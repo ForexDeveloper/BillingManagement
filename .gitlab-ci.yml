@@ -1,0 +1,5 @@
+include:
+  - project: 'keepa/devops/cicd'
+    ref: 'main'
+    file: 'include-ci/backend-creditcore-ci.yml'
+

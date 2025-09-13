@@ -1,0 +1,11 @@
+﻿namespace Application.Query.ViewModels.Tenants
+{
+    public class TenantViewModel
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+
+    }
+
+
+}

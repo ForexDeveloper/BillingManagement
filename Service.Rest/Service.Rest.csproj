@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<UserSecretsId>841d42bb-087f-4f05-836f-17b708c85194</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Shared.ApiVersioning" Version="250831.519.0" />
+		<PackageReference Include="Shared.Logging.Serilog" Version="250831.519.0" />
+		<PackageReference Include="Shared.Middlewares" Version="250831.519.0" />
+		<PackageReference Include="Shared.Swagger" Version="250831.519.0" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\Application.Command\Application.Command.csproj" />
+		<ProjectReference Include="..\Application.Query\Application.Query.csproj" />
+		<ProjectReference Include="..\Application.Service\Application.Service.csproj" />
+		<ProjectReference Include="..\Infrastructure.Data.Repository.EfCore\Infrastructure.Data.Repository.EfCore.csproj" />
+
+	</ItemGroup>
+
+</Project>

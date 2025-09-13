@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Polly" Version="8.5.2" />
+		<PackageReference Include="Shared.EventBus" Version="250831.519.0" />
+		<PackageReference Include="Shared.FluentValidation" Version="250831.519.0" />
+		<PackageReference Include="Shared.IdentityServerProvider" Version="250831.519.0" />
+		<PackageReference Include="Shared.MediatR" Version="250831.519.0" />
+		<PackageReference Include="Shared.Utilities" Version="250831.519.0" />
+		<PackageReference Include="Shared.Redis" Version="250831.519.0" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Domain.Core\Domain.Core.csproj" />
+	</ItemGroup>
+
+</Project>

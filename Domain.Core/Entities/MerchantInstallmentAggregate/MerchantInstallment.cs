@@ -1,0 +1,54 @@
+﻿using System;
+using Domain.Core.Enums;
+using Domain.Core.Helper;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.B2bInstallmentAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
+
+namespace Domain.Core.Entities.MerchantInstallmentAggregate;
+
+public sealed class MerchantInstallment : B2bInstallment
+{
+    public int TenantMerchantContractId { get; private set; }
+
+    public TenantMerchantContract TenantMerchantContract { get; private set; }
+
+    private MerchantInstallment()
+    {
+
+    }
+
+    public MerchantInstallment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
+        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, int number, DateTime dueDate,
+        B2bInstallmentType type) : base(financialDocument, tenantId,
+        fromBusinessIdentityId, toBusinessIdentityId, amount, number, dueDate, type)
+    {
+        TenantMerchantContractId = tenantMerchantContractId;
+        SetCheckSum();
+    }
+
+    public MerchantInstallment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
+        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, int number, DateTime dueDate,
+        B2bInstallmentType type) : base(tenantId, financialDocumentId,
+        fromBusinessIdentityId, toBusinessIdentityId, amount, number, dueDate, type)
+    {
+        TenantMerchantContractId = tenantMerchantContractId;
+        SetCheckSum();
+    }
+
+    protected override void SetCheckSum()
+    {
+        CheckSum = $"{FromBusinessIdentityId}{ToBusinessIdentityId}{Amount:F10}{Status}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}".Hash();
+    }
+
+    protected override void ValidateCheckSum()
+    {
+        var comperedTo = $"{FromBusinessIdentityId}{ToBusinessIdentityId}{Amount:F10}{Status}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
+
+        if (!comperedTo.Validate(CheckSum))
+        {
+            throw new ArgumentValidationException("InconsistentData", "اطلاعات موجود در دیتابیس صحیح نمی باشد.");
+        }
+    }
+}

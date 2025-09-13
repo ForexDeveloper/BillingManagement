@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="MimeTypesMap" Version="1.0.9" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Application.Query\Application.Query.csproj" />
+		<ProjectReference Include="..\Application.Service\Application.Service.csproj" />
+	</ItemGroup>
+
+</Project>
