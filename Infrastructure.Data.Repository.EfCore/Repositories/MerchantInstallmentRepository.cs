@@ -6,18 +6,11 @@ using System.Globalization;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.Internal;
-using Domain.Core.Entities.B2bInstallmentAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate.ValueObjects;
 using Domain.Core.Entities.MerchantInstallmentAggregate.ValueObjects;
-using static MassTransit.ValidationResultExtensions;
-using Domain.Core.Entities.AccountAggregate;
-using Domain.Core.Entities.InstallmentAggregate;
-using System.Diagnostics.Contracts;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 

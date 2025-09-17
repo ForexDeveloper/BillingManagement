@@ -31,14 +31,14 @@ try
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
     {
         options.UseSqlServer(configuration["ConnectionStrings:ApplicationDbConnection"],
-            x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Fc"));
+            x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Bill"));
         options.UseQueryTrackingBehavior(QueryTrackingBehavior.TrackAll);
     });
 
     builder.Services.AddDbContextPool<ReadonlyApplicationDbContext>(options =>
     {
         options.UseSqlServer(configuration["ConnectionStrings:ReadonlyDbConnection"],
-            x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Fc"));
+            x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Bill"));
         options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
     });
     builder.AddCustomWebApplicationSerilog(configuration, options =>

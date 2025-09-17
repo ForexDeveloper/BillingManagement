@@ -24,9 +24,11 @@ namespace Infrastructure.Data.Repository.EfCore.Repositories
         {
             return await _applicationDbContext.Merchants.AnyAsync(p => merchantIds.Contains(p.Id) && p.TenantId == tenantId);
         }
+
         public async Task<Merchant> GetAsync(int id, int tenantId)
         {
-            return await _applicationDbContext.Merchants.Include(c => c.MerchantCategories)
+            return await _applicationDbContext.Merchants
+                //.Include(c => c.MerchantCategories)
                 .FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId);
         }
 

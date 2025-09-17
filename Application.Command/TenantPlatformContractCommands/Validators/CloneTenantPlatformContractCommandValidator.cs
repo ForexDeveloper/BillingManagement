@@ -1,4 +1,4 @@
-﻿using Application.Command.WalletContractCommands.Validators;
+﻿using Application.Command.TenantMerchantContractCommands.Validators;
 using Domain.Core.Enums;
 using FluentValidation;
 using System;

@@ -6,31 +6,16 @@ using Application.Service.Dtos.FileManagers;
 using Application.Service.Dtos.Shared;
 using Application.Service.Encryptions;
 using Application.Service.Services;
-using Domain.Core.AggregateRoots.CategoryAggregate;
-using Domain.Core.AggregateRoots.WalletConfigurationAggregate;
-using Domain.Core.Entities.AccountAggregate;
-using Domain.Core.Entities.BankAccountAggregate;
-using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.CashOutRequestAggregate;
-using Domain.Core.Entities.ClosedloopAggregate;
-using Domain.Core.Entities.CurrencyTypeAggregate;
-using Domain.Core.Entities.CustomerAggregate;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
 using Domain.Core.Entities.GuarantorAggregate;
-using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.OrganizationAggregate;
-using Domain.Core.Entities.PlanAggregate;
-using Domain.Core.Entities.ProjectManegerAggregate;
 using Domain.Core.Entities.Providers;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
-using Domain.Core.Entities.TransactionAggregate;
-using Domain.Core.Entities.WalletAggregate;
-using Domain.Core.Entities.WalletContractAggregate;
 using Domain.Core.UnitOfWorkContracts;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
@@ -52,35 +37,18 @@ namespace Service.Rest
     {
         internal static void RegisterRepositories(this IServiceCollection services)
         {
-            services.AddScoped<IWalletConfigurationRepository, WalletConfigurationRepository>();
-            services.AddScoped<IWalletConfigurationReadOnlyRepository, WalletConfigurationReadOnlyRepository>();
-            services.AddScoped<ICurrencyReadOnlyRepository, CurrencyReadOnlyRepository>();
-            services.AddScoped<IProjectManagerReadOnlyRepository, ProjectManagerReadOnlyRepository>();
             services.AddScoped<ITenantReadOnlyRepository, TenantReadOnlyRepository>();
 
-            services.AddScoped<IProjectManagerRepository, ProjectManagerRepository>();
             services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<IOrganizationRepository, OrganizationRepository>();
-            services.AddScoped<ICustomerRepository, CustomerRepository>();
-            services.AddScoped<ICustomerReadOnlyRepository, CustomerReadOnlyRepository>();
             services.AddScoped<IFinancierRepository, FinancierRepository>();
             services.AddScoped<IFacilitatorRepository, FacilitatorRepository>();
             services.AddScoped<IGuarantorRepository, GuarantorRepository>();
-            services.AddScoped<IWalletContractRepository, WalletContractRepository>();
-            services.AddScoped<IWalletRepository, WalletRepository>();
 
-            services.AddScoped<ICategoryReadOnlyRepository, CategoryReadOnlyRepository>();
-            services.AddScoped<IClosedloopReadOnlyRepository, ClosedloopReadOnlyRepository>();
             services.AddScoped<IMerchantReadOnlyRepository, MerchantReadOnlyRepository>();
-            services.AddScoped<IPlanReadOnlyRepository, PlanReadOnlyRepository>();
             services.AddScoped<IWalletContractReadOnlyRepository, WalletContractReadOnlyRepository>();
-            services.AddScoped<ICashOutRequestReadOnlyRepository, CashOutRequestReadOnlyRepository>();
 
-
-            services.AddScoped<ICategoryRepository, CategoryRepository>();
-            services.AddScoped<IClosedloopRepository, ClosedloopRepository>();
             services.AddScoped<IMerchantRepository, MerchantRepository>();
-            services.AddScoped<IPlanRepository, PlanRepository>();
             services.AddScoped<ITenantMerchantContractRepository, TenantMerchantContractRepository>();
             services.AddScoped<ITenantMerchantContractReadOnlyRepository, TenantMerchantContractReadOnlyRepository>();
             services.AddScoped<IAttachmentReadOnlyRepository, AttachmentReadOnlyRepository>();
@@ -93,21 +61,10 @@ namespace Service.Rest
             services.AddScoped<IFacilitatorReadOnlyRepository, FacilitatorReadOnlyRepository>();
             services.AddScoped<IProviderReadOnlyRepository, ProviderReadOnlyRepository>();
 
-            services.AddScoped<IWalletReadOnlyRepository, WalletReadOnlyRepository>();
-            services.AddScoped<ICurrencyRepository, CurrencyRepository>();
             services.AddScoped<IFinancialDocumentReadOnlyRepository, FinancialDocumentReadOnlyRepository>();
-            services.AddScoped<IAccountRepository, AccountRepository>();
-            services.AddScoped<ITransactionRepository, TransactionRepository>();
-            services.AddScoped<IBillingRepository, BillingRepository>();
-            services.AddScoped<IInstallmentRepository, InstallmentRepository>();
             services.AddScoped<IMerchantBillingRepository, MerchantBillingRepository>();
             services.AddScoped<IMerchantInstallmentRepository, MerchantInstallmentRepository>();
             services.AddScoped<IFinancialDocumentRepository, FinancialDocumentRepository>();
-            services.AddScoped<IBillingReadOnlyRepository, BillingReadOnlyRepository>();
-            services.AddScoped<IBankAccountRepository, BankAccountRepository>();
-            services.AddScoped<IBankAccountReadOnlyRepository, BankAccountReadOnlyRepository>();
-            services.AddScoped<ICashOutRequestRepository, CashOutRequestRepository>();
-
         }
 
         internal static void UploadFileConfigurationServices(this IServiceCollection services, IConfiguration configuration)
@@ -167,17 +124,10 @@ namespace Service.Rest
 
         internal static void RegisterServices(this IServiceCollection services)
         {
-            services.AddScoped<ITransactionService, TransactionService>();
             services.AddScoped<ITenantMerchantContractService, TenantMerchantContractService>();
             services.AddScoped<IAttachmentService, AttachmentService>();
-            services.AddScoped<ILoanWalletService, LoanWalletService>();
-            services.AddScoped<IBillingService, BillingService>();
-            services.AddScoped<IMerchantBillingService, MerchantBillingService>();
-            services.AddScoped<ICashWalletService, CashWalletService>();
-            services.AddScoped<ICashOutRequestService, CashOutRequestService>();
+            services.AddScoped<IMerchantBillingService, MerchantBillingService>();            
             services.AddScoped<ITenantPlatformContractService, TenantPlatformContractService>();
-            services.AddScoped<IWalletContractService, WalletContractService>();
-            services.AddScoped<IBillingPaymentService, BillingPaymentService>();
         }
 
         internal static void RegisterPublicAppConfiguration(this IServiceCollection services, IConfiguration configuration)

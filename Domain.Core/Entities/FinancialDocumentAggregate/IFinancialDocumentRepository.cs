@@ -16,6 +16,4 @@ public interface IFinancialDocumentRepository
     Task<List<int>> GetTenantPlatformContractIdsHasTransaction(List<int> tenantPlatformContractIds);
     Task<bool> IsTenantMerchantContractUsedInTransaction(int tenantMerchantContractId);
     Task<List<int>> GetTenantMerchantContractIdsHasTransaction(List<int> tenantMerchantContractIds);
-    Task<bool> IsWalletContractUsedInTransaction(int walletContractId);
-    Task<List<int>> GetWalletContractIdsHasTransaction(List<int> walletContractIds);
 }

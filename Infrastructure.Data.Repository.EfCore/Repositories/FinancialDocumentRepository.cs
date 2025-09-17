@@ -23,20 +23,17 @@ public class FinancialDocumentRepository : IFinancialDocumentRepository
 
     public async Task<FinancialDocument> GetByIdAsync(long id)
     {
-        return await _applicationDbContext.FinancialDocuments
-            .Include(x => x.FinancialDocumentPayments).FirstOrDefaultAsync(p => p.Id == id);
+        return await _applicationDbContext.FinancialDocuments.FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<List<FinancialDocument>> GetRefundsByParentIdAsync(long parentId)
     {
-        return await _applicationDbContext.FinancialDocuments
-            .Include(x => x.FinancialDocumentPayments).Where(p => p.ParentId == parentId && p.Type == FinancialDocumentType.Refund).ToListAsync();
+        return await _applicationDbContext.FinancialDocuments.Where(p => p.ParentId == parentId && p.Type == FinancialDocumentType.Refund).ToListAsync();
     }
 
     public async Task<FinancialDocument> GetAsync(long paymentId)
     {
-        return await _applicationDbContext.FinancialDocuments
-            .Include(x => x.FinancialDocumentPayments).FirstOrDefaultAsync(p => p.PaymentId == paymentId);
+        return await _applicationDbContext.FinancialDocuments.FirstOrDefaultAsync(p => p.PaymentId == paymentId);
     }
 
     public void Update(FinancialDocument financialDocument)
@@ -51,7 +48,7 @@ public class FinancialDocumentRepository : IFinancialDocumentRepository
 
     public async Task<List<FinancialDocument>> GetAllAsync()
     {
-        return await _applicationDbContext.FinancialDocuments.Include(x => x.FinancialDocumentPayments).ToListAsync();
+        return await _applicationDbContext.FinancialDocuments.ToListAsync();
     }
 
     public async Task<bool> IsTenantPlatformContractUsedInTransaction(int tenantPlatformContractId)
@@ -81,22 +78,6 @@ public class FinancialDocumentRepository : IFinancialDocumentRepository
         var result = await _applicationDbContext.FinancialDocuments
             .Where(x => tenantMerchantContractIds.Contains(x.TenantMerchantContractId.Value))
             .Select(x => x.TenantMerchantContractId.Value)
-            .ToListAsync();
-
-        return result;
-    }
-
-    public async Task<bool> IsWalletContractUsedInTransaction(int walletContractId)
-    {
-        return await _applicationDbContext.FinancialDocumentPayments
-            .AnyAsync(x => x.WalletContractId == walletContractId);
-    }
-
-    public async Task<List<int>> GetWalletContractIdsHasTransaction(List<int> walletContractIds)
-    {
-        var result = await _applicationDbContext.FinancialDocumentPayments
-            .Where(x => walletContractIds.Contains(x.WalletContractId.Value))
-            .Select(x => x.WalletContractId.Value)
             .ToListAsync();
 
         return result;

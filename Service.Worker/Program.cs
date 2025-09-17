@@ -36,13 +36,13 @@ try
             services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(configuration["ConnectionStrings:ApplicationDbConnection"],
-                    x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Fc"));
+                    x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Bill"));
                 options.UseQueryTrackingBehavior(QueryTrackingBehavior.TrackAll);
             });
             services.AddDbContextPool<ReadonlyApplicationDbContext>(options =>
             {
                 options.UseSqlServer(configuration["ConnectionStrings:ReadonlyDbConnection"],
-                    x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Fc"));
+                    x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Bill"));
                 options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             });
 
@@ -57,8 +57,6 @@ try
 
 
             services.AddHostedService<OutboxPublisherServiceWorker>();
-            services.AddHostedService<UpdateBillingServiceWorker>();
-            services.AddHostedService<CreateLoanWalletBillingServiceWorker>();
             services.AddHostedService<MerchantBillingServiceWorker>();
 
             //services.AddHostedService<CustomerWalletServiceWorker>();

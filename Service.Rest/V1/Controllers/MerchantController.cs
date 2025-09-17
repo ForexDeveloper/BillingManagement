@@ -1,12 +1,8 @@
-﻿using Application.Command.TransactionCommands;
-using Application.Query.Queries;
-using Application.Query.ViewModels.FinancialDocuments;
+﻿using Application.Query.Queries;
 using Application.Query.ViewModels.Merchants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Service.Rest.V1.RequestModels.Merchants;
-using Service.Rest.V1.RequestModels.Transactions;
 using Shared.IdentityServerProvider.Contracts;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
@@ -42,36 +38,6 @@ namespace Service.Rest.V1.Controllers
         public async Task<ActionResult<bool>> ValidateMerchantBranch([FromRoute] long branchTerminalId)
         {
             return Ok(await _mediator.Send(new ValidateMerchantBranchQuery(branchTerminalId)));
-        }
-
-        [HttpPost("{merchantId}/refunds")]
-        [SwaggerOperation("Refund transactions")]
-        [SwaggerResponse((int)HttpStatusCode.OK, "Refunded")]
-        [SwaggerResponse((int)HttpStatusCode.BadRequest, "some validation or business error")]
-        public async Task<ActionResult<bool>> Refund([FromRoute] int merchantId, [FromBody] RefundTransactionModel request)
-        {
-            await _mediator.Send(new RefundTransactionCommand(request.FinancialDocumentId, merchantId, request.Amount, request.Reason, request.Description, _currentUserService.TenantId, isMerchant: true));
-            return Ok();
-        }
-
-        [HttpGet("{merchantId}/refunds/{financialDocumentId}")]
-        [ActionName(nameof(GetRefundDetails))]
-        [SwaggerOperation("Get refund details by financial document id")]
-        [SwaggerResponse((int)HttpStatusCode.OK, "Refund details returned", typeof(RefundFinancialDocumentViewModel))]
-        public async Task<ActionResult> GetRefundDetails([FromRoute] int merchantId, [FromRoute] long financialDocumentId)
-        {
-            var result = await _mediator.Send(new GetRefundFinancialDocumentByIdQuery(financialDocumentId, merchantId, _currentUserService.TenantId, isMerchant: true));
-            return Ok(result);
-        }
-
-        [HttpGet("{id}/purchases")]
-        [SwaggerOperation("Get  purchases list by id")]
-        [SwaggerResponse((int)HttpStatusCode.OK, "merchant purchases list returned", typeof(GetMerchantPurchasesViewModel))]
-        public async Task<ActionResult<GetMerchantPurchasesViewModel>> GetPurchasesList([FromRoute] int id, [FromQuery] GetMerchantPurchasesModel query)
-        {
-            var result = await _mediator.Send(new GetMerchantPurchasesQuery(query, query.FromDate, query.ToDate, query.WalletIds,
-                query.MerchantBrancheIds, id, _currentUserService.TenantId));
-            return Ok(result);
         }
 
         [HttpGet("{id}/branches")]

@@ -1,5 +1,4 @@
-﻿using Domain.Core.Entities.AccountAggregate;
-using Domain.Core.Entities.TenantAggregate;
+﻿using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Enums;
 using Domain.Core.UnitOfWorkContracts;
 using MassTransit;
@@ -18,17 +17,15 @@ namespace Application.Service.EventConsumers;
 public class TenantAddedOrUpdatedEventConsumer : IConsumer<CmTenantAddedOrUpdatedEvent>
 {
     private readonly ITenantRepository _tenantRepository;
-    private readonly IAccountRepository _accountRepository;
     private readonly IApplicationDbContextUnitOfWork _unitOfWork;
     public readonly ILogger<TenantAddedOrUpdatedEventConsumer> _logger;
 
     public TenantAddedOrUpdatedEventConsumer(ILogger<TenantAddedOrUpdatedEventConsumer> logger, ITenantRepository tenantRepository,
-        IApplicationDbContextUnitOfWork unitOfWork, IAccountRepository accountRepository)
+        IApplicationDbContextUnitOfWork unitOfWork)
     {
         _logger = logger;
         _tenantRepository = tenantRepository;
         _unitOfWork = unitOfWork;
-        _accountRepository = accountRepository;
     }
 
     public async Task Consume(ConsumeContext<CmTenantAddedOrUpdatedEvent> context)
@@ -80,20 +77,7 @@ public class TenantAddedOrUpdatedEventConsumer : IConsumer<CmTenantAddedOrUpdate
     {
         Tenant tenant = new(context.Message.Id, context.Message.Title, context.Message.CreditProjectName, context.Message.BrandName, context.Message.InternalProjectManagerName);
 
-        var accounts = new List<Account>
-        {
-            new(context.Message.Id, context.Message.Id, AccountType.Bank, 0),
-            new(context.Message.Id, context.Message.Id, AccountType.CashWallet, 0),
-            new(context.Message.Id, context.Message.Id, AccountType.Purchase, 0),
-            new(context.Message.Id, context.Message.Id, AccountType.Commission , 0),
-            new(context.Message.Id, context.Message.Id, AccountType.Loan  , 0),
-            new(context.Message.Id, context.Message.Id, AccountType.BNPL  , 0),
-            new(context.Message.Id, context.Message.Id, AccountType.Penalty  , 0),
-            new(context.Message.Id, context.Message.Id, AccountType.Interest  , 0)
-        };
-
         await _tenantRepository.AddAsync(tenant);
-        await _accountRepository.AddRangeAsync(accounts);
         await _unitOfWork.SaveChangesAsync();
     }
 

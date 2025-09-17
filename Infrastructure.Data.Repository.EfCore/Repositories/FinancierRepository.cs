@@ -25,7 +25,7 @@ namespace Infrastructure.Data.Repository.EfCore.Repositories
 
         public async Task<Financier> GetAsync(int id)
         {
-            return await _applicationDbContext.Financiers.Include(c=>c.CreditFlowConfigs).FirstOrDefaultAsync(p => p.Id == id);
+            return await _applicationDbContext.Financiers.FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task<bool> IsFinancierBelongToTenantAsync(int tenantId, int financierId)

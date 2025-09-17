@@ -50,11 +50,13 @@ namespace Application.Query.Queries
             if (!request.WalletId.HasValue)
                 return await GetTenantIpgSettingFromTenantPlatformContract(request.TenantId);
 
+            //To-do
             var walletContractId = await _walletReadOnlyRepository.GetWalletContractIdByWalletIdAsync(request.TenantId, request.WalletId.Value);
 
             if (walletContractId == null)
                 return await GetTenantIpgSettingFromTenantPlatformContract(request.TenantId);
 
+            //To-do
             var tenantIpgSettingId = await _walletContractReadOnlyRepository.GetTenantIpgSettingIdAsync(walletContractId.Value, request.TenantId);
 
             if (tenantIpgSettingId == null)

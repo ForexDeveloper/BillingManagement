@@ -1,5 +1,4 @@
 ﻿using Application.Query.ViewModels.TenantPlatfromContracts;
-using Application.Service.Contracts;
 using Application.Service.Dtos.Shared;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
@@ -26,18 +25,15 @@ namespace Application.Query.Queries
     public class GetTenantPlatformContractByIdQueryHandler : IRequestHandler<GetTenantPlatformContractByIdQuery, GetTenantPlatformContractVm>
     {
         private readonly ITenantPlatformContractRepository _tenantPlatformContractRepository;
-        private readonly ITransactionService _transactionService;
         private readonly PublicAppConfiguration _publicAppConfiguration;
         private readonly IFinancialDocumentRepository _financialDocumentRepository;
 
         public GetTenantPlatformContractByIdQueryHandler(
             ITenantPlatformContractRepository tenantPlatformContractRepository,
-            ITransactionService transactionService,
             IFinancialDocumentRepository financialDocumentRepository,
             IOptions<PublicAppConfiguration> publicAppConfiguration)
         {
             _tenantPlatformContractRepository = tenantPlatformContractRepository;
-            _transactionService = transactionService;
             _financialDocumentRepository = financialDocumentRepository;
             _publicAppConfiguration = publicAppConfiguration.Value;
         }

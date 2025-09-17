@@ -90,7 +90,6 @@ namespace Application.Command.TenantPlatformContractCommands
     {
         private readonly ITenantPlatformContractRepository _tenantPlatformContractRepository;
         private readonly ITenantRepository _tenantRepository;
-        private readonly ITransactionService _transactionService;
         private readonly IApplicationDbContextUnitOfWork _unitOfWork;
         private readonly ICurrentUserService _currentUserService;
         private readonly IProviderRepository _providerRepository;
@@ -101,7 +100,7 @@ namespace Application.Command.TenantPlatformContractCommands
             ITenantPlatformContractRepository tenantPlatformContractRepository,
             ITenantRepository tenantRepository, IApplicationDbContextUnitOfWork unitOfWork,
             ICurrentUserService currentUserService,
-            IProviderRepository providerRepository, ITransactionService transactionService,
+            IProviderRepository providerRepository,
             IFinancialDocumentRepository financialDocumentRepository,
             ITenantPlatformContractService tenantPlatformContractService)
         {
@@ -110,7 +109,6 @@ namespace Application.Command.TenantPlatformContractCommands
             _unitOfWork = unitOfWork;
             _currentUserService = currentUserService;
             _providerRepository = providerRepository;
-            _transactionService = transactionService;
             _financialDocumentRepository = financialDocumentRepository;
             _tenantPlatformContractService = tenantPlatformContractService;
         }

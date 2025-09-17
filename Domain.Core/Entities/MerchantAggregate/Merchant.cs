@@ -1,5 +1,4 @@
 ﻿using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.Merchants;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Enums;
 using System;
@@ -16,7 +15,6 @@ namespace Domain.Core.Entities.MerchantAggregate
         public string Title { get; private set; }
         public IdentityTypeEnum Type { get; private set; }
         public SaleType SaleType { get; private set; }
-        public List<MerchantCategory> MerchantCategories { get; private set; }
         public MerchantStatus Status { get; private set; }
         public List<MerchantBranch> MerchantBranches { get; private set; }
         public ICollection<MerchantBilling> MerchantBillings { get; private set; }
@@ -30,7 +28,7 @@ namespace Domain.Core.Entities.MerchantAggregate
         public void SetMerchantBranches(MerchantBranch merchantBranch)
         {
             if (merchantBranch is null)
-                throw new ArgumentValidationException(nameof(MerchantCategories), "مشخصات پذیرنده اجباریست.");
+                throw new ArgumentValidationException(nameof(MerchantBranch), "مشخصات پذیرنده اجباریست.");
             MerchantBranches ??= new List<MerchantBranch>();
             MerchantBranches.Add(merchantBranch);
         }
@@ -51,6 +49,7 @@ namespace Domain.Core.Entities.MerchantAggregate
 
             Title = title;
         }
+
         public void SetMerchant(string title, byte type, byte saleType, byte status)
         {
             SetTitle(title);
@@ -59,14 +58,14 @@ namespace Domain.Core.Entities.MerchantAggregate
             Status = (MerchantStatus)status;
         }
 
-        public void SetCategories(MerchantCategory merchantCategory)
-        {
-            if (merchantCategory is null)
-                throw new ArgumentValidationException(nameof(MerchantCategories), "مشخصات دسته بندی محصولات اجباریست.");
+        //public void SetCategories(MerchantCategory merchantCategory)
+        //{
+        //    if (merchantCategory is null)
+        //        throw new ArgumentValidationException(nameof(MerchantCategories), "مشخصات دسته بندی محصولات اجباریست.");
 
-            MerchantCategories ??= new List<MerchantCategory>();
-            MerchantCategories.Add(merchantCategory);
-        }
+        //    MerchantCategories ??= new List<MerchantCategory>();
+        //    MerchantCategories.Add(merchantCategory);
+        //}
 
     }
 }

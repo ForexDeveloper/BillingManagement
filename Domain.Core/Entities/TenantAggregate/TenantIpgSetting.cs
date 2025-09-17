@@ -1,6 +1,5 @@
 ﻿using Domain.Base;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
-using Domain.Core.Entities.WalletContractAggregate;
 using System.Collections.Generic;
 
 namespace Domain.Core.Entities.TenantAggregate
@@ -14,7 +13,7 @@ namespace Domain.Core.Entities.TenantAggregate
         public bool IsActive { get; private set; }
 
         public List<TenantPlatformContract> TenantPlatformContracts { get; private set; }
-        public List<WalletContract> WalletContracts { get; private set; }
+        //public List<WalletContract> WalletContracts { get; private set; }
 
         private TenantIpgSetting()
         {

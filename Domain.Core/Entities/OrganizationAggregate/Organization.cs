@@ -1,7 +1,6 @@
 ﻿using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.Entities.WalletContractAggregate;
 using System;
 using System.Collections.Generic;
 
@@ -16,7 +15,7 @@ namespace Domain.Core.Entities.OrganizationAggregate
         public string Title { get; private set; }
         public int? ParentId { get; private set; }
         public Organization Parent { get; set; }
-        public List<WalletContract> WalletContracts { get; private set; }
+        //public List<WalletContract> WalletContracts { get; private set; }
 
         #endregion #region Property
 

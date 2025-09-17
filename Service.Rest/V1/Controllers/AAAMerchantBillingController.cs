@@ -1,17 +1,8 @@
-﻿using Application.Query.Queries;
-using Application.Query.ViewModels.Categories;
-using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using Application.Service.Helper;
 using Domain.Core.Enums;
 using Infrastructure.Data.Repository.EfCore;
-using MassTransit.NewIdProviders;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 
 namespace Service.Rest.V1.Controllers;
@@ -32,7 +23,7 @@ public class AAAMerchantBillingController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<GetCategoryListVm>> SetMerchantInstallments(long tenantMerchantContractId)
+    public async Task<ActionResult> SetMerchantInstallments(long tenantMerchantContractId)
     {
         try
         {

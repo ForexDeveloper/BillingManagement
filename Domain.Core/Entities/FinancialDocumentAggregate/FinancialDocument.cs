@@ -43,8 +43,6 @@ public class FinancialDocument : BaseEntity<long>
     public FinancialDocument Parent { get; private set; }
     public ICollection<FinancialDocument> ChildFinancialDocuments { get; private set; }
 
-    public List<FinancialDocumentPayment> FinancialDocumentPayments { get; private set; } = [];
-
     #endregion
 
     private FinancialDocument()
@@ -81,11 +79,6 @@ public class FinancialDocument : BaseEntity<long>
     public void SetCheckSum()
     {
         CheckSum = HashHelper.Hash($"{FromBusinessIdentityId}{ToBusinessIdentityId}{Type}{Amount:F10}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}");
-    }
-
-    public void SetFinancialDocumentPayments(List<FinancialDocumentPayment> financialDocumentPayments)
-    {
-        FinancialDocumentPayments.AddRange(financialDocumentPayments);
     }
 
     public void SetState(FinancialDocumentState financialDocumentState)

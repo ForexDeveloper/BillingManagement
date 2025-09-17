@@ -1,8 +1,7 @@
 ﻿using Application.Service.Dtos.Shared;
 using FluentValidation;
 
-namespace Application.Command.WalletContractCommands.Validators;
-
+namespace Application.Command.TenantMerchantContractCommands.Validators;
 public class TieredCommissionsValidator : AbstractValidator<TieredCommissionDto>
 {
     public TieredCommissionsValidator()

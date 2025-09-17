@@ -1,6 +1,4 @@
-﻿using Domain.Core.AggregateRoots.CategoryAggregate;
-using Domain.Core.Entities.AccountAggregate;
-using Domain.Core.Entities.MerchantAggregate;
+﻿using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Enums;
 using Domain.Core.UnitOfWorkContracts;
 using MassTransit;
@@ -14,26 +12,20 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-
 namespace Application.Service.EventConsumers;
 
 public class MerchantBranchAddedOrUpdatedEventConsumer : IConsumer<CmMerchantBranchAddedOrUpdatedEvent>
 {
     private readonly IMerchantRepository _merchantRepository;
-    private readonly ICategoryRepository _categoryRepository;
-    private readonly IAccountRepository _accountRepository;
     private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    public readonly ILogger<CategoryAddedOrUpdatedEventConsumer> _logger;
+    public readonly ILogger<MerchantBranchAddedOrUpdatedEventConsumer> _logger;
 
-    public MerchantBranchAddedOrUpdatedEventConsumer(ILogger<CategoryAddedOrUpdatedEventConsumer> logger, ICategoryRepository categoryRepository,
-        IApplicationDbContextUnitOfWork unitOfWork, IMerchantRepository merchantRepository,
-        IAccountRepository accountRepository)
+    public MerchantBranchAddedOrUpdatedEventConsumer(ILogger<MerchantBranchAddedOrUpdatedEventConsumer> logger, 
+        IApplicationDbContextUnitOfWork unitOfWork, IMerchantRepository merchantRepository)
     {
         _logger = logger;
-        _categoryRepository = categoryRepository;
         _unitOfWork = unitOfWork;
         _merchantRepository = merchantRepository;
-        _accountRepository = accountRepository;
     }
 
     public async Task Consume(ConsumeContext<CmMerchantBranchAddedOrUpdatedEvent> context)
@@ -88,7 +80,6 @@ public class MerchantBranchAddedOrUpdatedEventConsumer : IConsumer<CmMerchantBra
             context.Message.Title, context.Message.TerminalId);
 
         await _merchantRepository.AddBranchAsync(merchantBranch);
-        //await CreateAccounts(context.Message.BranchId, tenantId);
         await _unitOfWork.SaveChangesAsync();
     }
 
@@ -96,30 +87,6 @@ public class MerchantBranchAddedOrUpdatedEventConsumer : IConsumer<CmMerchantBra
     {
         merchantBranch.Update(context.Message.Title);
         _merchantRepository.UpdateBranch(merchantBranch);
-        //await CreateAccounts(context.Message.BranchId, tenantId);
         await _unitOfWork.SaveChangesAsync();
-    }
-
-    private async Task CreateAccounts(int merchantBranchId, int tenantId)
-    {
-        var merchantBranchAccounts = await _accountRepository.GetListAsync(merchantBranchId, tenantId);
-        List<Account> accounts = [];
-
-        if (!merchantBranchAccounts.Any(x => x.Type == AccountType.Purchase))
-        {
-            var account = new Account(merchantBranchId, tenantId, AccountType.Purchase, 0);
-            accounts.Add(account);
-        }
-
-        if (!merchantBranchAccounts.Any(x => x.Type == AccountType.Bank))
-        {
-            var account = new Account(merchantBranchId, tenantId, AccountType.Bank, 0);
-            accounts.Add(account);
-        }
-
-        if (accounts.Count > 0)
-        {
-            await _accountRepository.AddRangeAsync(accounts);
-        }
     }
 }

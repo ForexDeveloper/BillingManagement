@@ -1,7 +1,6 @@
 ﻿using Domain.Core.Entities;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Exceptions;
-using Domain.Core.Entities.WalletContractAggregate.Exceptions;
 using Domain.Core.UnitOfWorkContracts;
 using MediatR;
 using System;
@@ -40,7 +39,7 @@ namespace Application.Command.TenantMerchantContractCommands
         public async Task<int> Handle(UpdateTenantMerchantContractStatusCommand request, CancellationToken cancellationToken)
         {
             var contract = await _tenantMerchantContractRepository.GetAsync(request.Id)
-                ?? throw new WalletContractNotFoundException("قرارداد پیدا نشد.");
+                ?? throw new TenantMerchantContractNotFoundException("قرارداد پیدا نشد.");
 
             if (request.TenantId.HasValue && request.TenantId != contract.TenantId)
             {

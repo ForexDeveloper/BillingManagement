@@ -11,8 +11,6 @@ namespace Application.Query.ReadOnlyRepositoryContracts
         Task<List<MerchantListQueryModel>> GetListAsync(int tenatid);
         Task<MerchantBranch> GetBranchByMerchantIdAsync(int merchantId);
         Task<MerchantBranch> GetBranchByIdAsync(int branchId);
-        Task<List<MerchantCategoryQueryModel>> GetCategoryByTenantIdAsync(int tenantId);
-        Task<List<int>> GetMerchantByFilterAsync(GetActiveWalletMerchantListQuery query);
         Task<MerchantBranch> GetMerchantBranchByTerminalIdAsync(long terminalId);
         Task<List<MerchantBranchSummeryQueryModel>> GetMerchantBranchesByTenantIdAsync(int merchantId, int? tenantId);
     }
