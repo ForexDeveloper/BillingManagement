@@ -1,6 +1,7 @@
 ﻿using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.WalletContractAggregate;
 using System;
 using System.Collections.Generic;
 
@@ -15,8 +16,7 @@ namespace Domain.Core.Entities.GuarantorAggregate
         public string Name { get; private set; }
         public byte Type { get; private set; }
         public bool IsTenant { get; private set; }
-
-        //public List<WalletContractGuarantor> WalletContractGuarantor { get; private set; }
+        public List<WalletContractGuarantor> WalletContractGuarantor { get; private set; }
 
         #endregion #region Property
 
