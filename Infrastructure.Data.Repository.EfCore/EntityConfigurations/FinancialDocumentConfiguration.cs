@@ -8,7 +8,9 @@ namespace GeneticsBank.Entities.Models.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<FinancialDocument> builder)
         {
+            builder.HasKey(p => p.Id);
             builder.Property(p => p.Id).IsRequired();
+            builder.Property(p => p.Id).ValueGeneratedNever();
 
             builder.Property(p => p.Amount).HasColumnType("decimal(32, 10)").IsRequired();
 

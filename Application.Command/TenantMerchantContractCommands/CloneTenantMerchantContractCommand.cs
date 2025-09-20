@@ -144,23 +144,24 @@ namespace Application.Command.TenantMerchantContractCommands
 
             using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                await DeActiveOldContract(oldContract);
-                _tenantMerchantContractRepository.Update(oldContract);
-
-                await _tenantMerchantContractRepository.AddAsync(contract);
-                await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-                var attachments = await _tenantMerchantContractService.SetTenantMerchantContractAttachments(
-                    contract.Id,
-                    request.ContractDocument,
-                    _currentUserService.UserId,
-                    _currentUserService.ClientId
-                );
-
-                await _attachmentRepository.AddRangeAsync(attachments);
-
                 try
                 {
+                    await DeActiveOldContract(oldContract);
+                    _tenantMerchantContractRepository.Update(oldContract);
+
+                    await _tenantMerchantContractRepository.AddAsync(contract);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                    var attachments = await _tenantMerchantContractService.SetTenantMerchantContractAttachments(
+                        contract.Id,
+                        request.ContractDocument,
+                        _currentUserService.UserId,
+                        _currentUserService.ClientId
+                    );
+
+                    await _attachmentRepository.AddRangeAsync(attachments);
+
+                    _tenantMerchantContractService.PublishTenantMerchantContractAddedOrUpdatedEvent(contract);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                 }
                 catch (Exception)

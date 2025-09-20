@@ -89,11 +89,14 @@ namespace Application.Service.Services
         {
             var providers = await _providerRepository.GetProvidersAsync(providerIds);
 
-            _outboxService.AddNewEvent(new FcmTenantPlatformContractAddedOrUpdatedEvent()
+            _outboxService.AddNewEvent(new BmTenantPlatformContractAddedOrUpdatedEvent()
             {
                 Id = contract.Id,
                 EditDateTime = contract.EditDateTime,
                 TenantId = contract.TenantId,
+                StartDate = contract.StartDate,
+                EndDate = contract.EndDate,
+                Status = contract.Status,
                 Providers = providers.ToDictionary(x => (byte)x.ProviderType, x => x.EnglishName)
             });
         }

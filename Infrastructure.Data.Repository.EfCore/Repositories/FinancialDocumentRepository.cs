@@ -31,11 +31,6 @@ public class FinancialDocumentRepository : IFinancialDocumentRepository
         return await _applicationDbContext.FinancialDocuments.Where(p => p.ParentId == parentId && p.Type == FinancialDocumentType.Refund).ToListAsync();
     }
 
-    public async Task<FinancialDocument> GetAsync(long paymentId)
-    {
-        return await _applicationDbContext.FinancialDocuments.FirstOrDefaultAsync(p => p.PaymentId == paymentId);
-    }
-
     public void Update(FinancialDocument financialDocument)
     {
         _applicationDbContext.FinancialDocuments.Update(financialDocument);

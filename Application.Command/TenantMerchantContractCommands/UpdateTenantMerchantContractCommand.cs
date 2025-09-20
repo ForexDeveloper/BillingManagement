@@ -161,33 +161,34 @@ public class UpdateTenantMerchantContractCommandHandler : IRequestHandler<Update
 
         using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
         {
-            _tenantMerchantContractRepository.Update(contract);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            var oldAndNewAttachments = await SetTenantMerchantContractAttachment(
-                contract.Id,
-                request.ContractDocument.BusinessDocumentType,
-                request.ContractDocument.NationalCartImageFront?.ToString(),
-                request.ContractDocument.NationalCartImageBack?.ToString(),
-                request.ContractDocument.BusinessDocumentImage?.ToString(),
-                request.ContractDocument.OfficialNewspaper?.ToString(),
-                _currentUserService.UserId,
-                _currentUserService.ClientId);
-
-            if (oldAndNewAttachments.newAttachments.Any())
-            {
-                await _attachmentRepository.AddRangeAsync(oldAndNewAttachments.newAttachments);
-            }
-
-            if (oldAndNewAttachments.oldAttachments.Any())
-            {
-                var oldAttachmentsDeleted = oldAndNewAttachments.oldAttachments.Where(x => x.IsDeleted == true).ToList();
-                if (oldAttachmentsDeleted.Any())
-                    _attachmentRepository.UpdateRange(oldAttachmentsDeleted);
-            }
-
             try
             {
+                _tenantMerchantContractRepository.Update(contract);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                var oldAndNewAttachments = await SetTenantMerchantContractAttachment(
+                    contract.Id,
+                    request.ContractDocument.BusinessDocumentType,
+                    request.ContractDocument.NationalCartImageFront?.ToString(),
+                    request.ContractDocument.NationalCartImageBack?.ToString(),
+                    request.ContractDocument.BusinessDocumentImage?.ToString(),
+                    request.ContractDocument.OfficialNewspaper?.ToString(),
+                    _currentUserService.UserId,
+                    _currentUserService.ClientId);
+
+                if (oldAndNewAttachments.newAttachments.Any())
+                {
+                    await _attachmentRepository.AddRangeAsync(oldAndNewAttachments.newAttachments);
+                }
+
+                if (oldAndNewAttachments.oldAttachments.Any())
+                {
+                    var oldAttachmentsDeleted = oldAndNewAttachments.oldAttachments.Where(x => x.IsDeleted == true).ToList();
+                    if (oldAttachmentsDeleted.Any())
+                        _attachmentRepository.UpdateRange(oldAttachmentsDeleted);
+                }
+
+                _tenantMerchantContractService.PublishTenantMerchantContractAddedOrUpdatedEvent(contract);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
             }
             catch (Exception)

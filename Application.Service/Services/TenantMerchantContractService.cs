@@ -4,8 +4,11 @@ using Domain.Core.Entities.Document;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
+using Shared.EventBus.Contracts;
+using Shared.EventBus.Events;
 using Shared.MinIO.Contracts;
 using Shared.MinIO.Entities;
 using Shared.MinIO.Models;
@@ -20,14 +23,17 @@ namespace Application.Service.Services
         private readonly IFileManagerService _fileManagerService;
         private readonly ITenantRepository _tenantRepository;
         private readonly IMerchantRepository _merchantRepository;
+        private readonly IOutboxService _outboxService;
 
         public TenantMerchantContractService(IFileManagerService fileManagerService,
             ITenantRepository tenantRepository,
-            IMerchantRepository merchantRepository)
+            IMerchantRepository merchantRepository,
+            IOutboxService outboxService)
         {
             _fileManagerService = fileManagerService;
             _tenantRepository = tenantRepository;
             _merchantRepository = merchantRepository;
+            _outboxService = outboxService;
         }
 
         public async Task<List<Attachment>> SetTenantMerchantContractAttachments(int entityId, TenantMerchantContractDocumentDto documents, string userId,
@@ -158,5 +164,17 @@ namespace Application.Service.Services
 
         }
 
+        public void PublishTenantMerchantContractAddedOrUpdatedEvent(TenantMerchantContract contract)
+        {
+            _outboxService.AddNewEvent(new BmTenantMerchantContractAddedOrUpdatedEvent()
+            {
+                Id = contract.Id,
+                TenantId = contract.TenantId,
+                MerchantId = contract.MerchantId,
+                StartDate = contract.StartDate,
+                EndDate = contract.EndDate,
+                Status = contract.Status
+            });
+        }
     }
 }
