@@ -202,7 +202,7 @@ public sealed class MerchantBillingService(
                 var contract = billingDto.ContractGroup;
 
                 var billingKey = new ContractIdentifier(contract.TenantId, contract.MerchantId, contract.BillingPeriod,
-                    contract.BillingPeriodType, contract.BillingDailyOriginDate);
+                    contract.BillingPeriodType, contract.BillingDailyOriginDate, contract.CommissionCalculationType);
 
                 var installments = installmentGroup.GetValueOrDefault(billingKey);
 
@@ -379,7 +379,7 @@ public sealed class MerchantBillingService(
                 var startOdPeriod = billingDto.StartOfPeriod;
 
                 var billingKey = new ContractIdentifier(contract.TenantId, contract.MerchantId, contract.BillingPeriod,
-                    contract.BillingPeriodType, contract.BillingDailyOriginDate);
+                    contract.BillingPeriodType, contract.BillingDailyOriginDate, contract.CommissionCalculationType);
 
                 var installments = installmentGroup.GetValueOrDefault(billingKey);
 

@@ -86,7 +86,8 @@ public class TenantMerchantContractRepository(ApplicationDbContext applicationDb
             MerchantId = p.MerchantId,
             BillingPeriod = p.BillingPeriod,
             BillingPeriodType = p.BillingPeriodType,
-            BillingDailyOriginDate = p.DailyBillingOriginDate
+            BillingDailyOriginDate = p.DailyBillingOriginDate,
+            CommissionCalculationType = p.CommissionCalculationType
         })
         .Select(p => new ContractGroup()
         {
@@ -95,6 +96,7 @@ public class TenantMerchantContractRepository(ApplicationDbContext applicationDb
             BillingPeriod = p.Key.BillingPeriod,
             BillingPeriodType = p.Key.BillingPeriodType,
             BillingDailyOriginDate = p.Key.BillingDailyOriginDate,
+            CommissionCalculationType = p.Key.CommissionCalculationType,
             ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id),
             EndorsementDate = p.OrderBy(q => q.CreatedDateTime).FirstOrDefault().CreatedDateTime,
             HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any()
@@ -151,7 +153,8 @@ public class TenantMerchantContractRepository(ApplicationDbContext applicationDb
             MerchantId = p.MerchantId,
             BillingPeriod = p.BillingPeriod,
             BillingPeriodType = p.BillingPeriodType,
-            BillingDailyOriginDate = p.DailyBillingOriginDate
+            BillingDailyOriginDate = p.DailyBillingOriginDate,
+            CommissionCalculationType = p.CommissionCalculationType
         })
         .Where(p =>
             (p.Key.BillingPeriodType == TimeInterval.Day && p.Select(q => q.Id).Any(q => dailyIds.Contains(q))) ||
@@ -166,6 +169,7 @@ public class TenantMerchantContractRepository(ApplicationDbContext applicationDb
             BillingPeriod = p.Key.BillingPeriod,
             BillingPeriodType = p.Key.BillingPeriodType,
             BillingDailyOriginDate = p.Key.BillingDailyOriginDate,
+            CommissionCalculationType = p.Key.CommissionCalculationType,
             ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id),
             EndorsementDate = p.OrderBy(q => q.CreatedDateTime).FirstOrDefault().CreatedDateTime,
             HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any()

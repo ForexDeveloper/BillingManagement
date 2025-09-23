@@ -21,4 +21,6 @@ public sealed record ContractGroup
     public required DateTime EndorsementDate { get; set; }
 
     public IEnumerable<int> ContractIds { get; set; }
+
+    public required CommissionCalculationType CommissionCalculationType { get; set; }
 }

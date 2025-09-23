@@ -18,17 +18,20 @@ public sealed record ContractIdentifier
 
     public DateTime? BillingDailyOriginDate { get; set; }
 
-    public ContractIdentifier(int tenantId, int merchantId, int billingPeriod, TimeInterval billingPeriodType, DateTime? billingDailyOriginDate)
+    public CommissionCalculationType CommissionCalculationType { get; set; }
+
+    public ContractIdentifier(int tenantId, int merchantId, int billingPeriod, TimeInterval billingPeriodType, DateTime? billingDailyOriginDate, CommissionCalculationType commissionCalculationType)
     {
         TenantId = tenantId;
         MerchantId = merchantId;
         BillingPeriod = billingPeriod;
         BillingPeriodType = billingPeriodType;
         BillingDailyOriginDate = billingDailyOriginDate;
+        CommissionCalculationType = commissionCalculationType;
     }
 
     public ContractIdentifier()
     {
-        
+
     }
 }

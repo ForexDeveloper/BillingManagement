@@ -58,12 +58,14 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
             p.TenantMerchantContract.MerchantId,
             p.TenantMerchantContract.BillingPeriod,
             p.TenantMerchantContract.BillingPeriodType,
-            p.TenantMerchantContract.DailyBillingOriginDate
+            p.TenantMerchantContract.DailyBillingOriginDate,
+            p.TenantMerchantContract.CommissionCalculationType
         }).GroupBy(p => new ContractIdentifier(p.TenantId,
                 p.MerchantId,
                 p.BillingPeriod,
                 p.BillingPeriodType,
-                p.DailyBillingOriginDate))
+                p.DailyBillingOriginDate,
+                p.CommissionCalculationType))
             .ToDictionaryAsync(p => p.Key, p => p.Select(q => q.Installemnt).ToList(), cancellationToken);
     }
 }
