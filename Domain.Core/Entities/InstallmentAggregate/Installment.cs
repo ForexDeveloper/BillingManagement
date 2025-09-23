@@ -1,16 +1,15 @@
-﻿using Domain.Base;
-using Domain.Core.Entities.B2bBillingAggregate;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantAggregate;
+﻿using System;
+using Domain.Base;
 using Domain.Core.Enums;
-using Domain.Core.Helper;
-using System;
+using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 
-namespace Domain.Core.Entities.B2bInstallmentAggregate;
+namespace Domain.Core.Entities.InstallmentAggregate;
 
-public abstract class B2bInstallment : BaseEntity<long>
+public abstract class Installment : BaseEntity<long>
 {
     public int TenantId { get; protected set; }
 
@@ -24,6 +23,8 @@ public abstract class B2bInstallment : BaseEntity<long>
 
     public decimal Amount { get; protected set; }
 
+    public decimal Commission { get; protected set; }
+
     public int Number { get; protected set; }
 
     public DateTime DueDate { get; protected set; }
@@ -32,15 +33,13 @@ public abstract class B2bInstallment : BaseEntity<long>
 
     public InstallmentStatus Status { get; protected set; }
 
-    //public InstallmentCategory Category { get; protected set; }
-
     public string CheckSum { get; protected set; }
 
     public byte[] RowVersion { get; protected set; }
 
     public Tenant Tenant { get; protected set; }
 
-    public B2bBilling Billing { get; protected set; }
+    public Billing Billing { get; protected set; }
 
     public FinancialDocument FinancialDocument { get; protected set; }
 
@@ -48,12 +47,12 @@ public abstract class B2bInstallment : BaseEntity<long>
 
     public BusinessIdentity ToBusinessIdentity { get; protected set; }
 
-    protected B2bInstallment()
+    protected Installment()
     {
 
     }
 
-    protected B2bInstallment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
+    protected Installment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
         int toBusinessIdentityId, decimal amount, int number,
         DateTime dueDate, B2bInstallmentType type)
     {
@@ -69,7 +68,7 @@ public abstract class B2bInstallment : BaseEntity<long>
         SetAmount(amount);
     }
 
-    protected B2bInstallment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
+    protected Installment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
         int toBusinessIdentityId, decimal amount, int number,
         DateTime dueDate, B2bInstallmentType type)
     {

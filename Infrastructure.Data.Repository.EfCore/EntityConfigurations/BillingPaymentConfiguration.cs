@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.B2bBillingPaymentAggregate;
+using Domain.Core.Entities.BillingPaymentAggregate;
 using Infrastructure.Data.Repository.EfCore.Constants;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations;
 
-public class B2bBillingPaymentConfiguration : IEntityTypeConfiguration<B2bBillingPayment>
+public sealed class BillingPaymentConfiguration : IEntityTypeConfiguration<BillingPayment>
 {
-    public void Configure(EntityTypeBuilder<B2bBillingPayment> builder)
+    public void Configure(EntityTypeBuilder<BillingPayment> builder)
     {
         builder.HasKey(p => p.Id);
 

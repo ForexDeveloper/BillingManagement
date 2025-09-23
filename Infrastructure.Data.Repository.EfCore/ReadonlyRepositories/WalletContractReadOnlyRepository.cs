@@ -1,6 +1,7 @@
 ﻿using Application.Query.ReadOnlyRepositoryContracts;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories
 {

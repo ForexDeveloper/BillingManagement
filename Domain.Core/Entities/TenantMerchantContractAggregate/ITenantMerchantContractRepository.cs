@@ -1,7 +1,7 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+﻿using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 using System.Collections.Generic;
-using Domain.Core.Entities.TenantMerchantContractAggregate.ValueObjects;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Domain.Core.Entities.TenantMerchantContractAggregate
 {
@@ -25,6 +25,8 @@ namespace Domain.Core.Entities.TenantMerchantContractAggregate
 
         Task<List<int>> GetContractIdsHasEndorsement(List<int> contractIds);
 
-        Task<List<NoInstallmentContract>> GetNoInstallmentContracts(CancellationToken cancellationToken);
+        Task<List<ContractGroup>> GetAllGroupContractAsync(CancellationToken cancellationToken);
+
+        Task<List<ContractGroup>> GetCurrentGroupContractsAsync(CancellationToken cancellationToken);
     }
 }

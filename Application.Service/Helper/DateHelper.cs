@@ -1,7 +1,7 @@
-﻿using System;
-using Domain.Core.Enums;
-using System.Globalization;
+﻿using Domain.Core.Enums;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Application.Service.Helper;
 
@@ -79,7 +79,7 @@ public static class DateHelper
 
             var installmentPersianDate = pc.AddMonths(new DateTime(year, month, day, pc), 1);
 
-            string installmentPersianDateStr = GetInstallmentPersianDate(installmentPersianDate, persianDayOfMonth);
+            string installmentPersianDateStr = GetRegulatedDateString(installmentPersianDate, persianDayOfMonth);
 
             installmentDate = ConvertPersianToGregorian(installmentPersianDateStr);
 
@@ -142,9 +142,9 @@ public static class DateHelper
 
                     installmentDate = pc.AddMonths(new DateTime(year, month, day, pc), 1);
 
-                    var installmentPersianDateStr = GetInstallmentPersianDate(installmentDate, billingPeriod);
+                    var regulatedDateString = GetRegulatedDateString(installmentDate, billingPeriod);
 
-                    installmentDate = ConvertPersianToGregorian(installmentPersianDateStr);
+                    installmentDate = ConvertPersianToGregorian(regulatedDateString);
 
                     break;
 
@@ -184,29 +184,16 @@ public static class DateHelper
         return installmentPersianDate;
     }
 
-    public static string GetInstallmentPersianDate(DateTime date, int persianDayOfMonth)
+    public static string GetRegulatedDateString(DateTime date, int periodOfMonth)
     {
-        PersianCalendar pc = new PersianCalendar();
-
-        int year = pc.GetYear(date);
-        int month = pc.GetMonth(date);
-
-        var installmentDayOfMonth = GetInstallmentDayOfMonth(year, month, persianDayOfMonth);
-
-        return $"{year}/{month:00}/{installmentDayOfMonth:00}";
-    }
-
-    public static string GetInstallmentPersianDate(DateTime date)
-    {
-        PersianCalendar pc = new PersianCalendar();
+        var pc = new PersianCalendar();
 
         var year = pc.GetYear(date);
         var month = pc.GetMonth(date);
-        var day = pc.GetDayOfMonth(date);
 
-        var installmentPersianDate = $"{year}/{month:00}/{day:00}";
+        periodOfMonth = RegulateBillingPeriod(year, month, periodOfMonth);
 
-        return installmentPersianDate;
+        return $"{year}/{month:00}/{periodOfMonth:00}";
     }
 
     public static int GetInstallmentDayOfMonth(int year, int month, int persianDayOfMonth)
@@ -227,7 +214,25 @@ public static class DateHelper
         return persianDayOfMonth;
     }
 
-    public static DateTime ConvertPersianToGregorian(string? persianDate)
+    public static int RegulateBillingPeriod(int year, int month, int billingPeriod)
+    {
+        PersianCalendar pc = new();
+
+        var daysInMonth = pc.GetDaysInMonth(year, month);
+
+        if (daysInMonth == 29 && (billingPeriod == 30 || billingPeriod == 31))
+        {
+            billingPeriod = 29;
+        }
+        else if (daysInMonth == 30 && billingPeriod == 31)
+        {
+            billingPeriod = 30;
+        }
+
+        return billingPeriod;
+    }
+
+    private static DateTime ConvertPersianToGregorian(string? persianDate)
     {
         if (string.IsNullOrEmpty(persianDate))
             throw new Exception("Invalid persianDate");
@@ -241,23 +246,5 @@ public static class DateHelper
         int day = Convert.ToInt32(persianDateParts[2]);
 
         return pc.ToDateTime(year, month, day, 0, 0, 0, 0);
-    }
-
-    public static DateTime GetEndDateOfMonthlyLoanBilling(DateTime gregorianDate)
-    {
-        var persianCalendar = new PersianCalendar();
-
-        var newDate = persianCalendar.AddMonths(gregorianDate, 1).AddDays(-1);
-
-        return newDate;
-    }
-
-    public static DateTime GetEndDateOfWeeklyLoanBilling(DateTime gregorianDate)
-    {
-        var persianCalendar = new PersianCalendar();
-
-        var newDate = persianCalendar.AddWeeks(gregorianDate, 1).AddDays(-1);
-
-        return newDate;
     }
 }

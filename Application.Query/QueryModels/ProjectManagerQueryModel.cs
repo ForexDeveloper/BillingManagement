@@ -1,4 +1,4 @@
-﻿namespace Application.Query.ViewModels;
+﻿namespace Application.Query.QueryModels;
 
 public class ProjectManagerQueryModel
 {

@@ -7,7 +7,7 @@ using Service.Rest.V1.RequestModels.IpgSettings;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 
-namespace Service.Rest.V1.Controllers.AdminPanel
+namespace Service.Rest.V1.Controllers.PlatformPanel
 {
     [ApiVersion("1.0")]
     [Route("api/platform-panel/tenant-ipg-settings")]

@@ -145,11 +145,11 @@ namespace Application.Command.TenantPlatformContractCommands
                 contract.SetTieredCommissions(tieredCommissions);
             }
 
-            await _tenantPlatformContractRepository.AddAsync(contract);
             using (var transaction = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
                 try
                 {
+                    await _tenantPlatformContractRepository.AddAsync(contract);
                     await _unitOfWork.SaveChangesAsync();
                     await _tenantPlatformContractService.PublishTenantPlatformContractAddedOrUpdatedEvent(contract, request.Providers.Select(x => x.ProviderId).ToList());
                     await _unitOfWork.SaveChangesAsync(cancellationToken);

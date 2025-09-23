@@ -1,12 +1,12 @@
 ﻿using System;
 using Domain.Base;
 using Domain.Core.Helper;
+using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.B2bBillingAggregate;
 
-namespace Domain.Core.Entities.B2bBillingPaymentAggregate;
+namespace Domain.Core.Entities.BillingPaymentAggregate;
 
-public abstract class B2bBillingPayment : BaseEntity<long>
+public abstract class BillingPayment : BaseEntity<long>
 {
     public long BillingId { get; protected set; }
 
@@ -16,9 +16,9 @@ public abstract class B2bBillingPayment : BaseEntity<long>
 
     public string CheckSum { get; protected set; }
 
-    public B2bBilling Billing { get; protected set; }
+    public Billing Billing { get; protected set; }
 
-    protected B2bBillingPayment()
+    protected BillingPayment()
     {
 
     }

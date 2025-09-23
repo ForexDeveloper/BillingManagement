@@ -1,6 +1,7 @@
 ﻿using Domain.Core.Entities.TenantPlatformContractAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories
 {

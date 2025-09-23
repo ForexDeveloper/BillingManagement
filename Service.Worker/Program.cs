@@ -14,6 +14,7 @@ using Shared.Logging.Serilog;
 using Shared.Logging.Serilog.Configurations;
 using Shared.Logging.Serilog.Utilities;
 using System;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 try
 {

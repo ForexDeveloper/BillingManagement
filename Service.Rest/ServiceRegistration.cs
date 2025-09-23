@@ -11,11 +11,14 @@ using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
 using Domain.Core.Entities.GuarantorAggregate;
 using Domain.Core.Entities.MerchantAggregate;
+using Domain.Core.Entities.MerchantBillingAggregate;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.OrganizationAggregate;
 using Domain.Core.Entities.Providers;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
+using Domain.Core.Entities.WalletContractAggregate;
 using Domain.Core.UnitOfWorkContracts;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
@@ -28,8 +31,6 @@ using Shared.MinIO;
 using Shared.MinIO.Contracts;
 using Shared.Redis;
 using System.Reflection;
-using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Entities.MerchantInstallmentAggregate;
 
 namespace Service.Rest
 {
@@ -65,6 +66,9 @@ namespace Service.Rest
             services.AddScoped<IMerchantBillingRepository, MerchantBillingRepository>();
             services.AddScoped<IMerchantInstallmentRepository, MerchantInstallmentRepository>();
             services.AddScoped<IFinancialDocumentRepository, FinancialDocumentRepository>();
+            services.AddScoped<IWalletContractRepository, WalletContractRepository>();
+
+
         }
 
         internal static void UploadFileConfigurationServices(this IServiceCollection services, IConfiguration configuration)
@@ -126,8 +130,10 @@ namespace Service.Rest
         {
             services.AddScoped<ITenantMerchantContractService, TenantMerchantContractService>();
             services.AddScoped<IAttachmentService, AttachmentService>();
-            services.AddScoped<IMerchantBillingService, MerchantBillingService>();            
+            services.AddScoped<IMerchantBillingService, MerchantBillingService>();
             services.AddScoped<ITenantPlatformContractService, TenantPlatformContractService>();
+            services.AddScoped<IWalletContractService, WalletContractService>();
+            services.AddScoped<IMerchantBillingService, MerchantBillingService>();
         }
 
         internal static void RegisterPublicAppConfiguration(this IServiceCollection services, IConfiguration configuration)

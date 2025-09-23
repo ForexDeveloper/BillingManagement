@@ -3,6 +3,7 @@ using Domain.Core.Enums;
 using FluentValidation;
 using System;
 using System.Linq;
+using Domain.Core.Helper;
 
 namespace Application.Command.TenantPlatformContractCommands.Validators;
 

@@ -1,5 +1,7 @@
 ﻿using System;
 
+namespace Application.Service.Helper;
+
 public class InstallmentCalculator
 {
     public static decimal CalculatePMT(decimal creditAmount, decimal annualInterestRate, int numberOfInstallments)

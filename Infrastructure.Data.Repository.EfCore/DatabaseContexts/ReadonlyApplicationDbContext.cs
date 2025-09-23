@@ -1,8 +1,12 @@
-﻿using Domain.Core.Entities.BusinessEntity;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
 using Domain.Core.Entities.GuarantorAggregate;
+using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -12,16 +16,13 @@ using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
 using Domain.Core.Entities.WalletContractAggregate;
-using GeneticsBank.Entities.Models.EntityConfigurations;
 using Infrastructure.Data.Repository.EfCore.EntityConfigurations;
 using Infrastructure.Data.Repository.EfCore.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Shared.EventBus.Entities;
 using Shared.MinIO.Entities;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Infrastructure.Data.Repository.EfCore
+namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
 {
     public class ReadonlyApplicationDbContext : DbContext
     {
@@ -50,7 +51,8 @@ namespace Infrastructure.Data.Repository.EfCore
         public DbSet<FinancialDocument> FinancialDocuments { get; set; }
         public DbSet<MerchantBilling> MerchantBillings { get; set; }
         public DbSet<MerchantInstallment> MerchantInstallments { get; set; }
-
+        public DbSet<Billing> Billings { get; set; }
+        public DbSet<Installment> Installments { get; set; }
         public override int SaveChanges()
         {
             throw new ReadonlyDbContextException();
@@ -89,6 +91,8 @@ namespace Infrastructure.Data.Repository.EfCore
 
             modelBuilder.ApplyConfiguration(new FinancialDocumentConfiguration());
 
+            modelBuilder.ApplyConfiguration(new BillingConfiguration());
+            modelBuilder.ApplyConfiguration(new InstallmentConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantBranchConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantBillingConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantInstallmentConfiguration());

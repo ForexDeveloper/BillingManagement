@@ -15,7 +15,7 @@
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="8.0.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
-		<PackageReference Include="Shared.Logging.Serilog" Version="250831.519.0" />
+		<PackageReference Include="Shared.Logging.Serilog" Version="250922.838.7" />
 
 	</ItemGroup>
 

@@ -1,9 +1,11 @@
-﻿using Domain.Core.Entities;
+﻿using Application.Service.Contracts;
+using Domain.Core.Entities;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate.Exceptions;
 using Domain.Core.UnitOfWorkContracts;
 using MediatR;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,13 +28,15 @@ namespace Application.Command.TenantPlatformContractCommands
     {
         private readonly IApplicationDbContextUnitOfWork _unitOfWork;
         private readonly ITenantPlatformContractRepository _tenantPlatformContractRepository;
-
+        private readonly ITenantPlatformContractService _tenantPlatformContractService;
 
         public UpdateTenantPlatformContractStatusCommandHandler(
-            IApplicationDbContextUnitOfWork unitOfWork, ITenantPlatformContractRepository tenantPlatformContractRepository)
+            IApplicationDbContextUnitOfWork unitOfWork, ITenantPlatformContractRepository tenantPlatformContractRepository,
+            ITenantPlatformContractService tenantPlatformContractService)
         {
             _unitOfWork = unitOfWork;
             _tenantPlatformContractRepository = tenantPlatformContractRepository;
+            _tenantPlatformContractService = tenantPlatformContractService;
         }
 
         public async Task<int> Handle(UpdateTenantPlatformContractStatusCommand request, CancellationToken cancellationToken)
@@ -79,7 +83,7 @@ namespace Application.Command.TenantPlatformContractCommands
             contract.SetEditDateTime(DateTime.Now);
 
             _tenantPlatformContractRepository.Update(contract);
-
+            await _tenantPlatformContractService.PublishTenantPlatformContractAddedOrUpdatedEvent(contract, contract.Providers.Select(x => x.ProviderId).ToList());
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return contract.Id;

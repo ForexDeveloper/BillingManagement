@@ -1,16 +1,17 @@
 ﻿using System;
+using System.Linq;
 using Domain.Base;
 using Domain.Core.Enums;
 using System.Collections.Generic;
+using Domain.Core.Entities.BillingPaymentAggregate;
 using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.B2bInstallmentAggregate;
-using Domain.Core.Entities.B2bBillingPaymentAggregate;
 
-namespace Domain.Core.Entities.B2bBillingAggregate;
+namespace Domain.Core.Entities.BillingAggregate;
 
-public abstract class B2bBilling : BaseEntity<long>
+public abstract class Billing : BaseEntity<long>
 {
     public int TenantId { get; protected set; }
 
@@ -26,6 +27,8 @@ public abstract class B2bBilling : BaseEntity<long>
 
     public BillingType Type { get; protected set; }
 
+    public TimeInterval PeriodType { get; protected set; }
+
     public decimal Amount { get; protected set; }
 
     public decimal PreviousDebitAmount { get; protected set; }
@@ -35,6 +38,8 @@ public abstract class B2bBilling : BaseEntity<long>
     public decimal PreviousPenaltyAmount { get; protected set; }
 
     public int GracePeriod { get; protected set; }
+
+    public IEnumerable<int> ContractIds { get; protected set; }
 
     public DateTime StartDate { get; protected set; }
 
@@ -48,31 +53,37 @@ public abstract class B2bBilling : BaseEntity<long>
 
     public Tenant Tenant { get; protected set; }
 
-    public B2bBilling? Parent { get; protected set; }
+    public Billing? Parent { get; protected set; }
 
     public BusinessIdentity FromBusinessIdentity { get; protected set; }
 
     public BusinessIdentity ToBusinessIdentity { get; protected set; }
 
-    public List<B2bInstallment> Installments { get; protected set; } = [];
+    public List<Installment> Installments { get; protected set; } = [];
 
-    public List<B2bBillingPayment> Payments { get; protected set; } = [];
+    public List<BillingPayment> Payments { get; protected set; } = [];
 
-    protected B2bBilling()
+    public ICollection<Billing> Children { get; protected set; } = [];
+
+    protected decimal PayableAmount => Amount - PaidAmount;
+
+    protected decimal PaidAmount => Payments.Sum(p => p.Amount);
+
+    protected Billing()
     {
 
     }
 
-    protected B2bBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        decimal amount, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
-        DateTime startDate, DateTime endDate, int gracePeriod, B2bBilling? parent = null)
+    protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
+        TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
+        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
+        IEnumerable<int> contractIds, Billing? parent = null)
     {
         Type = type;
         Parent = parent;
-        Amount = amount;
         TenantId = tenantId;
+        PeriodType = periodType;
         GracePeriod = gracePeriod;
-        Status = BillingStatus.Issued;
         PreviousDebitAmount = previousDebitAmount;
         PreviousCreditAmount = previousCreditAmount;
         ToBusinessIdentityId = toBusinessIdentityId;
@@ -80,22 +91,21 @@ public abstract class B2bBilling : BaseEntity<long>
         FromBusinessIdentityId = fromBusinessIdentityId;
 
         GenerateCode();
-        SetAmount(amount);
+        SetContractIds(contractIds);
         SetDueDate(endDate, gracePeriod);
         SetBillingRanges(startDate, endDate);
     }
 
-    protected B2bBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        decimal amount, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
-        DateTime startDate, DateTime endDate, int gracePeriod, IEnumerable<B2bInstallment> installments,
-        B2bBilling? parent = null)
+    protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
+        TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
+        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
+        IEnumerable<int> contractIds, IEnumerable<Installment> installments, Billing? parent = null)
     {
         Type = type;
         Parent = parent;
-        Amount = amount;
         TenantId = tenantId;
+        PeriodType = periodType;
         GracePeriod = gracePeriod;
-        Status = BillingStatus.Issued;
         PreviousDebitAmount = previousDebitAmount;
         PreviousCreditAmount = previousCreditAmount;
         ToBusinessIdentityId = toBusinessIdentityId;
@@ -103,23 +113,33 @@ public abstract class B2bBilling : BaseEntity<long>
         FromBusinessIdentityId = fromBusinessIdentityId;
 
         GenerateCode();
-        SetAmount(amount);
+        SetContractIds(contractIds);
         AddInstallments(installments);
         SetDueDate(endDate, gracePeriod);
         SetBillingRanges(startDate, endDate);
     }
 
-
+    public void Settle()
+    {
+        UpdateStatus(BillingStatus.Settled);
+    }
 
     public void Overdue()
     {
-        ValidateCheckSum();
-        Status = BillingStatus.Overdue;
-        SetCheckSum();
-        SetEditDateTime(DateTime.Now);
+        UpdateStatus(BillingStatus.Overdue);
     }
 
-    public void UpdateStatus(BillingStatus status)
+    public decimal GetDebitAmount()
+    {
+        return PayableAmount;
+    }
+
+    public decimal CalculateDebitAmount()
+    {
+        return Amount - Payments.Sum(p => p.Amount);
+    }
+
+    private void UpdateStatus(BillingStatus status)
     {
         ValidateCheckSum();
         Status = status;
@@ -137,14 +157,14 @@ public abstract class B2bBilling : BaseEntity<long>
         Code = Guid.NewGuid().ToString();
     }
 
-    private void SetAmount(decimal amount)
+    private void SetContractIds(IEnumerable<int> contractIds)
     {
-        if (amount <= 0)
+        if (contractIds == null || contractIds.Any() == false)
         {
-            throw new ArgumentValidationException(nameof(amount), "مبلغ صورتحساب نمی تواند کوچک تر مساوی صفر باشد");
+            throw new ArgumentValidationException(nameof(contractIds), "لیست شناسه قرارداد های صورتحساب نمی تواند خالی باشد");
         }
 
-        Amount = amount;
+        ContractIds = contractIds;
     }
 
     private void SetBillingRanges(DateTime startDate, DateTime endDate)
@@ -158,9 +178,14 @@ public abstract class B2bBilling : BaseEntity<long>
         EndDate = endDate;
     }
 
-    private void AddInstallments(IEnumerable<B2bInstallment> installments)
+    private void AddInstallments(IEnumerable<Installment> installments)
     {
         Installments.AddRange(installments);
+    }
+
+    protected void SettleOrIssue()
+    {
+        Status = Amount == 0 ? BillingStatus.Settled : BillingStatus.Issued;
     }
 
     protected abstract void SetCheckSum();

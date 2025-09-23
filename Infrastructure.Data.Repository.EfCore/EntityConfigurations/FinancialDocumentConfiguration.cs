@@ -2,13 +2,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace GeneticsBank.Entities.Models.EntityConfigurations
+namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations
 {
     public class FinancialDocumentConfiguration : IEntityTypeConfiguration<FinancialDocument>
     {
         public void Configure(EntityTypeBuilder<FinancialDocument> builder)
         {
+            builder.HasKey(p => p.Id);
             builder.Property(p => p.Id).IsRequired();
+            builder.Property(p => p.Id).ValueGeneratedNever();
 
             builder.Property(p => p.Amount).HasColumnType("decimal(32, 10)").IsRequired();
 

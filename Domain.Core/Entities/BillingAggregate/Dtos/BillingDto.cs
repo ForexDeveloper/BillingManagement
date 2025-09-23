@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
+
+namespace Domain.Core.Entities.BillingAggregate.Dtos;
+
+public sealed record BillingDto
+{
+    public required DateTime StartOfPeriod { get; set; }
+
+    public required DateTime EndOfPeriod { get; set; }
+
+    public required IEnumerable<int> ContractIds { get; set; }
+
+    public required ContractGroup ContractGroup { get; set; }
+}

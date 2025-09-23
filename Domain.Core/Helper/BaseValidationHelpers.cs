@@ -1,8 +1,10 @@
-﻿using Domain.Core.Entities.Shared.Exceptions;
-using System;
+﻿using System;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Domain.Core.Entities.Shared.Exceptions;
+
+namespace Domain.Core.Helper;
 
 public static class BaseValidationHelpers
 {

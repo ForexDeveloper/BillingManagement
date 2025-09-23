@@ -2,13 +2,13 @@
 using Domain.Core.Enums;
 using Domain.Core.Helper;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.B2bInstallmentAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Domain.Core.Entities.MerchantInstallmentAggregate;
 
-public sealed class MerchantInstallment : B2bInstallment
+public sealed class MerchantInstallment : Installment
 {
     public int TenantMerchantContractId { get; private set; }
 

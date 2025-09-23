@@ -1,4 +1,5 @@
-﻿using Domain.Core.Entities;
+﻿using Application.Service.Contracts;
+using Domain.Core.Entities;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Exceptions;
 using Domain.Core.UnitOfWorkContracts;
@@ -27,13 +28,15 @@ namespace Application.Command.TenantMerchantContractCommands
     {
         private readonly IApplicationDbContextUnitOfWork _unitOfWork;
         private readonly ITenantMerchantContractRepository _tenantMerchantContractRepository;
-
+        private readonly ITenantMerchantContractService _tenantMerchantContractService;
 
         public UpdateTenantMerchantContractStatusCommandHandler(
-            IApplicationDbContextUnitOfWork unitOfWork, ITenantMerchantContractRepository tenantMerchantContractRepository)
+            IApplicationDbContextUnitOfWork unitOfWork, ITenantMerchantContractRepository tenantMerchantContractRepository,
+            ITenantMerchantContractService tenantMerchantContractService)
         {
             _unitOfWork = unitOfWork;
             _tenantMerchantContractRepository = tenantMerchantContractRepository;
+            _tenantMerchantContractService = tenantMerchantContractService;
         }
 
         public async Task<int> Handle(UpdateTenantMerchantContractStatusCommand request, CancellationToken cancellationToken)
@@ -80,8 +83,8 @@ namespace Application.Command.TenantMerchantContractCommands
 
             contract.SetEditDateTime(DateTime.Now);
 
+            _tenantMerchantContractService.PublishTenantMerchantContractAddedOrUpdatedEvent(contract);
             _tenantMerchantContractRepository.Update(contract);
-
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             return contract.Id;
