@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Application.Service.Helper;
 using Application.Service.Contracts;
+using Domain.Core.UnitOfWorkContracts;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.B2bBillingAggregate.Dtos;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using Domain.Core.UnitOfWorkContracts;
 
 namespace Application.Service.Services;
 
@@ -172,6 +172,8 @@ public sealed class MerchantBillingService(
             billingGroups.Add(billingDtos);
         }
 
+        var overdueBillings = OverdueThenFilterBillings(notAssignedBillings);
+
         var installmentGroup = await merchantInstallmentRepository.GetGroupContractInstallments(
             finalQuery.InstallmentQuery, cancellationToken);
 
@@ -179,19 +181,6 @@ public sealed class MerchantBillingService(
            finalQuery.FinancialDocumentQuery, cancellationToken);
 
         var billings = new List<MerchantBilling>();
-
-        var notPaidBillings = notAssignedBillings.Where(p =>
-            p.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid);
-
-        foreach (var notPaidBilling in notPaidBillings)
-        {
-            var payableAmount = notPaidBilling.CalculatePayableAmount();
-
-            if (payableAmount != 0)
-            {
-                notPaidBilling.Billing.Overdue();
-            }
-        }
 
         foreach (var billingGroup in billingGroups)
         {
@@ -203,8 +192,8 @@ public sealed class MerchantBillingService(
 
             var contractIds = billingGroup.First().ContractIds;
 
-            var notAssignedBilling = notAssignedBillings.FirstOrDefault(p => contractIds.Any(q => p.Billing.ContractIds.Contains(q))) ?? 
-                                     notAssignedBillings.FirstOrDefault(p => contractIds.Contains(p.ChildContractId));
+            var overdueBilling = overdueBillings.FirstOrDefault(p => contractIds.Any(q => p.Billing.ContractIds.Contains(q)))?.Billing ??
+                                 overdueBillings.FirstOrDefault(p => contractIds.Contains(p.FinalEndorsementContractId))?.Billing;
 
             foreach (var billingDto in billingGroup.OrderBy(p => p.EndOfPeriod))
             {
@@ -225,8 +214,6 @@ public sealed class MerchantBillingService(
 
                 var previousPeriodRefundedTransactions = financialDocuments.Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod).Where(p => p.Type == FinancialDocumentType.Refund).Sum(p => p.Amount);
 
-                MerchantBilling overdueBilling = null;
-
                 var alternativeBilling = alternativeBillings.LastOrDefault();
 
                 if (alternativeBilling != null)
@@ -237,19 +224,6 @@ public sealed class MerchantBillingService(
                     {
                         alternativeBilling.Overdue();
                         overdueBilling = alternativeBilling;
-                    }
-                }
-                else
-                {
-                    if (notAssignedBilling != null)
-                    {
-                        previousDebitAmount = notAssignedBilling.CalculatePayableAmount();
-
-                        if (previousDebitAmount != 0)
-                        {
-                            notAssignedBilling.Billing.Overdue();
-                            overdueBilling = notAssignedBilling.Billing;
-                        }
                     }
                 }
 
@@ -465,6 +439,46 @@ public sealed class MerchantBillingService(
         await merchantBillingRepository.AddRangeAsync(billings, cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private static List<NotSettledBilling> OverdueThenFilterBillings(List<NotSettledBilling> notAssignedBillings)
+    {
+        for (var i = notAssignedBillings.Count - 1; i >= 0; i--)
+        {
+            var notAssignedBilling = notAssignedBillings[i];
+
+            if (notAssignedBilling.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid)
+            {
+                var payableAmount = notAssignedBilling.CalculatePayableAmount();
+
+                if (payableAmount != 0)
+                {
+                    notAssignedBilling.Billing.Overdue();
+                }
+                else
+                {
+                    notAssignedBillings.RemoveAt(i);
+                }
+            }
+        }
+
+        return notAssignedBillings;
+
+
+        var notPaidBillings = notAssignedBillings.Where(p =>
+            p.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid);
+
+        foreach (var notPaidBilling in notPaidBillings)
+        {
+            var payableAmount = notPaidBilling.CalculatePayableAmount();
+
+            if (payableAmount != 0)
+            {
+                notPaidBilling.Billing.Overdue();
+            }
+        }
+
+        notAssignedBillings.RemoveAll(p => p.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid);
     }
 
     private async Task CheckPreviousBilling(FinalInstallmentQuery finalQuery, List<BillingDto> billingDtos, ContractGroup contract, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)

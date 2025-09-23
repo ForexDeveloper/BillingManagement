@@ -1,5 +1,4 @@
 ﻿using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using Domain.Core.Entities.TenantMerchantContractAggregate.ValueObjects;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,8 +24,6 @@ namespace Domain.Core.Entities.TenantMerchantContractAggregate
         Task<bool> HasEndorsement(int contractId, int tenantId);
 
         Task<List<int>> GetContractIdsHasEndorsement(List<int> contractIds);
-
-        Task<List<NoInstallmentContract>> GetNoInstallmentContracts(CancellationToken cancellationToken);
 
         Task<List<ContractGroup>> GetAllGroupContractAsync(CancellationToken cancellationToken);
 

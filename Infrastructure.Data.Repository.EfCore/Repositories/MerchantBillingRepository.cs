@@ -29,7 +29,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
 
         foreach (var billing in billings)
         {
-            billing.ChildContractId = GetChildContractId(billing);
+            billing.FinalEndorsementContractId = GetFinalContractId(billing);
         }
 
         return billings;
@@ -56,7 +56,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
         await applicationDbContext.MerchantBillings.AddRangeAsync(billings, cancellationToken);
     }
 
-    private static int GetChildContractId(NotSettledBilling notSettledBilling)
+    private static int GetFinalContractId(NotSettledBilling notSettledBilling)
     {
         var contract = notSettledBilling.Contract;
 
@@ -66,7 +66,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
             {
                 if (child.Children != null && child.Children.Any())
                 {
-                    return GetChildContractId(notSettledBilling);
+                    return GetFinalContractId(notSettledBilling);
                 }
 
                 return child.Id;
