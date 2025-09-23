@@ -1,7 +1,7 @@
 ﻿using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 
-namespace Domain.Core.Entities.B2bBillingAggregate.Dtos;
+namespace Domain.Core.Entities.BillingAggregate.Dtos;
 
 public sealed record NotSettledBilling
 {

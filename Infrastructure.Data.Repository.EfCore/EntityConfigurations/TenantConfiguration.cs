@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace GeneticsBank.Entities.Models.EntityConfigurations
+namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations
 {
     public class TenantConfiguration : IEntityTypeConfiguration<Tenant>
     {

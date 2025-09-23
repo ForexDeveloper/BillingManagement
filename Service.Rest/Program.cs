@@ -16,6 +16,7 @@ using Shared.Swagger;
 using Shared.Swagger.Extensions;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 
 try

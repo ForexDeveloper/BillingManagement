@@ -32,7 +32,7 @@ public sealed class GetBillingsQuery : BasePaginatedListRequest, IRequest<GetBil
     }
 }
 
-public sealed class GetBillingsQueryHandler(IB2bBillingReadOnlyRepository repository)
+public sealed class GetBillingsQueryHandler(IBillingReadOnlyRepository repository)
     : BaseQueryHandler, IRequestHandler<GetBillingsQuery, GetBillingsViewModel>
 {
     public async Task<GetBillingsViewModel> Handle(GetBillingsQuery query, CancellationToken cancellationToken)

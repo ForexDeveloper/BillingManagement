@@ -1,10 +1,10 @@
-﻿using Application.Query.Queries.Billings;
+﻿using System.Threading.Tasks;
+using Application.Query.Queries.Billings;
 using Application.Query.ViewModels.Billings;
-using System.Threading.Tasks;
 
 namespace Application.Query.ReadOnlyRepositoryContracts;
 
-public interface IB2bBillingReadOnlyRepository
+public interface IBillingReadOnlyRepository
 {
     Task<GetBillingsViewModel> GetBillingsAsync(GetBillingsQuery query);
 }

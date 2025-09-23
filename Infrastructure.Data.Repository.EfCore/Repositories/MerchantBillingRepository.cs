@@ -4,8 +4,8 @@ using System.Threading;
 using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Domain.Core.Entities.BillingAggregate.Dtos;
 using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.B2bBillingAggregate.Dtos;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 

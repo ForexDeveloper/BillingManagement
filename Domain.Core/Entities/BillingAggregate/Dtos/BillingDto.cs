@@ -1,8 +1,8 @@
-﻿using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
-namespace Domain.Core.Entities.B2bBillingAggregate.Dtos;
+namespace Domain.Core.Entities.BillingAggregate.Dtos;
 
 public sealed record BillingDto
 {

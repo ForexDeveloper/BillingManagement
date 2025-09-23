@@ -4,12 +4,12 @@ using Domain.Core.Enums;
 using Domain.Core.Helper;
 using System.Collections.Generic;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.B2bBillingAggregate;
-using Domain.Core.Entities.B2bInstallmentAggregate;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.InstallmentAggregate;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 
-public sealed class MerchantBilling : B2bBilling
+public sealed class MerchantBilling : Billing
 {
     public decimal Additions { get; private set; }
 
@@ -37,7 +37,7 @@ public sealed class MerchantBilling : B2bBilling
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
         IEnumerable<int> contractIds, decimal currentPeriodFinalCommission, decimal refundedTransactionsCommission,
         decimal previousPeriodRefundedTransactions, decimal currentPeriodPurchaseTransactions,
-        B2bBilling? parent = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType,
+        Billing? parent = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType,
         previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds,
         parent)
     {
@@ -57,7 +57,7 @@ public sealed class MerchantBilling : B2bBilling
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
         IEnumerable<int> contractIds, decimal currentPeriodFinalCommission, decimal refundedTransactionsCommission,
         decimal previousPeriodRefundedTransactions, decimal currentPeriodPurchaseTransactions,
-        IEnumerable<B2bInstallment>? installments = null, B2bBilling? parent = null) : base(tenantId,
+        IEnumerable<Installment>? installments = null, Billing? parent = null) : base(tenantId,
         fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount, previousCreditAmount,
         previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds, installments, parent)
     {

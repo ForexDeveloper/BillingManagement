@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Domain.Core.Entities.B2bBillingAggregate.Dtos;
+using Domain.Core.Entities.BillingAggregate.Dtos;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 

@@ -1,10 +1,11 @@
-﻿using Domain.Core.Entities.B2bBillingAggregate;
-using Domain.Core.Entities.B2bInstallmentAggregate;
+﻿using System.Linq;
+using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
 using Domain.Core.Entities.GuarantorAggregate;
+using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -14,13 +15,11 @@ using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
 using Domain.Core.Entities.WalletContractAggregate;
-using GeneticsBank.Entities.Models.EntityConfigurations;
 using Infrastructure.Data.Repository.EfCore.EntityConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Shared.EventBus.Entities;
-using System.Linq;
 
-namespace Infrastructure.Data.Repository.EfCore
+namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
 {
     public class ApplicationDbContext : DbContext
     {
@@ -46,8 +45,8 @@ namespace Infrastructure.Data.Repository.EfCore
         public DbSet<Provider> Providers { get; set; }
         public DbSet<TenantIpgSetting> TenantIpgSettings { get; set; }
         public DbSet<FinancialDocument> FinancialDocuments { get; set; }
-        public DbSet<B2bBilling> B2bBillings { get; set; }
-        public DbSet<B2bInstallment> B2bInstallments { get; set; }
+        public DbSet<Billing> Billings { get; set; }
+        public DbSet<Installment> Installments { get; set; }
         public DbSet<MerchantBilling> MerchantBillings { get; set; }
         public DbSet<MerchantInstallment> MerchantInstallments { get; set; }
 
@@ -85,11 +84,11 @@ namespace Infrastructure.Data.Repository.EfCore
             modelBuilder.ApplyConfiguration(new FinancialDocumentConfiguration());
 
             modelBuilder.ApplyConfiguration(new MerchantBranchConfiguration());
-            modelBuilder.ApplyConfiguration(new B2bBillingConfiguration());
-            modelBuilder.ApplyConfiguration(new B2bInstallmentConfiguration());
+            modelBuilder.ApplyConfiguration(new BillingConfiguration());
+            modelBuilder.ApplyConfiguration(new InstallmentConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantBillingConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantInstallmentConfiguration());
-            modelBuilder.ApplyConfiguration(new B2bBillingPaymentConfiguration());
+            modelBuilder.ApplyConfiguration(new BillingPaymentConfiguration());
 
 
         }

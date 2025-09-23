@@ -1,5 +1,4 @@
 ﻿using Domain.Base;
-using Domain.Core.Entities.B2bInstallmentAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.Shared;
@@ -8,6 +7,8 @@ using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Enums;
 using System;
 using System.Collections.Generic;
+using Domain.Core.Entities.InstallmentAggregate;
+using Domain.Core.Helper;
 
 namespace Domain.Core.Entities.TenantMerchantContractAggregate
 {
@@ -48,7 +49,7 @@ namespace Domain.Core.Entities.TenantMerchantContractAggregate
         public int? ParentId { get; private set; }
         public TenantMerchantContract? Parent { get; private set; }
         public ICollection<TenantMerchantContract>? Children { get; private set; }
-        public ICollection<B2bInstallment> Installments { get; private set; }
+        public ICollection<Installment> Installments { get; private set; }
         public ICollection<FinancialDocument> FinancialDocuments { get; private set; }
 
         private TenantMerchantContract()

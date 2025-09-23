@@ -1,18 +1,20 @@
-﻿using Application.Query.Queries.Billings;
-using Application.Query.ReadOnlyRepositoryContracts;
-using Application.Query.ViewModels.Billings;
-using Microsoft.EntityFrameworkCore;
-using Shared.Utilities.Extensions;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
+using Shared.Utilities.Extensions;
+using Microsoft.EntityFrameworkCore;
+using Application.Query.Queries.Billings;
+using Application.Query.ViewModels.Billings;
+using Application.Query.ReadOnlyRepositoryContracts;
+
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
 
-public sealed class B2bBillingReadOnlyRepository(ReadonlyApplicationDbContext dbContext) : IB2bBillingReadOnlyRepository
+public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbContext) : IBillingReadOnlyRepository
 {
     public async Task<GetBillingsViewModel> GetBillingsAsync(GetBillingsQuery query)
     {
-        var billingQuery = dbContext.B2bBillings.Where(p => p.FromBusinessIdentityId == query.TenantId);
+        var billingQuery = dbContext.Billings.Where(p => p.FromBusinessIdentityId == query.TenantId);
 
         if (query.Type.HasValue)
         {

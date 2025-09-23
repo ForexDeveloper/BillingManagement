@@ -3,15 +3,15 @@ using System.Linq;
 using Domain.Base;
 using Domain.Core.Enums;
 using System.Collections.Generic;
+using Domain.Core.Entities.BillingPaymentAggregate;
 using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.B2bInstallmentAggregate;
-using Domain.Core.Entities.B2bBillingPaymentAggregate;
 
-namespace Domain.Core.Entities.B2bBillingAggregate;
+namespace Domain.Core.Entities.BillingAggregate;
 
-public abstract class B2bBilling : BaseEntity<long>
+public abstract class Billing : BaseEntity<long>
 {
     public int TenantId { get; protected set; }
 
@@ -53,31 +53,31 @@ public abstract class B2bBilling : BaseEntity<long>
 
     public Tenant Tenant { get; protected set; }
 
-    public B2bBilling? Parent { get; protected set; }
+    public Billing? Parent { get; protected set; }
 
     public BusinessIdentity FromBusinessIdentity { get; protected set; }
 
     public BusinessIdentity ToBusinessIdentity { get; protected set; }
 
-    public List<B2bInstallment> Installments { get; protected set; } = [];
+    public List<Installment> Installments { get; protected set; } = [];
 
-    public List<B2bBillingPayment> Payments { get; protected set; } = [];
+    public List<BillingPayment> Payments { get; protected set; } = [];
 
-    public ICollection<B2bBilling> Children { get; protected set; } = [];
+    public ICollection<Billing> Children { get; protected set; } = [];
 
     protected decimal PayableAmount => Amount - PaidAmount;
 
     protected decimal PaidAmount => Payments.Sum(p => p.Amount);
 
-    protected B2bBilling()
+    protected Billing()
     {
 
     }
 
-    protected B2bBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
+    protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, B2bBilling? parent = null)
+        IEnumerable<int> contractIds, Billing? parent = null)
     {
         Type = type;
         Parent = parent;
@@ -96,10 +96,10 @@ public abstract class B2bBilling : BaseEntity<long>
         SetBillingRanges(startDate, endDate);
     }
 
-    protected B2bBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
+    protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, IEnumerable<B2bInstallment> installments, B2bBilling? parent = null)
+        IEnumerable<int> contractIds, IEnumerable<Installment> installments, Billing? parent = null)
     {
         Type = type;
         Parent = parent;
@@ -178,7 +178,7 @@ public abstract class B2bBilling : BaseEntity<long>
         EndDate = endDate;
     }
 
-    private void AddInstallments(IEnumerable<B2bInstallment> installments)
+    private void AddInstallments(IEnumerable<Installment> installments)
     {
         Installments.AddRange(installments);
     }

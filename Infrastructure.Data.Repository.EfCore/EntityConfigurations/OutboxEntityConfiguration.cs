@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Shared.EventBus.Entities;
 
-namespace GeneticsBank.Entities.Models.EntityConfigurations
+namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations
 {
     public class OutboxEntityConfiguration : IEntityTypeConfiguration<OutboxEntity>
     {

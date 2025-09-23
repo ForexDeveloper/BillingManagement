@@ -1,13 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.B2bInstallmentAggregate;
+using Domain.Core.Entities.InstallmentAggregate;
 using Infrastructure.Data.Repository.EfCore.Constants;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations;
 
-public sealed class B2bInstallmentConfiguration : IEntityTypeConfiguration<B2bInstallment>
+public sealed class InstallmentConfiguration : IEntityTypeConfiguration<Installment>
 {
-    public void Configure(EntityTypeBuilder<B2bInstallment> builder)
+    public void Configure(EntityTypeBuilder<Installment> builder)
     {
         builder.HasKey(p => p.Id);
 
