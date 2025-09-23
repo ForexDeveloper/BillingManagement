@@ -6,7 +6,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetAdditionsQuery(long Id, int TenantId) : IRequest<GetAdditionsViewModel>
+public sealed record GetAdditionsQuery(int TenantId, long Id) : IRequest<GetAdditionsViewModel>
 {
     public long Id { get; set; } = Id;
 

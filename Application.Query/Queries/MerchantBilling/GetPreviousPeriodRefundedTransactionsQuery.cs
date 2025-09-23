@@ -6,7 +6,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetPreviousPeriodRefundedTransactionsQuery(long Id, int TenantId) : IRequest<GetPreviousPeriodRefundedTransactionsViewModel>
+public sealed record GetPreviousPeriodRefundedTransactionsQuery(int TenantId, long Id) : IRequest<GetPreviousPeriodRefundedTransactionsViewModel>
 {
     public long Id { get; set; } = Id;
 

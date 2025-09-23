@@ -6,7 +6,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetDeductionsQuery(long Id, int TenantId) : IRequest<GetDeductionsViewModel>
+public sealed record GetDeductionsQuery(int TenantId, long Id) : IRequest<GetDeductionsViewModel>
 {
     public long Id { get; set; } = Id;
 

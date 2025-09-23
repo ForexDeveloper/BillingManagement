@@ -6,7 +6,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetMerchantBillingQuery(long Id, int TenantId) : IRequest<GetMerchantBillingViewModel>
+public sealed record GetMerchantBillingQuery(int TenantId, long Id) : IRequest<GetMerchantBillingViewModel>
 {
     public long Id { get; set; } = Id;
 
@@ -19,6 +19,6 @@ public sealed class GetMerchantBillingQueryHandler(IMerchantBillingReadOnlyRepos
     public async Task<GetMerchantBillingViewModel> Handle(GetMerchantBillingQuery query,
         CancellationToken cancellationToken)
     {
-       return await repository.GetBillingAsync(query);
+        return await repository.GetBillingAsync(query);
     }
 }

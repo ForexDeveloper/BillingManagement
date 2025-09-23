@@ -7,7 +7,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetCurrentPeriodFinalCommissionQuery(long Id, int TenantId) : IRequest<GetCurrentPeriodFinalCommissionViewModel>
+public sealed record GetCurrentPeriodFinalCommissionQuery(int TenantId, long Id) : IRequest<GetCurrentPeriodFinalCommissionViewModel>
 {
     public long Id { get; set; } = Id;
 

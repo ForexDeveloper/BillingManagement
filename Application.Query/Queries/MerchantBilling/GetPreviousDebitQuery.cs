@@ -6,7 +6,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetPreviousDebitQuery(long Id, int TenantId) : IRequest<GetPreviousDebitViewModel>
+public sealed record GetPreviousDebitQuery(int TenantId, long Id) : IRequest<GetPreviousDebitViewModel>
 {
     public long Id { get; set; } = Id;
 

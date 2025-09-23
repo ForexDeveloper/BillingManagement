@@ -6,7 +6,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetRefundedPurchasesCommissionQuery(long Id, int TenantId) : IRequest<GetRefundedTransactionsCommissionViewModel>
+public sealed record GetRefundedPurchasesCommissionQuery(int TenantId, long Id) : IRequest<GetRefundedTransactionsCommissionViewModel>
 {
     public long Id { get; set; } = Id;
 
