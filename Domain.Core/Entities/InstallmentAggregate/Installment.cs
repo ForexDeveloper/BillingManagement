@@ -23,13 +23,13 @@ public abstract class Installment : BaseEntity<long>
 
     public decimal Amount { get; protected set; }
 
-    public decimal Commission { get; protected set; }
+    public decimal? Commission { get; protected set; }
 
     public int Number { get; protected set; }
 
     public DateTime DueDate { get; protected set; }
 
-    public B2bInstallmentType Type { get; protected set; }
+    public InstallmentType Type { get; protected set; }
 
     public InstallmentStatus Status { get; protected set; }
 
@@ -54,7 +54,7 @@ public abstract class Installment : BaseEntity<long>
 
     protected Installment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
         int toBusinessIdentityId, decimal amount, int number,
-        DateTime dueDate, B2bInstallmentType type)
+        DateTime dueDate, InstallmentType type)
     {
         Type = type;
         Amount = amount;
@@ -70,7 +70,7 @@ public abstract class Installment : BaseEntity<long>
 
     protected Installment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
         int toBusinessIdentityId, decimal amount, int number,
-        DateTime dueDate, B2bInstallmentType type)
+        DateTime dueDate, InstallmentType type)
     {
         Type = type;
         Number = number;
@@ -91,6 +91,16 @@ public abstract class Installment : BaseEntity<long>
         }
 
         Amount = amount;
+    }
+
+    public void SetCommission(decimal? commission)
+    {
+        if (commission <= 0)
+        {
+            throw new ArgumentValidationException(nameof(commission), "مبلغ کمیسیون قسط نمی تواند کوچک تر مساوی صفر باشد");
+        }
+
+        Commission = commission;
     }
 
     protected abstract void SetCheckSum();

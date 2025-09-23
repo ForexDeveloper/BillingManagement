@@ -7,8 +7,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Application.Service.Helper;
 using Application.Service.Contracts;
-using Domain.Core.Entities.BillingAggregate.Dtos;
 using Domain.Core.UnitOfWorkContracts;
+using Domain.Core.Entities.BillingAggregate.Dtos;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -24,7 +24,7 @@ public sealed class MerchantBillingService(
     IMerchantInstallmentRepository merchantInstallmentRepository,
     ITenantMerchantContractRepository tenantMerchantContractRepository) : IMerchantBillingService
 {
-    public async Task CreateMerchantBilling(CancellationToken cancellationToken)
+    public async Task IssueOrOverdueBilling(CancellationToken cancellationToken)
     {
         var today = DateTime.Today;
 
@@ -256,7 +256,7 @@ public sealed class MerchantBillingService(
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task CreateMerchantBillingV2(CancellationToken cancellationToken)
+    public async Task AddOrUpdateBilling(CancellationToken cancellationToken)
     {
         var today = DateTime.Today;
 

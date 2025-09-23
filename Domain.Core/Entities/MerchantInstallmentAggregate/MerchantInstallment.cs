@@ -2,8 +2,8 @@
 using Domain.Core.Enums;
 using Domain.Core.Helper;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.InstallmentAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -21,7 +21,7 @@ public sealed class MerchantInstallment : Installment
 
     public MerchantInstallment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
         int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, int number, DateTime dueDate,
-        B2bInstallmentType type) : base(financialDocument, tenantId,
+        InstallmentType type) : base(financialDocument, tenantId,
         fromBusinessIdentityId, toBusinessIdentityId, amount, number, dueDate, type)
     {
         TenantMerchantContractId = tenantMerchantContractId;
@@ -30,7 +30,7 @@ public sealed class MerchantInstallment : Installment
 
     public MerchantInstallment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
         int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, int number, DateTime dueDate,
-        B2bInstallmentType type) : base(tenantId, financialDocumentId,
+        InstallmentType type) : base(tenantId, financialDocumentId,
         fromBusinessIdentityId, toBusinessIdentityId, amount, number, dueDate, type)
     {
         TenantMerchantContractId = tenantMerchantContractId;

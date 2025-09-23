@@ -385,7 +385,7 @@ public class AAAMerchantBillingController : ControllerBase
                 var installment = new MerchantInstallment(tenantId: 2, financialDocumentId: 1,
                     fromBusinessIdentityId: 2, toBusinessIdentityId: 3,
                     tenantMerchantContractId: (int)tenantMerchantContractId, amount: 31, number: 2, dueDate: installmentDate,
-                    type: B2bInstallmentType.Installment);
+                    type: InstallmentType.Installment);
 
                 installments.Add(installment);
             }
