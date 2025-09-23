@@ -13,7 +13,6 @@ namespace Domain.Core.Entities.TenantAggregate
         public bool IsActive { get; private set; }
 
         public List<TenantPlatformContract> TenantPlatformContracts { get; private set; }
-        //public List<WalletContract> WalletContracts { get; private set; }
 
         private TenantIpgSetting()
         {

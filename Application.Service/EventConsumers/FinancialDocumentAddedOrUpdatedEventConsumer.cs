@@ -1,4 +1,6 @@
 ﻿using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Enums;
 using Domain.Core.UnitOfWorkContracts;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -36,10 +38,12 @@ public class FinancialDocumentAddedOrUpdatedEventConsumer : IConsumer<FcmFinanci
             var financialDocument = await _financialDocumentRepository.GetByIdAsync(context.Message.Id);
             if (financialDocument == null)
             {
+                //purchase and refund
                 await CreateFinancialDocument(context);
                 return;
             }
 
+            //only reverse
             await UpdateFinancialDocument(context, financialDocument);
         }
         catch (Exception ex)
@@ -73,13 +77,21 @@ public class FinancialDocumentAddedOrUpdatedEventConsumer : IConsumer<FcmFinanci
 
     private async Task CreateFinancialDocument(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context)
     {
+        FinancialDocumentType type = FinancialDocumentType.Purchase;
+
+        //6 => refund
+        if (context.Message.Type == 6)
+        {
+            type = FinancialDocumentType.Refund;
+        }
+
         var financialDocument = new FinancialDocument(
                 context.Message.Id,
                 context.Message.FromBusinessIdentityId,
                 context.Message.ToBusinessIdentityId,
                 context.Message.TenantId,
                 context.Message.Amount,
-                context.Message.Type,
+                type,
                 context.Message.State,
                 context.Message.PaymentGatewayType,
                 context.Message.Description,
@@ -98,7 +110,26 @@ public class FinancialDocumentAddedOrUpdatedEventConsumer : IConsumer<FcmFinanci
 
     private async Task UpdateFinancialDocument(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context, FinancialDocument financialDocument)
     {
-        financialDocument.SetState(context.Message.State);
+        FinancialDocumentType type = FinancialDocumentType.Reverse;
+
+        //1 => purchase
+        if (context.Message.Type != 1)
+        {
+            ArgumentValidationException ex = new ArgumentValidationException(nameof(context.Message.Type), "نوع سند مالی برای بازگشت کامل وجه خرید معتبر نیست.");
+            _logger.LogError(new LogStruct
+            {
+                Message = ex.Message,
+                ServiceName = "FinancialDocumentAddedOrUpdatedEventConsumer_Consume",
+                InputParams = context.Message,
+                Results = "",
+                Exception = ex,
+                Tags = LogMessageTag.EventBus
+            });
+
+            throw ex;
+        }
+
+        financialDocument.SetState(FinancialDocumentState.Reverse);
 
         _financialDocumentRepository.Update(financialDocument);
         await _unitOfWork.SaveChangesAsync();

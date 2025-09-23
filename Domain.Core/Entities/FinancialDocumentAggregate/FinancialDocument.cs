@@ -47,7 +47,7 @@ public class FinancialDocument : BaseEntity<long>
     }
 
     public FinancialDocument(long id, int fromBusinessIdentityId, int toBusinessIdentityId, int tenantId, decimal amount,
-        byte type, byte state, byte? paymentGatewayType = null,
+        FinancialDocumentType type, byte state, byte? paymentGatewayType = null,
         string description = null, int? merchantBranchId = null, int? tenantMerchantContractId = null, int? tenantPlatformContractId = null,
         byte? refundReason = null, string refundDescription = null, byte? refundType = null, long? parentId = null)
     {
@@ -56,7 +56,7 @@ public class FinancialDocument : BaseEntity<long>
         ToBusinessIdentityId = toBusinessIdentityId;
         TenantId = tenantId;
         Amount = amount;
-        Type = (FinancialDocumentType)type;
+        Type = type;
         State = (FinancialDocumentState)state;
         PaymentGatewayType = (PaymentGatewayType)paymentGatewayType;
         Description = description;
@@ -80,9 +80,9 @@ public class FinancialDocument : BaseEntity<long>
         SetCheckSum();
     }
 
-    public void SetState(byte financialDocumentState)
+    public void SetState(FinancialDocumentState financialDocumentState)
     {
-        State = (FinancialDocumentState)financialDocumentState;
+        State = financialDocumentState;
         SetEditDateTime(DateTime.Now);
     }
 

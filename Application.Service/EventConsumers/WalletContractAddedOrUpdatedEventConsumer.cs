@@ -86,6 +86,8 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
                context.Message.StartDate,
                context.Message.EndDate,
                (WalletContractStatus)context.Message.Status,
+               context.Message.ParentId,
+               context.Message.RootParentId,
                context.Message.TenantIpgSettingId
            );
 

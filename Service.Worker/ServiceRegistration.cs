@@ -53,6 +53,16 @@ namespace Service.Worker
                 x.AddConsumer<TenantIpgSettingsAddedOrUpdatedEventConsumer>()
                     .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
 
+
+                x.AddConsumer<FinancialDocumentAddedOrUpdatedEventConsumer>()
+                   .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
+
+                x.AddConsumer<WalletContractAddedOrUpdatedEventConsumer>()
+                   .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
+
+                x.AddConsumer<WalletContractStatusChangedEventConsumer>()
+                   .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
+
                 x.AddConsumer<MerchantAddedOrUpdatedEventConsumer>()
                     .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
 
