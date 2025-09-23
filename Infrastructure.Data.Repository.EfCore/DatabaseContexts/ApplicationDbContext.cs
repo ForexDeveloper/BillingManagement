@@ -1,22 +1,24 @@
-﻿using Domain.Core.Entities.BusinessEntity;
+﻿using Domain.Core.Entities.B2bBillingAggregate;
+using Domain.Core.Entities.B2bInstallmentAggregate;
+using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
 using Domain.Core.Entities.GuarantorAggregate;
 using Domain.Core.Entities.MerchantAggregate;
+using Domain.Core.Entities.MerchantBillingAggregate;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.OrganizationAggregate;
 using Domain.Core.Entities.Providers;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
+using Domain.Core.Entities.WalletContractAggregate;
 using GeneticsBank.Entities.Models.EntityConfigurations;
 using Infrastructure.Data.Repository.EfCore.EntityConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Shared.EventBus.Entities;
 using System.Linq;
-using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Entities.MerchantInstallmentAggregate;
-using Domain.Core.Entities.WalletContractAggregate;
 
 namespace Infrastructure.Data.Repository.EfCore
 {
@@ -44,6 +46,8 @@ namespace Infrastructure.Data.Repository.EfCore
         public DbSet<Provider> Providers { get; set; }
         public DbSet<TenantIpgSetting> TenantIpgSettings { get; set; }
         public DbSet<FinancialDocument> FinancialDocuments { get; set; }
+        public DbSet<B2bBilling> B2bBillings { get; set; }
+        public DbSet<B2bInstallment> B2bInstallments { get; set; }
         public DbSet<MerchantBilling> MerchantBillings { get; set; }
         public DbSet<MerchantInstallment> MerchantInstallments { get; set; }
 
@@ -64,7 +68,7 @@ namespace Infrastructure.Data.Repository.EfCore
 
             modelBuilder.ApplyConfiguration(new TenantConfiguration());
             modelBuilder.ApplyConfiguration(new OutboxEntityConfiguration());
-            modelBuilder.ApplyConfiguration(new MerchantConfiguration());           
+            modelBuilder.ApplyConfiguration(new MerchantConfiguration());
             modelBuilder.ApplyConfiguration(new TenantMerchantContractConfiguration());
             modelBuilder.ApplyConfiguration(new AttachmentConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationConfiguration());
@@ -85,6 +89,9 @@ namespace Infrastructure.Data.Repository.EfCore
             modelBuilder.ApplyConfiguration(new B2bInstallmentConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantBillingConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantInstallmentConfiguration());
+            modelBuilder.ApplyConfiguration(new B2bBillingPaymentConfiguration());
+
+
         }
     }
 }

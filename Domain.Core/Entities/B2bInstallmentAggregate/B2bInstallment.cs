@@ -1,12 +1,11 @@
-﻿using Domain.Base;
-using Domain.Core.Entities.B2bBillingAggregate;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantAggregate;
+﻿using System;
+using Domain.Base;
 using Domain.Core.Enums;
-using Domain.Core.Helper;
-using System;
+using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.B2bBillingAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 
 namespace Domain.Core.Entities.B2bInstallmentAggregate;
 
@@ -23,6 +22,8 @@ public abstract class B2bInstallment : BaseEntity<long>
     public int ToBusinessIdentityId { get; protected set; }
 
     public decimal Amount { get; protected set; }
+
+    public decimal Commission { get; protected set; }
 
     public int Number { get; protected set; }
 

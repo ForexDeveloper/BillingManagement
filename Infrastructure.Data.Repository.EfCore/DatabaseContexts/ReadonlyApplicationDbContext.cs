@@ -1,4 +1,6 @@
-﻿using Domain.Core.Entities.BusinessEntity;
+﻿using Domain.Core.Entities.B2bBillingAggregate;
+using Domain.Core.Entities.B2bInstallmentAggregate;
+using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
@@ -50,7 +52,8 @@ namespace Infrastructure.Data.Repository.EfCore
         public DbSet<FinancialDocument> FinancialDocuments { get; set; }
         public DbSet<MerchantBilling> MerchantBillings { get; set; }
         public DbSet<MerchantInstallment> MerchantInstallments { get; set; }
-
+        public DbSet<B2bBilling> B2bBillings { get; set; }
+        public DbSet<B2bInstallment> B2bInstallments { get; set; }
         public override int SaveChanges()
         {
             throw new ReadonlyDbContextException();

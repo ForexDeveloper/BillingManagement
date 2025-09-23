@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations;
 
-public class B2bBillingConfiguration : IEntityTypeConfiguration<B2bBilling>
+public sealed class B2bBillingConfiguration : IEntityTypeConfiguration<B2bBilling>
 {
     public void Configure(EntityTypeBuilder<B2bBilling> builder)
     {
@@ -18,6 +18,7 @@ public class B2bBillingConfiguration : IEntityTypeConfiguration<B2bBilling>
         builder.Property(p => p.DueDate).IsRequired();
         builder.Property(p => p.TenantId).IsRequired();
         builder.Property(p => p.StartDate).IsRequired();
+        builder.Property(p => p.PeriodType).IsRequired();
         builder.Property(p => p.GracePeriod).IsRequired();
         builder.Property(p => p.ToBusinessIdentityId).IsRequired();
         builder.Property(p => p.FromBusinessIdentityId).IsRequired();

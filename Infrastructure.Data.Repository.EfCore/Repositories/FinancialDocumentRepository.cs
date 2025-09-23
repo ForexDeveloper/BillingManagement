@@ -1,8 +1,11 @@
 ﻿using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 using Domain.Core.Enums;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
@@ -77,4 +80,39 @@ public class FinancialDocumentRepository : IFinancialDocumentRepository
 
         return result;
     }
+
+    public IQueryable<FinancialDocument> CreateJobFinancialDocumentQuery(DateTime startOfPeriod, DateTime endOfPeriod, IEnumerable<int> contractIds)
+    {
+        return _applicationDbContext.FinancialDocuments
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value));
+    }
+
+    public async Task<bool> FindInContractPeriodAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
+    {
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<Dictionary<ContractIdentifier, List<FinancialDocument>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
+    {
+        return await query.Select(p => new
+        {
+            FinancialDocument = p,
+            p.TenantMerchantContract.TenantId,
+            p.TenantMerchantContract.MerchantId,
+            p.TenantMerchantContract.BillingPeriod,
+            p.TenantMerchantContract.BillingPeriodType,
+            p.TenantMerchantContract.DailyBillingOriginDate
+        })
+        .GroupBy(p => new ContractIdentifier()
+        {
+            TenantId = p.TenantId,
+            MerchantId = p.MerchantId,
+            BillingPeriod = p.BillingPeriod,
+            BillingPeriodType = p.BillingPeriodType,
+            BillingDailyOriginDate = p.DailyBillingOriginDate
+        })
+        .ToDictionaryAsync(p => p.Key, p => p.Select(q => q.FinancialDocument).ToList(), cancellationToken);
+    }
+
 }

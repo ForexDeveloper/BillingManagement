@@ -13,15 +13,19 @@ public sealed class MerchantBilling : B2bBilling
 {
     public decimal Additions { get; private set; }
 
+    public string? AdditionsDescription { get; private set; }
+
     public decimal Deductions { get; private set; }
 
-    public decimal RefundedPurchasesCommission { get; private set; }
+    public string? DeductionsDescription { get; private set; }
+
+    public decimal RefundedTransactionsCommission { get; private set; }
 
     public decimal CurrentPeriodFinalCommission { get; private set; }
 
     public decimal CurrentPeriodPurchaseTransactions { get; private set; }
 
-    public decimal PreviousPeriodRefundedPurchases { get; private set; }
+    public decimal PreviousPeriodRefundedTransactions { get; private set; }
 
     private MerchantBilling()
     {
@@ -29,46 +33,46 @@ public sealed class MerchantBilling : B2bBilling
     }
 
     public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        decimal amount, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
-        DateTime startDate, DateTime endDate, int gracePeriod, decimal refundedPurchasesCommission,
-        decimal currentPeriodFinalCommission, decimal previousPeriodRefundedPurchases,
-        decimal currentPeriodPurchaseTransactions, B2bBilling? parent = null) : base(tenantId, fromBusinessIdentityId,
-        toBusinessIdentityId, type, amount, previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate,
-        endDate, gracePeriod, parent)
-    {
-        Additions = 0;
-        Deductions = 0;
-        RefundedPurchasesCommission = refundedPurchasesCommission;
-        CurrentPeriodFinalCommission = currentPeriodFinalCommission;
-        PreviousPeriodRefundedPurchases = previousPeriodRefundedPurchases;
-        CurrentPeriodPurchaseTransactions = currentPeriodPurchaseTransactions;
-        SetCheckSum();
-    }
-
-    public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        decimal amount, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
-        DateTime startDate, DateTime endDate, int gracePeriod, decimal refundedPurchasesCommission,
-        decimal currentPeriodFinalCommission, decimal previousPeriodRefundedPurchases,
-        decimal currentPeriodPurchaseTransactions, IEnumerable<B2bInstallment>? installments = null,
-        B2bBilling? parent = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, amount,
-        previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, installments,
+        TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
+        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
+        IEnumerable<int> contractIds, decimal currentPeriodFinalCommission, decimal refundedTransactionsCommission,
+        decimal previousPeriodRefundedTransactions, decimal currentPeriodPurchaseTransactions,
+        B2bBilling? parent = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType,
+        previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds,
         parent)
     {
         Additions = 0;
         Deductions = 0;
-        RefundedPurchasesCommission = refundedPurchasesCommission;
         CurrentPeriodFinalCommission = currentPeriodFinalCommission;
-        PreviousPeriodRefundedPurchases = previousPeriodRefundedPurchases;
+        RefundedTransactionsCommission = refundedTransactionsCommission;
         CurrentPeriodPurchaseTransactions = currentPeriodPurchaseTransactions;
+        PreviousPeriodRefundedTransactions = previousPeriodRefundedTransactions;
+        CalculateAmount();
+        SettleOrIssue();
         SetCheckSum();
     }
 
-    public decimal CalculateDebitAmount()
+    public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
+        TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
+        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
+        IEnumerable<int> contractIds, decimal currentPeriodFinalCommission, decimal refundedTransactionsCommission,
+        decimal previousPeriodRefundedTransactions, decimal currentPeriodPurchaseTransactions,
+        IEnumerable<B2bInstallment>? installments = null, B2bBilling? parent = null) : base(tenantId,
+        fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount, previousCreditAmount,
+        previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds, installments, parent)
     {
-        return Amount + PreviousDebitAmount - Payments.Sum(p => p.Amount);
+        Additions = 0;
+        Deductions = 0;
+        CurrentPeriodFinalCommission = currentPeriodFinalCommission;
+        RefundedTransactionsCommission = refundedTransactionsCommission;
+        CurrentPeriodPurchaseTransactions = currentPeriodPurchaseTransactions;
+        PreviousPeriodRefundedTransactions = previousPeriodRefundedTransactions;
+        CalculateAmount();
+        SettleOrIssue();
+        SetCheckSum();
     }
 
-    public void SetAdditions(decimal additions)
+    public void SetAdditions(decimal additions, string? additionDescription)
     {
         if (additions < 0)
         {
@@ -76,16 +80,38 @@ public sealed class MerchantBilling : B2bBilling
         }
 
         Additions = additions;
+        AdditionsDescription = additionDescription;
+        CalculateAmount();
     }
 
-    public void SetDeductions(decimal deductions)
+    public void SetDeductions(decimal deductions, string? deductionDescription)
     {
         if (deductions < 0)
         {
             throw new ArgumentValidationException(nameof(deductions), "مبلغ کسورات نمی تواند از 0 کوچکتر باشد");
         }
 
+        Amount += Deductions;
+
+        if (Amount < deductions)
+        {
+            throw new ArgumentValidationException(nameof(deductions), "مبلغ کسورات نمی تواند از مبلغ کل صورتحساب بیشتر باشد");
+        }
+
+        DeductionsDescription = deductionDescription;
         Deductions = deductions;
+        CalculateAmount();
+    }
+
+    private void CalculateAmount()
+    {
+        var totalCredit = PreviousDebitAmount + CurrentPeriodPurchaseTransactions + RefundedTransactionsCommission + Additions;
+
+        var totalDebit = PreviousCreditAmount + CurrentPeriodFinalCommission + PreviousPeriodRefundedTransactions + Deductions;
+
+        Amount = totalCredit - totalDebit;
+
+        SetCheckSum();
     }
 
     protected override void SetCheckSum()

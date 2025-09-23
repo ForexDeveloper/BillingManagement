@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations;
 
-public class B2bBillingPaymentConfiguration : IEntityTypeConfiguration<B2bBillingPayment>
+public sealed class B2bBillingPaymentConfiguration : IEntityTypeConfiguration<B2bBillingPayment>
 {
     public void Configure(EntityTypeBuilder<B2bBillingPayment> builder)
     {

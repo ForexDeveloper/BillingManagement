@@ -1,11 +1,14 @@
-﻿using System;
+﻿using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
+using Domain.Core.Entities.TenantMerchantContractAggregate.ValueObjects;
+using Domain.Core.Enums;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate.ValueObjects;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories
 {
@@ -99,6 +102,102 @@ namespace Infrastructure.Data.Repository.EfCore.Repositories
                 })
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<ContractGroup>> GetAllGroupContractAsync(CancellationToken cancellationToken)
+        {
+            return await applicationDbContext.TenantMerchantContracts.GroupBy(p => new ContractIdentifier()
+            {
+                TenantId = p.TenantId,
+                MerchantId = p.MerchantId,
+                BillingPeriod = p.BillingPeriod,
+                BillingPeriodType = p.BillingPeriodType,
+                BillingDailyOriginDate = p.DailyBillingOriginDate
+            })
+            .Select(p => new ContractGroup()
+            {
+                TenantId = p.Key.TenantId,
+                MerchantId = p.Key.MerchantId,
+                BillingPeriod = p.Key.BillingPeriod,
+                BillingPeriodType = p.Key.BillingPeriodType,
+                BillingDailyOriginDate = p.Key.BillingDailyOriginDate,
+                ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id),
+                EndorsementDate = p.OrderBy(q => q.CreatedDateTime).FirstOrDefault().CreatedDateTime,
+                HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any()
+            })
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<ContractGroup>> GetCurrentGroupContractsAsync(CancellationToken cancellationToken)
+        {
+            var today = DateTime.Today;
+
+            var pc = new PersianCalendar();
+
+            var dailyIds = new List<int>();
+
+            var year = pc.GetYear(today);
+            var month = pc.GetMonth(today);
+            var day = pc.GetDayOfMonth(today);
+            var dayOfWeek = pc.GetDayOfWeek(today);
+            var daysInMonth = pc.GetDaysInMonth(year, month);
+
+            var dailyPeriods = await applicationDbContext.TenantMerchantContracts
+                .Where(p => p.BillingPeriodType == TimeInterval.Day)
+                .Select(p => new
+                {
+                    p.Id,
+                    p.BillingPeriod,
+                    p.DailyBillingOriginDate
+                })
+                .DistinctBy(p => new { p.BillingPeriod, p.DailyBillingOriginDate })
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            foreach (var dailyPeriod in dailyPeriods)
+            {
+                if (!dailyPeriod.DailyBillingOriginDate.HasValue) continue;
+
+                var originDate = dailyPeriod.DailyBillingOriginDate.Value;
+
+                if (today.Date < originDate.Date) continue;
+
+                var difference = (today.Date - originDate.Date).Days;
+
+                if (difference % dailyPeriod.BillingPeriod == 0)
+                {
+                    dailyIds.Add(dailyPeriod.Id);
+                }
+            }
+
+            return await applicationDbContext.TenantMerchantContracts.GroupBy(p => new ContractIdentifier()
+            {
+                TenantId = p.TenantId,
+                MerchantId = p.MerchantId,
+                BillingPeriod = p.BillingPeriod,
+                BillingPeriodType = p.BillingPeriodType,
+                BillingDailyOriginDate = p.DailyBillingOriginDate
+            })
+            .Where(p =>
+                (p.Key.BillingPeriodType == TimeInterval.Day && p.Select(q => q.Id).Any(q => dailyIds.Contains(q))) ||
+                (p.Key.BillingPeriodType == TimeInterval.Month && p.Key.BillingPeriod == day) ||
+                (p.Key.BillingPeriodType == TimeInterval.Month && p.Key.BillingPeriod >= 30 && daysInMonth == 29 && day == 29) ||
+                (p.Key.BillingPeriodType == TimeInterval.Month && p.Key.BillingPeriod == 31 && daysInMonth == 30 && day == 30) ||
+                (p.Key.BillingPeriodType == TimeInterval.Week && p.Key.BillingPeriod == (int)dayOfWeek))
+            .Select(p => new ContractGroup()
+            {
+                TenantId = p.Key.TenantId,
+                MerchantId = p.Key.MerchantId,
+                BillingPeriod = p.Key.BillingPeriod,
+                BillingPeriodType = p.Key.BillingPeriodType,
+                BillingDailyOriginDate = p.Key.BillingDailyOriginDate,
+                ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id),
+                EndorsementDate = p.OrderBy(q => q.CreatedDateTime).FirstOrDefault().CreatedDateTime,
+                HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any()
+            })
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
         }
     }
 }

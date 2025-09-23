@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations;
 
-public class B2bInstallmentConfiguration : IEntityTypeConfiguration<B2bInstallment>
+public sealed class B2bInstallmentConfiguration : IEntityTypeConfiguration<B2bInstallment>
 {
     public void Configure(EntityTypeBuilder<B2bInstallment> builder)
     {
