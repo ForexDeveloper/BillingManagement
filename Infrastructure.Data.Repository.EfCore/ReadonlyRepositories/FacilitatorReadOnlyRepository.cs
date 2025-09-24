@@ -1,11 +1,11 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
-using Application.Query.ReadOnlyRepositoryContracts;
+﻿using Application.Query.ReadOnlyRepositoryContracts;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Application.Query.QueryModels.Facilitators;
+using Application.Query.Queries.Facilitators;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
 

@@ -1,4 +1,4 @@
-﻿using Application.Query.Queries;
+﻿using Application.Query.Queries.Financiers;
 using Application.Query.ViewModels.Financiers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

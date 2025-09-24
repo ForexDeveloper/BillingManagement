@@ -1,11 +1,12 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.QueryModels;
 using Application.Query.ReadOnlyRepositoryContracts;
 using Domain.Core.Entities.GuarantorAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Application.Query.QueryModels.Guarantors;
+using Application.Query.Queries.Guarantors;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
 

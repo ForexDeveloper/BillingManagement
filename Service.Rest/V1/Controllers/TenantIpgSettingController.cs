@@ -1,4 +1,4 @@
-﻿using Application.Query.Queries;
+﻿using Application.Query.Queries.IpgSettings;
 using Application.Query.ViewModels.IpgSettings;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

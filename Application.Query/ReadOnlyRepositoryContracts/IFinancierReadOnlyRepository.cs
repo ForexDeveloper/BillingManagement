@@ -1,5 +1,5 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.Queries.Financiers;
+using Application.Query.QueryModels.Financiers;
 using Domain.Core.Entities.FinancierAggregate;
 using System.Threading.Tasks;
 

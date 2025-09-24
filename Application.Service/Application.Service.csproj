@@ -19,4 +19,9 @@
 		<ProjectReference Include="..\Domain.Core\Domain.Core.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Enums\" />
+	  <Folder Include="GlobalConstants\" />
+	</ItemGroup>
+
 </Project>

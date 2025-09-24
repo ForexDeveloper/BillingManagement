@@ -1,4 +1,4 @@
-﻿using Application.Query.Queries;
+﻿using Application.Query.Queries.Organizations;
 using Application.Query.ViewModels.Organizations;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

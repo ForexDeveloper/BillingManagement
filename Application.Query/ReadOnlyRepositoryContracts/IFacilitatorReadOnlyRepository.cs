@@ -1,5 +1,5 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.Queries.Facilitators;
+using Application.Query.QueryModels.Facilitators;
 using Domain.Core.Entities.FacilitatorAggregate;
 using System.Threading.Tasks;
 
