@@ -1,5 +1,5 @@
 ﻿using Application.Service.Dtos.Shared;
-using Application.Service.Dtos.TenantPlatformContract;
+using Application.Service.Dtos.TenantPlatformContracts;
 using Domain.Core.Enums;
 
 namespace Service.Rest.V1.RequestModels.TenantPlatfromContracts

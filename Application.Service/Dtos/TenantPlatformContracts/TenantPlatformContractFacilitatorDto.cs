@@ -1,6 +1,6 @@
 ﻿using Domain.Core.Enums;
 
-namespace Application.Service.Dtos.TenantPlatformContract;
+namespace Application.Service.Dtos.TenantPlatformContracts;
 
 public class TenantPlatformContractFacilitatorDto
 {

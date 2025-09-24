@@ -1,6 +1,6 @@
 ﻿using Application.Service.Contracts;
 using Application.Service.Dtos.Shared;
-using Application.Service.Dtos.TenantPlatformContract;
+using Application.Service.Dtos.TenantPlatformContracts;
 using Domain.Core.Entities.Providers;
 using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.TenantAggregate;

@@ -1,5 +1,5 @@
 ﻿using Application.Service.Dtos.Shared;
-using Application.Service.Dtos.TenantMerchantContract;
+using Application.Service.Dtos.TenantMerchantContracts;
 using Domain.Core.Enums;
 
 namespace Service.Rest.V1.RequestModels.TenantMerchantContracts

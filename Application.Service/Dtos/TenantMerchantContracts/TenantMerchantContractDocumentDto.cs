@@ -1,7 +1,7 @@
 ﻿using Domain.Core.Enums;
 using System;
 
-namespace Application.Service.Dtos.TenantMerchantContract
+namespace Application.Service.Dtos.TenantMerchantContracts
 {
     public class TenantMerchantContractDocumentDto
     {

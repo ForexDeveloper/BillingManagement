@@ -1,4 +1,4 @@
-﻿namespace Application.Service.Dtos.TenantPlatformContract;
+﻿namespace Application.Service.Dtos.TenantPlatformContracts;
 
 public class TenantPlatformContractProviderDto
 {
