@@ -13,61 +13,33 @@ namespace Application.Query.Queries
     public class GetTenantIpgSettingByWalletIdQuery : IRequest<int>
     {
         public int TenantId { get; set; }
-        public int? WalletId { get; set; }
 
-        public GetTenantIpgSettingByWalletIdQuery(int tenantId, int? walletId)
+        public GetTenantIpgSettingByWalletIdQuery(int tenantId)
         {
             TenantId = tenantId;
-            WalletId = walletId;
         }
 
     }
 
     public class GetTenantIpgSettingByWalletIdQueryHandler : IRequestHandler<GetTenantIpgSettingByWalletIdQuery, int>
     {
-        private readonly ITenantReadOnlyRepository _tenantReadOnlyRepository;
         private readonly ITenantRepository _tenantRepository;
         private readonly ITenantPlatformContractReadOnlyRepository _tenantPlatformContractReadOnlyRepository;
-        private readonly IWalletContractReadOnlyRepository _walletContractReadOnlyRepository;
-        private readonly IWalletReadOnlyRepository _walletReadOnlyRepository;
         private readonly PublicAppConfiguration _publicAppConfiguration;
 
-        public GetTenantIpgSettingByWalletIdQueryHandler(ITenantReadOnlyRepository tenantReadOnlyRepository,
-            ITenantPlatformContractReadOnlyRepository tenantPlatformContractReadOnlyRepository, IWalletContractReadOnlyRepository walletContractReadOnlyRepository,
-            IWalletReadOnlyRepository walletReadOnlyRepository, ITenantRepository tenantRepository,
+        public GetTenantIpgSettingByWalletIdQueryHandler(
+            ITenantPlatformContractReadOnlyRepository tenantPlatformContractReadOnlyRepository,
+            ITenantRepository tenantRepository,
             IOptions<PublicAppConfiguration> publicAppConfiguration)
         {
-            _tenantReadOnlyRepository = tenantReadOnlyRepository;
             _tenantPlatformContractReadOnlyRepository = tenantPlatformContractReadOnlyRepository;
-            _walletContractReadOnlyRepository = walletContractReadOnlyRepository;
-            _walletReadOnlyRepository = walletReadOnlyRepository;
             _tenantRepository = tenantRepository;
             _publicAppConfiguration = publicAppConfiguration.Value;
         }
 
         public async Task<int> Handle(GetTenantIpgSettingByWalletIdQuery request, CancellationToken cancellationToken)
         {
-            if (!request.WalletId.HasValue)
-                return await GetTenantIpgSettingFromTenantPlatformContract(request.TenantId);
-
-            //To-do
-            var walletContractId = await _walletReadOnlyRepository.GetWalletContractIdByWalletIdAsync(request.TenantId, request.WalletId.Value);
-
-            if (walletContractId == null)
-                return await GetTenantIpgSettingFromTenantPlatformContract(request.TenantId);
-
-            //To-do
-            var tenantIpgSettingId = await _walletContractReadOnlyRepository.GetTenantIpgSettingIdAsync(walletContractId.Value, request.TenantId);
-
-            if (tenantIpgSettingId == null)
-                return await GetTenantIpgSettingFromTenantPlatformContract(request.TenantId);
-
-            return tenantIpgSettingId.Value;
-        }
-
-        private async Task<int> GetTenantIpgSettingFromTenantPlatformContract(int tenantId)
-        {
-            var tenantPlatformContacts = await _tenantPlatformContractReadOnlyRepository.GetActiveContractsAsync(tenantId);
+            var tenantPlatformContacts = await _tenantPlatformContractReadOnlyRepository.GetActiveContractsAsync(request.TenantId);
             if (tenantPlatformContacts.Count == 0)
             {
                 var platformTenantId = _publicAppConfiguration.PlatformTenantId;
@@ -79,9 +51,7 @@ namespace Application.Query.Queries
                 return platformTenantIpgSetting.Id;
             }
 
-            return tenantPlatformContacts.Any(x => x.Status) ?
-                tenantPlatformContacts.First(x => x.Status).TenantIpgSettingId :
-                tenantPlatformContacts.MaxBy(x => x.Id).TenantIpgSettingId;
+            return tenantPlatformContacts.First(x => x.Status).TenantIpgSettingId;
         }
 
     }

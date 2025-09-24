@@ -38,37 +38,39 @@ namespace Service.Rest
     {
         internal static void RegisterRepositories(this IServiceCollection services)
         {
-            services.AddScoped<ITenantReadOnlyRepository, TenantReadOnlyRepository>();
-
-            services.AddScoped<ITenantRepository, TenantRepository>();
-            services.AddScoped<IOrganizationRepository, OrganizationRepository>();
-            services.AddScoped<IFinancierRepository, FinancierRepository>();
-            services.AddScoped<IFacilitatorRepository, FacilitatorRepository>();
-            services.AddScoped<IGuarantorRepository, GuarantorRepository>();
-
-            services.AddScoped<IMerchantReadOnlyRepository, MerchantReadOnlyRepository>();
-            services.AddScoped<IWalletContractReadOnlyRepository, WalletContractReadOnlyRepository>();
-
-            services.AddScoped<IMerchantRepository, MerchantRepository>();
-            services.AddScoped<ITenantMerchantContractRepository, TenantMerchantContractRepository>();
-            services.AddScoped<ITenantMerchantContractReadOnlyRepository, TenantMerchantContractReadOnlyRepository>();
+            #region ReadOnlyRepositories
             services.AddScoped<IAttachmentReadOnlyRepository, AttachmentReadOnlyRepository>();
-            services.AddScoped<IProviderRepository, ProviderRepository>();
-            services.AddScoped<ITenantPlatformContractRepository, TenantPlatformContractRepository>();
-            services.AddScoped<ITenantPlatformContractReadOnlyRepository, TenantPlatformContractReadOnlyRepository>();
-            services.AddScoped<IOrganizationReadOnlyRepository, OrganizationReadOnlyRepository>();
+            services.AddScoped<IBillingReadOnlyRepository, BillingReadOnlyRepository>();
             services.AddScoped<IFinancierReadOnlyRepository, FinancierReadOnlyRepository>();
             services.AddScoped<IGuarantorReadOnlyRepository, GuarantorReadOnlyRepository>();
             services.AddScoped<IFacilitatorReadOnlyRepository, FacilitatorReadOnlyRepository>();
-            services.AddScoped<IProviderReadOnlyRepository, ProviderReadOnlyRepository>();
-
             services.AddScoped<IFinancialDocumentReadOnlyRepository, FinancialDocumentReadOnlyRepository>();
+            services.AddScoped<IMerchantBillingReadOnlyRepository, MerchantBillingReadOnlyRepository>();
+            services.AddScoped<IMerchantReadOnlyRepository, MerchantReadOnlyRepository>();
+            services.AddScoped<IOrganizationReadOnlyRepository, OrganizationReadOnlyRepository>();
+            services.AddScoped<IProviderReadOnlyRepository, ProviderReadOnlyRepository>();
+            services.AddScoped<ITenantPlatformContractReadOnlyRepository, TenantPlatformContractReadOnlyRepository>();
+            services.AddScoped<ITenantMerchantContractReadOnlyRepository, TenantMerchantContractReadOnlyRepository>();
+            services.AddScoped<ITenantReadOnlyRepository, TenantReadOnlyRepository>();
+            services.AddScoped<IWalletContractReadOnlyRepository, WalletContractReadOnlyRepository>();
+            #endregion
+
+            #region Repositories
+            services.AddScoped<IAttachmentRepository, AttachmentRepository>();
+            services.AddScoped<IFacilitatorRepository, FacilitatorRepository>();
+            services.AddScoped<IFinancialDocumentRepository, FinancialDocumentRepository>();
+            services.AddScoped<IFinancierRepository, FinancierRepository>();
+            services.AddScoped<IGuarantorRepository, GuarantorRepository>();
             services.AddScoped<IMerchantBillingRepository, MerchantBillingRepository>();
             services.AddScoped<IMerchantInstallmentRepository, MerchantInstallmentRepository>();
-            services.AddScoped<IFinancialDocumentRepository, FinancialDocumentRepository>();
+            services.AddScoped<IMerchantRepository, MerchantRepository>();
+            services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+            services.AddScoped<IProviderRepository, ProviderRepository>();
+            services.AddScoped<ITenantMerchantContractRepository, TenantMerchantContractRepository>();
+            services.AddScoped<ITenantPlatformContractRepository, TenantPlatformContractRepository>();
+            services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<IWalletContractRepository, WalletContractRepository>();
-
-
+            #endregion
         }
 
         internal static void UploadFileConfigurationServices(this IServiceCollection services, IConfiguration configuration)
