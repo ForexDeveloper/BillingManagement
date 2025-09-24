@@ -28,4 +28,9 @@
 
 	</ItemGroup>
 
+
+	<ItemGroup>
+	  <Folder Include="V1\RequestModels\Merchants\" />
+	</ItemGroup>
+
 </Project>
