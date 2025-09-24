@@ -1,10 +1,10 @@
-﻿using Application.Query.ViewModels.Categories;
-using Application.Service.Helper;
-using Domain.Core.Entities.MerchantInstallmentAggregate;
+﻿using System.Text.Json;
 using Domain.Core.Enums;
-using Infrastructure.Data.Repository.EfCore;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
+using Application.Service.Helper;
+using Application.Service.Contracts;
+using Application.Query.ViewModels.Categories;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Service.Rest.V1.Controllers;
@@ -12,19 +12,13 @@ namespace Service.Rest.V1.Controllers;
 [ApiVersion("1.0")]
 [Route("api/merchantBilling")]
 [ApiController]
-public class AAAMerchantBillingController : ControllerBase
+public class A1BillingController(
+    ApplicationDbContext dbContext,
+    IMerchantInstallmentRepository merchantInstallmentRepository,
+    IMerchantBillingService merchantBillingService)
+    : ControllerBase
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    private readonly IMerchantInstallmentRepository _merchantInstallmentRepository;
-
-    public AAAMerchantBillingController(ApplicationDbContext dbContext, IMerchantInstallmentRepository merchantInstallmentRepository)
-    {
-        _dbContext = dbContext;
-        _merchantInstallmentRepository = merchantInstallmentRepository;
-    }
-
-    [HttpPost]
+    [HttpPost("installment")]
     public async Task<ActionResult<GetCategoryListVm>> SetMerchantInstallments(long tenantMerchantContractId)
     {
         try

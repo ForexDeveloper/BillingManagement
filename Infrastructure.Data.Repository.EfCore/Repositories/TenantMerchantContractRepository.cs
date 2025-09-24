@@ -99,7 +99,10 @@ public class TenantMerchantContractRepository(ApplicationDbContext applicationDb
             CommissionCalculationType = p.Key.CommissionCalculationType,
             ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id),
             EndorsementDate = p.OrderBy(q => q.CreatedDateTime).FirstOrDefault().CreatedDateTime,
-            HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any()
+            HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any(),
+            TieredCommissions = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().TieredCommissions,
+            PeriodMinCommissionAmount = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().PeriodMinCommissionAmount,
+            PeriodMaxCommissionAmount = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().PeriodMaxCommissionAmount
         })
         .AsNoTracking()
         .ToListAsync(cancellationToken);
@@ -172,7 +175,10 @@ public class TenantMerchantContractRepository(ApplicationDbContext applicationDb
             CommissionCalculationType = p.Key.CommissionCalculationType,
             ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id),
             EndorsementDate = p.OrderBy(q => q.CreatedDateTime).FirstOrDefault().CreatedDateTime,
-            HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any()
+            HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any(),
+            TieredCommissions = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().TieredCommissions,
+            PeriodMinCommissionAmount = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().PeriodMinCommissionAmount,
+            PeriodMaxCommissionAmount = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().PeriodMaxCommissionAmount
         })
         .AsNoTracking()
         .ToListAsync(cancellationToken);

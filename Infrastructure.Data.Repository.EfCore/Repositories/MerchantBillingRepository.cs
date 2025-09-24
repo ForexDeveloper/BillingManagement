@@ -4,9 +4,10 @@ using System.Threading;
 using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Domain.Core.Entities.BillingAggregate.Dtos;
 using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.BillingAggregate.Dtos;
 using Domain.Core.Entities.MerchantBillingAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
@@ -29,7 +30,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
 
         foreach (var billing in billings)
         {
-            billing.FinalEndorsementContractId = GetFinalContractId(billing);
+            billing.FinalEndorsementContractId = GetFinalContractId(billing.Contract);
         }
 
         return billings;
@@ -56,21 +57,13 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
         await applicationDbContext.MerchantBillings.AddRangeAsync(billings, cancellationToken);
     }
 
-    private static int GetFinalContractId(NotSettledBilling notSettledBilling)
+    private static int GetFinalContractId(TenantMerchantContract contract)
     {
-        var contract = notSettledBilling.Contract;
+        if (contract.Children == null || !contract.Children.Any()) return contract.Id;
 
-        if (contract.Children != null && contract.Children.Any())
+        foreach (var child in contract.Children)
         {
-            foreach (var child in contract.Children)
-            {
-                if (child.Children != null && child.Children.Any())
-                {
-                    return GetFinalContractId(notSettledBilling);
-                }
-
-                return child.Id;
-            }
+            return GetFinalContractId(child);
         }
 
         return contract.Id;

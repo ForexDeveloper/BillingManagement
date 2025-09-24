@@ -1,64 +1,57 @@
-﻿using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using Domain.Core.Enums;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Enums;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
-public class FinancialDocumentRepository : IFinancialDocumentRepository
+public sealed class FinancialDocumentRepository(ApplicationDbContext applicationDbContext) : IFinancialDocumentRepository
 {
-    private readonly ApplicationDbContext _applicationDbContext;
-
-    public FinancialDocumentRepository(ApplicationDbContext applicationDbContext)
-    {
-        _applicationDbContext = applicationDbContext;
-    }
-
     public async Task AddAsync(FinancialDocument financialDocument)
     {
-        await _applicationDbContext.FinancialDocuments.AddAsync(financialDocument);
+        await applicationDbContext.FinancialDocuments.AddAsync(financialDocument);
     }
 
     public async Task<FinancialDocument> GetByIdAsync(long id)
     {
-        return await _applicationDbContext.FinancialDocuments.FirstOrDefaultAsync(p => p.Id == id);
+        return await applicationDbContext.FinancialDocuments.FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<List<FinancialDocument>> GetRefundsByParentIdAsync(long parentId)
     {
-        return await _applicationDbContext.FinancialDocuments.Where(p => p.ParentId == parentId && p.Type == FinancialDocumentType.Refund).ToListAsync();
+        return await applicationDbContext.FinancialDocuments.Where(p => p.ParentId == parentId && p.Type == FinancialDocumentType.Refund).ToListAsync();
     }
 
     public void Update(FinancialDocument financialDocument)
     {
-        _applicationDbContext.FinancialDocuments.Update(financialDocument);
+        applicationDbContext.FinancialDocuments.Update(financialDocument);
     }
 
     public void UpdateRange(List<FinancialDocument> financialDocuments)
     {
-        _applicationDbContext.FinancialDocuments.UpdateRange(financialDocuments);
+        applicationDbContext.FinancialDocuments.UpdateRange(financialDocuments);
     }
 
     public async Task<List<FinancialDocument>> GetAllAsync()
     {
-        return await _applicationDbContext.FinancialDocuments.ToListAsync();
+        return await applicationDbContext.FinancialDocuments.ToListAsync();
     }
 
     public async Task<bool> IsTenantPlatformContractUsedInTransaction(int tenantPlatformContractId)
     {
-        return await _applicationDbContext.FinancialDocuments
+        return await applicationDbContext.FinancialDocuments
             .AnyAsync(x => x.TenantPlatformContractId == tenantPlatformContractId);
     }
 
     public async Task<List<int>> GetTenantPlatformContractIdsHasTransaction(List<int> tenantPlatformContractIds)
     {
-        var result = await _applicationDbContext.FinancialDocuments
+        var result = await applicationDbContext.FinancialDocuments
             .Where(x => tenantPlatformContractIds.Contains(x.TenantPlatformContractId.Value))
             .Select(x => x.TenantPlatformContractId.Value)
             .ToListAsync();
@@ -68,13 +61,13 @@ public class FinancialDocumentRepository : IFinancialDocumentRepository
 
     public async Task<bool> IsTenantMerchantContractUsedInTransaction(int tenantMerchantContractId)
     {
-        return await _applicationDbContext.FinancialDocuments
+        return await applicationDbContext.FinancialDocuments
             .AnyAsync(x => x.TenantMerchantContractId == tenantMerchantContractId);
     }
 
     public async Task<List<int>> GetTenantMerchantContractIdsHasTransaction(List<int> tenantMerchantContractIds)
     {
-        var result = await _applicationDbContext.FinancialDocuments
+        var result = await applicationDbContext.FinancialDocuments
             .Where(x => tenantMerchantContractIds.Contains(x.TenantMerchantContractId.Value))
             .Select(x => x.TenantMerchantContractId.Value)
             .ToListAsync();
@@ -84,14 +77,22 @@ public class FinancialDocumentRepository : IFinancialDocumentRepository
 
     public IQueryable<FinancialDocument> CreateJobFinancialDocumentQuery(DateTime startOfPeriod, DateTime endOfPeriod, IEnumerable<int> contractIds)
     {
-        return _applicationDbContext.FinancialDocuments
+        return applicationDbContext.FinancialDocuments
             .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value));
     }
 
-    public async Task<bool> FindInContractPeriodAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
+    public async Task<bool> ExecuteQueryAnyAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
     {
         return await query.AnyAsync(cancellationToken);
+    }
+
+    public async Task<decimal> CalculatePeriodTransactions(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.FinancialDocuments
+            .Where(p => p.FromBusinessIdentityId == tenantId && p.ToBusinessIdentityId == merchantId)
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
+            .Where(p => p.Type == FinancialDocumentType.Purchase).SumAsync(p => p.Amount, cancellationToken);
     }
 
     public async Task<Dictionary<ContractIdentifier, List<FinancialDocument>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
@@ -115,5 +116,4 @@ public class FinancialDocumentRepository : IFinancialDocumentRepository
         })
         .ToDictionaryAsync(p => p.Key, p => p.Select(q => q.FinancialDocument).ToList(), cancellationToken);
     }
-
 }

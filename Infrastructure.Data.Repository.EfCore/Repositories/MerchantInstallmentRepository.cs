@@ -31,10 +31,18 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         return await query.AnyAsync(cancellationToken);
     }
 
-    public async Task<InstallmentDates?> GetInstallmentsDates(DateTime endOfPeriod, IEnumerable<int> contractIds, CancellationToken cancellationToken)
+    public async Task<InstallmentRange?> GetInstallmentsRanges(IEnumerable<int> contractIds, CancellationToken cancellationToken)
     {
+        var financialDocument = await applicationDbContext.FinancialDocuments.Where(p => p.TenantMerchantContractId == 12)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var installments = await applicationDbContext.MerchantInstallments
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync(cancellationToken);
+
+        var commission = installments.Sum(p => p.Commission);
+
         var query = applicationDbContext.MerchantInstallments
-            .Where(p => p.DueDate < endOfPeriod)
+            .Where(p => p.DueDate < DateTime.Today)
             .Where(p => p.BillingId.HasValue == false)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId));
 
@@ -46,7 +54,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
 
         var maxDueDate = await query.MaxAsync(p => p.DueDate, cancellationToken);
 
-        return new InstallmentDates(minDueDate, maxDueDate);
+        return new InstallmentRange(minDueDate, maxDueDate);
     }
 
     public async Task<Dictionary<ContractIdentifier, List<MerchantInstallment>>> GetGroupContractInstallments(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken)
