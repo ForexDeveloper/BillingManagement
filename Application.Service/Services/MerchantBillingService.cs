@@ -40,9 +40,9 @@ public sealed class MerchantBillingService(
 
         var billingGroups = new List<List<BillingDto>>();
 
-        var notAssignedBillings = await merchantBillingRepository.GetNotAssignedBillings(cancellationToken);
-
         var allContracts = await tenantMerchantContractRepository.GetAllGroupContractAsync(cancellationToken);
+
+        var overdueOrNotSettledBillings = await merchantBillingRepository.GetOverdueOrNotSettledBillings(cancellationToken);
 
         foreach (var contract in allContracts)
         {
@@ -126,7 +126,7 @@ public sealed class MerchantBillingService(
 
             if (contract.HasEndorsement)
             {
-                var installmentRanges = await merchantInstallmentRepository.GetInstallmentsRanges(contract.ContractIds, cancellationToken);
+                var installmentRanges = await merchantInstallmentRepository.GetInstallmentRanges(contract.ContractIds, cancellationToken);
 
                 if (installmentRanges == null) continue;
 
@@ -173,7 +173,7 @@ public sealed class MerchantBillingService(
             billingGroups.Add(billingDtos);
         }
 
-        var overdueBillings = OverdueThenFilterBillings(notAssignedBillings);
+        var overdueBillings = OverdueThenFilterBillings(overdueOrNotSettledBillings);
 
         var installmentGroup = await merchantInstallmentRepository.GetGroupContractInstallments(
             finalQuery.InstallmentQuery, cancellationToken);
@@ -195,9 +195,8 @@ public sealed class MerchantBillingService(
             foreach (var billingDto in billingGroup.OrderBy(p => p.EndOfPeriod))
             {
                 decimal previousDebitAmount = 0;
-                decimal? currentPeriodFinalCommission;
-                decimal? currentPeriodCalculatedCommission;
-                decimal refundedTransactionsCommission = 0;
+                decimal currentPeriodFinalCommission;
+                decimal currentPeriodCalculatedCommission;
 
                 var contract = billingDto.ContractGroup;
 
@@ -208,14 +207,27 @@ public sealed class MerchantBillingService(
 
                 var financialDocuments = financialDocumentGroup.GetValueOrDefault(billingKey);
 
+                var refundFinancialDocuments = financialDocuments.Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod).Where(p => p.Type == FinancialDocumentType.Refund);
+
+                var purchaseFinancialDocuments = refundFinancialDocuments.Select(p => p.Parent);
+
+                var refundedTransactionsCommission = purchaseFinancialDocuments.Sum(p => p.Commission) ?? 0;
+
                 var currentPeriodPurchaseTransactions = installments.Where(p => billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod).Sum(p => p.Amount);
 
                 var previousPeriodRefundedTransactions = financialDocuments.Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod).Where(p => p.Type == FinancialDocumentType.Refund).Sum(p => p.Amount);
 
+                decimal totalAmount = financialDocuments
+                    .Where(p => p.Type == FinancialDocumentType.Purchase)
+                    .Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod)
+                    .Sum(p => p.Amount);
+
                 if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
-                    var totalTransactionsAmount = await financialDocumentRepository.CalculatePeriodTransactions(contract.TenantId, contract.MerchantId,
+                    var totalTransactionsAmount = await financialDocumentRepository.GetPeriodTotalTransactionsAmount(contract.TenantId, contract.MerchantId,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+
+                    totalAmount = totalTransactionsAmount;
 
                     var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
                         p.FromAmount < totalTransactionsAmount && totalTransactionsAmount <= p.ToAmount);
@@ -253,21 +265,35 @@ public sealed class MerchantBillingService(
                 }
                 else
                 {
-                    currentPeriodCalculatedCommission = installments.Where(p => billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod).Sum(p => p.Commission);
+                    currentPeriodCalculatedCommission = installments
+                        .Where(p => billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod)
+                        .Sum(p => p.Commission) ?? 0;
                 }
 
                 if (currentPeriodCalculatedCommission > contract.PeriodMaxCommissionAmount)
                 {
-                    currentPeriodFinalCommission = contract.PeriodMaxCommissionAmount;
+                    currentPeriodFinalCommission = contract.PeriodMaxCommissionAmount.Value;
                 }
 
                 else if (currentPeriodCalculatedCommission < contract.PeriodMinCommissionAmount)
                 {
-                    currentPeriodFinalCommission = contract.PeriodMinCommissionAmount;
+                    currentPeriodFinalCommission = contract.PeriodMinCommissionAmount.Value;
                 }
                 else
                 {
                     currentPeriodFinalCommission = currentPeriodCalculatedCommission;
+                }
+
+                if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
+                {
+                    foreach (var financialDocument in financialDocuments
+                                 .Where(p => p.Type == FinancialDocumentType.Purchase)
+                                 .Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod))
+                    {
+                        var commission = currentPeriodFinalCommission * (financialDocument.Amount / totalAmount);
+
+                        financialDocument.SetCommission(commission);
+                    }
                 }
 
                 var alternativeBilling = alternativeBillings.LastOrDefault();
@@ -322,7 +348,7 @@ public sealed class MerchantBillingService(
 
         var billingGroups = new List<List<BillingDto>>();
 
-        var notAssignedBillings = await merchantBillingRepository.GetNotAssignedBillings(cancellationToken);
+        var notAssignedBillings = await merchantBillingRepository.GetOverdueOrNotSettledBillings(cancellationToken);
 
         var currentContracts = await tenantMerchantContractRepository.GetCurrentGroupContractsAsync(cancellationToken);
 
@@ -360,7 +386,7 @@ public sealed class MerchantBillingService(
 
             if (contract.HasEndorsement)
             {
-                var installmentRanges = await merchantInstallmentRepository.GetInstallmentsRanges(contract.ContractIds, cancellationToken);
+                var installmentRanges = await merchantInstallmentRepository.GetInstallmentRanges(contract.ContractIds, cancellationToken);
 
                 if (installmentRanges == null) continue;
 
@@ -403,13 +429,11 @@ public sealed class MerchantBillingService(
 
         var overdueBillings = OverdueThenFilterBillings(notAssignedBillings);
 
-        var financialDocumentGroup =
-            await financialDocumentRepository.GetGroupContractFinancialDocuments(
-                finalQuery.FinancialDocumentQuery, cancellationToken);
+        var installmentGroup = await merchantInstallmentRepository.GetGroupContractInstallments(
+            finalQuery.InstallmentQuery, cancellationToken);
 
-        var installmentGroup =
-            await merchantInstallmentRepository.GetGroupContractInstallments(finalQuery.InstallmentQuery,
-                cancellationToken);
+        var financialDocumentGroup = await financialDocumentRepository.GetGroupContractFinancialDocuments(
+                finalQuery.FinancialDocumentQuery, cancellationToken);
 
         var billings = new List<MerchantBilling>();
 
@@ -425,8 +449,8 @@ public sealed class MerchantBillingService(
             foreach (var billingDto in billingGroup.OrderBy(p => p.EndOfPeriod))
             {
                 decimal previousDebitAmount = 0;
-                decimal? currentPeriodFinalCommission;
-                decimal? currentPeriodCalculatedCommission;
+                decimal currentPeriodFinalCommission;
+                decimal currentPeriodCalculatedCommission;
                 decimal refundedTransactionsCommission = 0;
 
                 var contract = billingDto.ContractGroup;
@@ -448,7 +472,7 @@ public sealed class MerchantBillingService(
 
                 if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
-                    var totalTransactionsAmount = await financialDocumentRepository.CalculatePeriodTransactions(contract.TenantId, contract.MerchantId,
+                    var totalTransactionsAmount = await financialDocumentRepository.GetPeriodTotalTransactionsAmount(contract.TenantId, contract.MerchantId,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                     var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
@@ -487,16 +511,16 @@ public sealed class MerchantBillingService(
                 }
                 else
                 {
-                    currentPeriodCalculatedCommission = installments.Where(p => billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod).Sum(p => p.Commission);
+                    currentPeriodCalculatedCommission = installments.Where(p => billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod).Sum(p => p.Commission) ?? 0;
                 }
 
                 if (currentPeriodCalculatedCommission > contract.PeriodMaxCommissionAmount)
                 {
-                    currentPeriodFinalCommission = contract.PeriodMaxCommissionAmount;
+                    currentPeriodFinalCommission = contract.PeriodMaxCommissionAmount.Value;
                 }
                 else if (currentPeriodCalculatedCommission < contract.PeriodMinCommissionAmount)
                 {
-                    currentPeriodFinalCommission = contract.PeriodMinCommissionAmount;
+                    currentPeriodFinalCommission = contract.PeriodMinCommissionAmount.Value;
                 }
                 else
                 {

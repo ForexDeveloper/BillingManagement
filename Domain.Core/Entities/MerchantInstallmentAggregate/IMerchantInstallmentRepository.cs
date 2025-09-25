@@ -16,9 +16,11 @@ public interface IMerchantInstallmentRepository
 
     Task<bool> FindInContractPeriodAsync(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken);
 
-    Task<InstallmentRange?> GetInstallmentsRanges(IEnumerable<int> contractIds, CancellationToken cancellationToken);
+    Task<InstallmentRange?> GetInstallmentRanges(IEnumerable<int> contractIds, CancellationToken cancellationToken);
 
     Task<Dictionary<ContractIdentifier, List<MerchantInstallment>>> GetGroupContractInstallments(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken);
+
+    Task<decimal?> GetSumOfCommissionsAsync(IEnumerable<long> financialDocumentIds, CancellationToken cancellationToken);
 }
 
 public sealed record InstallmentRange(DateTime MinDueDate, DateTime MaxDueDate)

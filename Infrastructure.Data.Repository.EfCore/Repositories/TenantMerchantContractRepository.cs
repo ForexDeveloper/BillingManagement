@@ -59,6 +59,9 @@ public class TenantMerchantContractRepository(ApplicationDbContext applicationDb
     {
         //TODO  x.EndDate >= DateTime.Now && DateTime.Now >= x.StartDate 
 
+        return await applicationDbContext.TenantMerchantContracts.OrderByDescending(p => p.CreatedDateTime)
+            .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.MerchantId == merchantId && x.Status);
+
         return await applicationDbContext.TenantMerchantContracts
             .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.MerchantId == merchantId && x.Status == true && x.EndDate >= DateTime.Now);
     }

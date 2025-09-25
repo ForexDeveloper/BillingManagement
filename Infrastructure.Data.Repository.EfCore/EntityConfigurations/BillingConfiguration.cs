@@ -20,6 +20,7 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.StartDate).IsRequired();
         builder.Property(p => p.PeriodType).IsRequired();
         builder.Property(p => p.GracePeriod).IsRequired();
+        builder.Property(p => p.ContractIds).IsRequired();
         builder.Property(p => p.ToBusinessIdentityId).IsRequired();
         builder.Property(p => p.FromBusinessIdentityId).IsRequired();
         builder.Property(p => p.Status).HasDefaultValue(BillingStatus.Issued).IsRequired();

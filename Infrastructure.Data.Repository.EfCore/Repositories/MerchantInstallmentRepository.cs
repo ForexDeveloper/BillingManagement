@@ -31,16 +31,8 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         return await query.AnyAsync(cancellationToken);
     }
 
-    public async Task<InstallmentRange?> GetInstallmentsRanges(IEnumerable<int> contractIds, CancellationToken cancellationToken)
+    public async Task<InstallmentRange?> GetInstallmentRanges(IEnumerable<int> contractIds, CancellationToken cancellationToken)
     {
-        var financialDocument = await applicationDbContext.FinancialDocuments.Where(p => p.TenantMerchantContractId == 12)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var installments = await applicationDbContext.MerchantInstallments
-            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync(cancellationToken);
-
-        var commission = installments.Sum(p => p.Commission);
-
         var query = applicationDbContext.MerchantInstallments
             .Where(p => p.DueDate < DateTime.Today)
             .Where(p => p.BillingId.HasValue == false)
@@ -75,5 +67,12 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
                 p.DailyBillingOriginDate,
                 p.CommissionCalculationType))
             .ToDictionaryAsync(p => p.Key, p => p.Select(q => q.Installemnt).ToList(), cancellationToken);
+    }
+
+    public async Task<decimal?> GetSumOfCommissionsAsync(IEnumerable<long> financialDocumentIds, CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.MerchantInstallments
+            .Where(p => financialDocumentIds.Contains(p.FinancialDocumentId))
+            .SumAsync(p => p.Commission, cancellationToken);
     }
 }

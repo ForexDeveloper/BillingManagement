@@ -87,7 +87,7 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
         return await query.AnyAsync(cancellationToken);
     }
 
-    public async Task<decimal> CalculatePeriodTransactions(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    public async Task<decimal> GetPeriodTotalTransactionsAmount(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await applicationDbContext.FinancialDocuments
             .Where(p => p.FromBusinessIdentityId == tenantId && p.ToBusinessIdentityId == merchantId)

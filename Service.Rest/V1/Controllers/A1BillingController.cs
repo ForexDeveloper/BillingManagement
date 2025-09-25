@@ -365,14 +365,10 @@ public class A1BillingController(
 
             var installments = new List<MerchantInstallment>();
 
-            var installmentDates = DateHelper.CalculateMerchantInstallments(depositDate, 24,
+            var installmentDates = DateHelper.CalculateInstallments(depositDate, 24,
                 TimeInterval.Day, 29, 4, TimeInterval.Month);
 
-            var installmentDates2 = DateHelper.CalculateInstallments(depositDate, 4, 24, TimeInterval.Day, 29);
-
             var t2 = JsonSerializer.Serialize(installmentDates);
-
-            var t3 = JsonSerializer.Serialize(installmentDates2);
 
             foreach (var installmentDate in installmentDates)
             {

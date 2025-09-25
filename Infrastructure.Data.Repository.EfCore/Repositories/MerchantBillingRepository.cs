@@ -14,7 +14,7 @@ namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
 public sealed class MerchantBillingRepository(ApplicationDbContext applicationDbContext) : IMerchantBillingRepository
 {
-    public async Task<List<NotSettledBilling>> GetNotAssignedBillings(CancellationToken cancellationToken)
+    public async Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken)
     {
         var billings = await applicationDbContext.MerchantBillings
             .Where(p => (p.Status == BillingStatus.Overdue && p.Children.Any() == false) ||

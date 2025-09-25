@@ -36,7 +36,7 @@ public sealed class MerchantBilling : Billing
     public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, decimal? currentPeriodCalculatedCommission, decimal? currentPeriodFinalCommission,
+        IEnumerable<int> contractIds, decimal currentPeriodCalculatedCommission, decimal currentPeriodFinalCommission,
         decimal refundedTransactionsCommission, decimal previousPeriodRefundedTransactions,
         decimal currentPeriodPurchaseTransactions,
         Billing? parent = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType,
@@ -45,11 +45,11 @@ public sealed class MerchantBilling : Billing
     {
         Additions = 0;
         Deductions = 0;
+        CurrentPeriodFinalCommission = currentPeriodFinalCommission;
         RefundedTransactionsCommission = refundedTransactionsCommission;
-        CurrentPeriodFinalCommission = currentPeriodFinalCommission ?? 0;
         CurrentPeriodPurchaseTransactions = currentPeriodPurchaseTransactions;
+        CurrentPeriodCalculatedCommission = currentPeriodCalculatedCommission;
         PreviousPeriodRefundedTransactions = previousPeriodRefundedTransactions;
-        CurrentPeriodCalculatedCommission = currentPeriodCalculatedCommission ?? 0;
         CalculateAmount();
         SettleOrIssue();
         SetCheckSum();
@@ -58,7 +58,7 @@ public sealed class MerchantBilling : Billing
     public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, decimal? currentPeriodCalculatedCommission, decimal? currentPeriodFinalCommission,
+        IEnumerable<int> contractIds, decimal currentPeriodCalculatedCommission, decimal currentPeriodFinalCommission,
         decimal refundedTransactionsCommission, decimal previousPeriodRefundedTransactions,
         decimal currentPeriodPurchaseTransactions, IEnumerable<Installment>? installments = null,
         Billing? parent = null) : base(tenantId,
@@ -67,11 +67,11 @@ public sealed class MerchantBilling : Billing
     {
         Additions = 0;
         Deductions = 0;
+        CurrentPeriodFinalCommission = currentPeriodFinalCommission;
         RefundedTransactionsCommission = refundedTransactionsCommission;
-        CurrentPeriodFinalCommission = currentPeriodFinalCommission ?? 0;
         CurrentPeriodPurchaseTransactions = currentPeriodPurchaseTransactions;
+        CurrentPeriodCalculatedCommission = currentPeriodCalculatedCommission;
         PreviousPeriodRefundedTransactions = previousPeriodRefundedTransactions;
-        CurrentPeriodCalculatedCommission = currentPeriodCalculatedCommission ?? 0;
         CalculateAmount();
         SettleOrIssue();
         SetCheckSum();
