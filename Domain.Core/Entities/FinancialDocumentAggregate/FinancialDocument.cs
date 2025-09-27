@@ -36,6 +36,9 @@ public class FinancialDocument : BaseEntity<long>
     public RefundReason? RefundReason { get; private set; }
     public string RefundDescription { get; private set; }
     public FinancialDocumentRefundType? RefundType { get; private set; }
+    public decimal CreditAmount { get; set; }
+    public decimal CashAmount { get; set; }
+    public decimal PrepaymentAmount { get; set; }
     public long? ParentId { get; private set; }
     public FinancialDocument Parent { get; private set; }
     public ICollection<FinancialDocument> ChildFinancialDocuments { get; private set; }
@@ -47,7 +50,9 @@ public class FinancialDocument : BaseEntity<long>
     }
 
     public FinancialDocument(long id, int fromBusinessIdentityId, int toBusinessIdentityId, int tenantId, decimal amount,
-        FinancialDocumentType type, byte state, byte? paymentGatewayType = null,
+        decimal creditAmount, decimal cashAmount, decimal prepaymentAmount,
+        FinancialDocumentType type,
+        byte state, byte? paymentGatewayType = null,
         string description = null, int? merchantBranchId = null, int? tenantMerchantContractId = null, int? tenantPlatformContractId = null,
         byte? refundReason = null, string refundDescription = null, byte? refundType = null, long? parentId = null)
     {
@@ -56,6 +61,9 @@ public class FinancialDocument : BaseEntity<long>
         ToBusinessIdentityId = toBusinessIdentityId;
         TenantId = tenantId;
         Amount = amount;
+        CreditAmount = creditAmount;
+        CashAmount = cashAmount;
+        PrepaymentAmount = prepaymentAmount;
         Type = type;
         State = (FinancialDocumentState)state;
         PaymentGatewayType = (PaymentGatewayType)paymentGatewayType;
