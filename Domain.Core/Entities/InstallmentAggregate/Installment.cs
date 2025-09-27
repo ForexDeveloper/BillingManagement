@@ -23,7 +23,7 @@ public abstract class Installment : BaseEntity<long>
 
     public decimal Amount { get; protected set; }
 
-    public decimal? Commission { get; protected set; }
+    public decimal Commission { get; protected set; }
 
     public int Number { get; protected set; }
 
@@ -93,7 +93,7 @@ public abstract class Installment : BaseEntity<long>
         Amount = amount;
     }
 
-    public void SetCommission(decimal? commission)
+    public void SetCommission(decimal commission)
     {
         if (commission <= 0)
         {

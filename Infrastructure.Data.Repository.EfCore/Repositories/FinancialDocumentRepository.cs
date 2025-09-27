@@ -34,6 +34,12 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
         applicationDbContext.FinancialDocuments.Update(financialDocument);
     }
 
+    public void Attach(FinancialDocument financialDocument)
+    {
+        applicationDbContext.FinancialDocuments.Attach(financialDocument);
+        applicationDbContext.FinancialDocuments.Entry(financialDocument).State = EntityState.Modified;
+    }
+
     public void UpdateRange(List<FinancialDocument> financialDocuments)
     {
         applicationDbContext.FinancialDocuments.UpdateRange(financialDocuments);
@@ -123,11 +129,15 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             .SumAsync(p => p.Amount);
     }
 
-    public async Task<Dictionary<ContractIdentifier, List<FinancialDocument>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
+    public async Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
     {
-        return await query.Select(p => new
+        return await query.AsNoTracking().Select(p => new
         {
-            FinancialDocument = p,
+            p.Id,
+            p.Type,
+            p.Amount,
+            p.CreatedDateTime,
+            PurchaseCommission = p.Parent.Commission,
             p.TenantMerchantContract.TenantId,
             p.TenantMerchantContract.MerchantId,
             p.TenantMerchantContract.BillingPeriod,
@@ -142,6 +152,13 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             BillingPeriodType = p.BillingPeriodType,
             BillingDailyOriginDate = p.DailyBillingOriginDate
         })
-        .ToDictionaryAsync(p => p.Key, p => p.Select(q => q.FinancialDocument).ToList(), cancellationToken);
+        .ToDictionaryAsync(p => p.Key, p => p.Select(q => new FinancialDocumentDto()
+        {
+            Id = q.Id,
+            Type = q.Type,
+            Amount = q.Amount,
+            CreatedDateTime = q.CreatedDateTime,
+            PurchaseCommission = q.PurchaseCommission
+        }).ToList(), cancellationToken);
     }
 }

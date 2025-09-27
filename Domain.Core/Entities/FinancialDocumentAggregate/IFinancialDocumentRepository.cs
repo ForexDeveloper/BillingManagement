@@ -1,11 +1,11 @@
-﻿using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using Domain.Core.Enums;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Enums;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.FinancialDocumentAggregate;
 
@@ -14,6 +14,8 @@ public interface IFinancialDocumentRepository
     Task AddAsync(FinancialDocument financialDocument);
 
     void Update(FinancialDocument financialDocument);
+
+    void Attach(FinancialDocument financialDocument);
 
     void UpdateRange(List<FinancialDocument> financialDocuments);
 
@@ -43,5 +45,18 @@ public interface IFinancialDocumentRepository
 
     Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod);
 
-    Task<Dictionary<ContractIdentifier, List<FinancialDocument>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
+    Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
+}
+
+public sealed record FinancialDocumentDto
+{
+    public long Id { get; set; }
+
+    public decimal Amount { get; set; }
+
+    public FinancialDocumentType Type { get; set; }
+
+    public decimal? PurchaseCommission { get; set; }
+
+    public DateTime CreatedDateTime { get; set; }
 }

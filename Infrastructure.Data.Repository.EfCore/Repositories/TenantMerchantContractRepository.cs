@@ -27,12 +27,6 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
 
     public async Task<TenantMerchantContract> GetAsync(int id)
     {
-        const long billingId = 100;
-
-        await applicationDbContext.MerchantInstallments
-            .Where(p => p.Id == 1000)
-            .ExecuteUpdateAsync(p => p.SetProperty(q => q.Commission, billingId));
-
         var contract = await applicationDbContext.TenantMerchantContracts
             .Include(x => x.Tenant)
             .Include(x => x.Merchant)

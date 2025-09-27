@@ -57,8 +57,11 @@ public class FinancialDocument : BaseEntity<long>
     public string RefundDescription { get; private set; }
 
     public FinancialDocumentRefundType? RefundType { get; private set; }
+
     public decimal CreditAmount { get; set; }
+
     public decimal CashAmount { get; set; }
+
     public decimal PrepaymentAmount { get; set; }
 
     public decimal? Commission { get; private set; }
@@ -73,6 +76,12 @@ public class FinancialDocument : BaseEntity<long>
 
     private FinancialDocument()
     {
+        
+    }
+
+    public FinancialDocument(long id)
+    {
+        Id = id;
     }
 
     public FinancialDocument(long id, int fromBusinessIdentityId, int toBusinessIdentityId, int tenantId, decimal amount,

@@ -38,12 +38,14 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
             {
                 //purchase and refund
 
-                financialDocument = await CreateFinancialDocument(context);
+                //financialDocument = await CreateFinancialDocument(context);
 
-                var contract = await tenantMerchantContractRepository.GetActiveContractAsync(
-                    financialDocument.ToBusinessIdentityId, financialDocument.TenantId);
+                //var contract = await tenantMerchantContractRepository.GetActiveContractAsync(
+                //    financialDocument.ToBusinessIdentityId, financialDocument.TenantId);
 
-                await CreateMerchantInstallments(contract, financialDocument);
+                //await CreateMerchantInstallments(contract, financialDocument);
+
+                await CreateFinancialDocument(context);
 
                 await unitOfWork.SaveChangesAsync();
 
@@ -168,39 +170,36 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
         decimal financialDocumentTargetAmount = 0;
 
-        //if (!contract.CommissionReferenceTypes.Any())
-        //{
-        //    financialDocumentTargetAmount = financialDocument.Amount;
-        //}
-        //else
-        //{
-        //    foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
-        //    {
-        //        switch (contractCommissionReferenceType)
-        //        {
-        //            case CommissionReferenceType.PrepaymentAmount:
-        //                financialDocumentTargetAmount += financialDocument.FinancialDocumentPayments
-        //                    .Where(p => p.Type == FinancialDocumentPaymentType.Prepayment).Sum(p => p.Amount);
-        //                break;
+        if (!contract.CommissionReferenceTypes.Any())
+        {
+            financialDocumentTargetAmount = financialDocument.Amount;
+        }
+        else
+        {
+            foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
+            {
+                switch (contractCommissionReferenceType)
+                {
+                    case CommissionReferenceType.CashAmount:
+                        financialDocumentTargetAmount += financialDocument.CashAmount;
+                        break;
 
-        //            case CommissionReferenceType.CashAmount:
-        //                financialDocumentTargetAmount += financialDocument.FinancialDocumentPayments
-        //                    .Where(p => p.Type == FinancialDocumentPaymentType.Cash).Sum(p => p.Amount);
-        //                break;
+                    case CommissionReferenceType.CreditAmount:
+                        financialDocumentTargetAmount += financialDocument.CreditAmount;
+                        break;
 
-        //            case CommissionReferenceType.CreditAmount:
-        //                financialDocumentTargetAmount += financialDocument.FinancialDocumentPayments
-        //                    .Where(p => p.Type == FinancialDocumentPaymentType.Credit).Sum(p => p.Amount);
-        //                break;
+                    case CommissionReferenceType.PrepaymentAmount:
+                        financialDocumentTargetAmount += financialDocument.PrepaymentAmount;
+                        break;
 
-        //            case CommissionReferenceType.InterestAmount:
-        //                break;
+                    case CommissionReferenceType.InterestAmount:
+                        break;
 
-        //            default:
-        //                throw new ArgumentOutOfRangeException();
-        //        }
-        //    }
-        //}
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
 
         switch (contract.CommissionCalculationType)
         {

@@ -56,54 +56,72 @@ public sealed class MerchantBillingService(
             foreach (var billingDto in billingGroup.OrderBy(p => p.EndOfPeriod))
             {
                 decimal previousDebitAmount = 0;
-                decimal currentPeriodCalculatedCommission;
+                decimal totalTransactionsAmount = 0;
+                decimal currentPeriodFinalCommission = 0;
+                decimal refundedTransactionsCommission = 0;
+                decimal currentPeriodCalculatedCommission = 0;
+                decimal currentPeriodPurchaseTransactions = 0;
+                decimal previousPeriodRefundedTransactions = 0;
 
                 var contract = billingDto.ContractGroup;
+
+                var purchaseFinancialDocuments = new List<FinancialDocumentDto>();
 
                 var contractIdentifier = new ContractIdentifier(contract.TenantId, contract.MerchantId, contract.BillingPeriod,
                     contract.BillingPeriodType, contract.BillingDailyOriginDate, contract.CommissionCalculationType);
 
-                var installments = installmentGroup.GetValueOrDefault(contractIdentifier);
+                var installments = installmentGroup.GetValueOrDefault(contractIdentifier).Where(p =>
+                    billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod).ToList();
 
-                var financialDocuments = financialDocumentGroup.GetValueOrDefault(contractIdentifier);
+                var financialDocuments = financialDocumentGroup.GetValueOrDefault(contractIdentifier)
+                    .Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod).ToList();
 
-                var refundFinancialDocuments = financialDocuments.Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod).Where(p => p.Type == FinancialDocumentType.Refund);
+                foreach (var installment in installments)
+                {
+                    currentPeriodPurchaseTransactions += installment.Amount;
+                    currentPeriodCalculatedCommission += installment.Commission;
+                }
 
-                var purchaseFinancialDocuments = refundFinancialDocuments.Select(p => p.Parent);
+                foreach (var financialDocumentDto in financialDocuments)
+                {
+                    switch (financialDocumentDto.Type)
+                    {
+                        case FinancialDocumentType.Purchase:
+                            totalTransactionsAmount += financialDocumentDto.Amount;
+                            break;
 
-                var refundedTransactionsCommission = purchaseFinancialDocuments.Sum(p => p.Commission) ?? 0;
+                        case FinancialDocumentType.Refund:
+                            purchaseFinancialDocuments.Add(financialDocumentDto);
+                            previousPeriodRefundedTransactions += financialDocumentDto.Amount;
+                            refundedTransactionsCommission += financialDocumentDto.PurchaseCommission ?? 0;
+                            break;
 
-                var currentPeriodPurchaseTransactions = installments.Where(p => billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod).Sum(p => p.Amount);
+                        case FinancialDocumentType.Reverse:
+                            break;
 
-                var previousPeriodRefundedTransactions = financialDocuments.Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod).Where(p => p.Type == FinancialDocumentType.Refund).Sum(p => p.Amount);
-
-                var totalTransactionsAmount = financialDocuments
-                    .Where(p => p.Type == FinancialDocumentType.Purchase)
-                    .Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod)
-                    .Sum(p => p.Amount);
+                        default:
+                            continue;
+                    }
+                }
 
                 if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
                     currentPeriodCalculatedCommission = CalculateUniformedTieredCommission(contract, totalTransactionsAmount);
                 }
-                else
-                {
-                    currentPeriodCalculatedCommission = installments
-                        .Where(p => billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod)
-                        .Sum(p => p.Commission) ?? 0;
-                }
 
-                var currentPeriodFinalCommission = CalculateFinalCommission(contract, currentPeriodCalculatedCommission);
+                currentPeriodFinalCommission = CalculateFinalCommission(contract, currentPeriodCalculatedCommission);
 
                 if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
-                    foreach (var financialDocument in financialDocuments
-                                 .Where(p => p.Type == FinancialDocumentType.Purchase)
-                                 .Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod))
+                    foreach (var financialDocumentDto in purchaseFinancialDocuments)
                     {
-                        var commission = currentPeriodFinalCommission * (financialDocument.Amount / totalTransactionsAmount);
+                        var commission = currentPeriodFinalCommission * (financialDocumentDto.Amount / totalTransactionsAmount);
+
+                        var financialDocument = new FinancialDocument(financialDocumentDto.Id);
 
                         financialDocument.SetCommission(commission);
+
+                        financialDocumentRepository.Attach(financialDocument);
                     }
                 }
 
@@ -127,10 +145,7 @@ public sealed class MerchantBillingService(
                     previousPeriodRefundedTransactions, currentPeriodPurchaseTransactions, installments,
                     overdueBilling);
 
-                if (billing.Amount == 0 && contract.HasEndorsement)
-                {
-                    continue;
-                }
+                if (billing.Amount == 0 && contract.HasEndorsement) continue;
 
                 billings.Add(billing);
 
@@ -321,7 +336,7 @@ public sealed class MerchantBillingService(
                 }
                 else
                 {
-                    currentPeriodCalculatedCommission = installments.Where(p => billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod).Sum(p => p.Commission) ?? 0;
+                    currentPeriodCalculatedCommission = installments.Where(p => billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod).Sum(p => p.Commission);
                 }
 
                 if (currentPeriodCalculatedCommission > contract.PeriodMaxCommissionAmount)
