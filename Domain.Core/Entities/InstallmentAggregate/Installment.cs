@@ -1,11 +1,11 @@
-﻿using System;
-using Domain.Base;
-using Domain.Core.Enums;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.TenantAggregate;
+﻿using Domain.Base;
 using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Enums;
+using System;
 
 namespace Domain.Core.Entities.InstallmentAggregate;
 
@@ -29,7 +29,7 @@ public abstract class Installment : BaseEntity<long>
 
     public DateTime DueDate { get; protected set; }
 
-    public B2bInstallmentType Type { get; protected set; }
+    public InstallmentType Type { get; protected set; }
 
     public InstallmentStatus Status { get; protected set; }
 
@@ -54,7 +54,7 @@ public abstract class Installment : BaseEntity<long>
 
     protected Installment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
         int toBusinessIdentityId, decimal amount, int number,
-        DateTime dueDate, B2bInstallmentType type)
+        DateTime dueDate, InstallmentType type)
     {
         Type = type;
         Amount = amount;
@@ -70,7 +70,7 @@ public abstract class Installment : BaseEntity<long>
 
     protected Installment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
         int toBusinessIdentityId, decimal amount, int number,
-        DateTime dueDate, B2bInstallmentType type)
+        DateTime dueDate, InstallmentType type)
     {
         Type = type;
         Number = number;

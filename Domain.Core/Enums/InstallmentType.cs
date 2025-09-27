@@ -2,7 +2,7 @@
 
 namespace Domain.Core.Enums;
 
-public enum B2bInstallmentType : byte
+public enum InstallmentType : byte
 {
     [Description("قسط")]
     Installment = 1,
