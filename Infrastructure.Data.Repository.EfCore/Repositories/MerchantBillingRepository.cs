@@ -18,7 +18,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
     {
         var billings = await applicationDbContext.MerchantBillings
             .Where(p => (p.Status == BillingStatus.Overdue && p.Children.Any() == false) ||
-                        ((p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid) && p.DueDate.AddDays(-1) < DateTime.Today))
+                        ((p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid) && p.DueDate.AddDays(1) < DateTime.Today))
             .Select(p => new NotSettledBilling
             {
                 Billing = p,

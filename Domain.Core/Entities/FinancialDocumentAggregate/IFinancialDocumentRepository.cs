@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
+using Domain.Core.Enums;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.FinancialDocumentAggregate;
 
@@ -36,7 +37,9 @@ public interface IFinancialDocumentRepository
 
     Task<decimal> GetPeriodTotalTransactionsAmount(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
 
-    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod);
+    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, int billingPeriod,
+        TimeInterval billingPeriodType, DateTime? dailyBillingOriginDate,
+        CommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod);
 
     Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod);
 
