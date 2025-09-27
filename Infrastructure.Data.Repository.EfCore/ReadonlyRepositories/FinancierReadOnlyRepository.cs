@@ -1,11 +1,11 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
-using Application.Query.ReadOnlyRepositoryContracts;
+﻿using Application.Query.ReadOnlyRepositoryContracts;
 using Domain.Core.Entities.FinancierAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Application.Query.QueryModels.Financiers;
+using Application.Query.Queries.Financiers;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories
 {

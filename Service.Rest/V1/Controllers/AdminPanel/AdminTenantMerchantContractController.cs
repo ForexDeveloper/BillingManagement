@@ -1,5 +1,5 @@
 ﻿using Application.Command.TenantMerchantContractCommands;
-using Application.Query.Queries;
+using Application.Query.Queries.TenantMerchantContracts;
 using Application.Query.ViewModels.TenantMerchantContracts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

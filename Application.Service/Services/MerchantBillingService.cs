@@ -98,7 +98,7 @@ public sealed class MerchantBillingService(
 
                 case TimeInterval.Month:
 
-                    period = DateHelper.RegulateBillingPeriod(year, month, period);
+                    period = DateHelper.RegulateBillingPeriod(daysInMonth, period);
 
                     if (period >= dayOfMonth)
                     {

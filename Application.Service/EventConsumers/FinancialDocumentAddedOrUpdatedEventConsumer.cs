@@ -25,8 +25,6 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     ITenantMerchantContractRepository tenantMerchantContractRepository,
     ILogger<FinancialDocumentAddedOrUpdatedEventConsumer> logger) : IConsumer<FcmFinancialDocumentAddedOrUpdatedEvent>
 {
-    public readonly ILogger<FinancialDocumentAddedOrUpdatedEventConsumer> _logger = logger;
-
     public async Task Consume(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context)
     {
         var stopWatch = new Stopwatch();
@@ -58,7 +56,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
         catch (Exception ex)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
+            logger.LogCritical(new LogStruct
             {
                 Message = ex.Message,
                 ServiceName = "FinancialDocumentAddedOrUpdatedEventConsumer_Consume",
@@ -72,7 +70,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
                 Message = "",
                 ServiceName = "FinancialDocumentAddedOrUpdatedEventConsumer_Consume",
@@ -126,7 +124,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
         if (context.Message.Type != 1)
         {
             ArgumentValidationException ex = new ArgumentValidationException(nameof(context.Message.Type), "نوع سند مالی برای بازگشت کامل وجه خرید معتبر نیست.");
-            _logger.LogError(new LogStruct
+            logger.LogError(new LogStruct
             {
                 Message = ex.Message,
                 ServiceName = "FinancialDocumentAddedOrUpdatedEventConsumer_Consume",
@@ -160,7 +158,10 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
         var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
 
-        const decimal currentTransactionAmount = 15000000;
+        var period = tenantMerchantContractRepository.GetContractActivePeriod(contract);
+
+        var sumOfTransactionsOfCurrentPeriod = await financialDocumentRepository.GetSumOfTransactionsOfCurrentPeriod(contract,
+            period.StartOfPeriod, period.EndOfPeriod);
 
         decimal financialDocumentTargetAmount = 0;
 
@@ -205,32 +206,47 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
             case CommissionCalculationType.CumulativeTiered:
 
-                var tieredCommission = contract.TieredCommissions
-                    .FirstOrDefault(p => currentTransactionAmount <= p.FromAmount ||
-                                         (p.FromAmount <= currentTransactionAmount && currentTransactionAmount < p.ToAmount) ||
-                                         p.ToAmount < currentTransactionAmount);
+                var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
+                    p.FromAmount < sumOfTransactionsOfCurrentPeriod && sumOfTransactionsOfCurrentPeriod <= p.ToAmount);
 
-                if (tieredCommission == null) break;
-
-                commission = financialDocumentTargetAmount * tieredCommission.Percentage;
-
-                if (commission > tieredCommission.MaxAmount)
+                if (tieredCommission == null)
                 {
-                    commission = tieredCommission.MaxAmount.Value;
-                }
+                    var minTieredCommission = contract.TieredCommissions.MinBy(p => p.ToAmount);
 
-                if (commission < tieredCommission.MinAmount)
-                {
-                    commission = tieredCommission.MinAmount.Value;
+                    var maxTieredCommission = contract.TieredCommissions.MaxBy(p => p.ToAmount);
+
+                    if (sumOfTransactionsOfCurrentPeriod <= minTieredCommission.FromAmount)
+                    {
+                        tieredCommission = minTieredCommission;
+                    }
+
+                    else if (sumOfTransactionsOfCurrentPeriod > maxTieredCommission.ToAmount)
+                    {
+                        tieredCommission = maxTieredCommission;
+                    }
+
+                    if (tieredCommission == null) break;
+
+                    commission = sumOfTransactionsOfCurrentPeriod * tieredCommission.Percentage;
+
+                    if (commission > tieredCommission.MaxAmount)
+                    {
+                        commission = tieredCommission.MaxAmount.Value;
+                    }
+
+                    if (commission < tieredCommission.MinAmount)
+                    {
+                        commission = tieredCommission.MinAmount.Value;
+                    }
                 }
 
                 break;
 
             case CommissionCalculationType.FixedPercentage:
 
-                commission = contract.FixedPercentageCommission.HasValue
-                    ? financialDocumentTargetAmount * contract.FixedPercentageCommission.Value
-                    : 0;
+                if (!contract.FixedPercentageCommission.HasValue) break;
+
+                commission = financialDocumentTargetAmount * contract.FixedPercentageCommission.Value;
 
                 if (commission > contract.TransactionMaxCommissionAmount)
                 {

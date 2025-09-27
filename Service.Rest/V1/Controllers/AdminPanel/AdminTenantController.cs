@@ -1,4 +1,4 @@
-﻿using Application.Query.Queries;
+﻿using Application.Query.Queries.Tenants;
 using Application.Query.ViewModels.Tenants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

@@ -1,5 +1,5 @@
 ﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+using Application.Query.QueryModels.Merchants;
 using Domain.Core.Entities.MerchantAggregate;
 using System.Collections.Generic;
 using System.Threading.Tasks;

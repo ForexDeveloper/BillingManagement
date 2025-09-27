@@ -1,11 +1,11 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
-using Application.Query.ReadOnlyRepositoryContracts;
+﻿using Application.Query.ReadOnlyRepositoryContracts;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Application.Query.QueryModels.TenantMerchantContracts;
+using Application.Query.Queries.TenantMerchantContracts;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories
 {

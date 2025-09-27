@@ -1,5 +1,5 @@
 ﻿using Application.Command.TenantPlatformContractCommands;
-using Application.Query.Queries;
+using Application.Query.Queries.TenantPlatfromContracts;
 using Application.Query.ViewModels.TenantPlatfromContracts;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

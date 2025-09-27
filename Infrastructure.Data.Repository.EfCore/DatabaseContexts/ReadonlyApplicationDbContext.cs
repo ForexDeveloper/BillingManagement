@@ -1,6 +1,5 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Domain.Core.Entities.BillingAggregate;
+﻿using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.BillingPaymentAggregate;
 using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
@@ -21,6 +20,8 @@ using Infrastructure.Data.Repository.EfCore.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Shared.EventBus.Entities;
 using Shared.MinIO.Entities;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
 {
@@ -37,7 +38,7 @@ namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
         public DbSet<OutboxEntity> Outboxes { get; set; }
         public DbSet<TenantMerchantContract> TenantMerchantContracts { get; set; }
         public DbSet<Attachment> Attachment { get; set; }
-        public DbSet<WalletContract> WalletContracts { get; set; } ////To-do
+        public DbSet<WalletContract> WalletContracts { get; set; }
         public DbSet<TenantPlatformContract> TenantPlatformContracts { get; set; }
         public DbSet<TenantPlatformContractFacilitator> TenantPlatformContractFacilitators { get; set; }
         public DbSet<TenantPlatformContractProvider> TenantPlatformContractProviders { get; set; }
@@ -52,6 +53,7 @@ namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
         public DbSet<MerchantBilling> MerchantBillings { get; set; }
         public DbSet<MerchantInstallment> MerchantInstallments { get; set; }
         public DbSet<Billing> Billings { get; set; }
+        public DbSet<BillingPayment> BillingPayments { get; set; }
         public DbSet<Installment> Installments { get; set; }
         public override int SaveChanges()
         {
@@ -80,6 +82,10 @@ namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
             modelBuilder.ApplyConfiguration(new TenantPlatformContractConfiguration());
             modelBuilder.ApplyConfiguration(new TenantPlatformContractFacilitatorConfiguration());
             modelBuilder.ApplyConfiguration(new TenantPlatformContractProviderConfiguration());
+            modelBuilder.ApplyConfiguration(new WalletContractConfiguration());
+            modelBuilder.ApplyConfiguration(new WalletContractFinancierConfiguration());
+            modelBuilder.ApplyConfiguration(new WalletContractFacilitatorConfiguration());
+            modelBuilder.ApplyConfiguration(new WalletContractGuarantorConfiguration());
             modelBuilder.ApplyConfiguration(new ProviderConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationConfiguration());
             modelBuilder.ApplyConfiguration(new FinancierConfiguration());
@@ -88,10 +94,9 @@ namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
             modelBuilder.ApplyConfiguration(new BusinessIdentityConfiguration());
             modelBuilder.ApplyConfiguration(new AttachmentConfiguration());
             modelBuilder.ApplyConfiguration(new TenantIpgSettingConfiguration());
-
             modelBuilder.ApplyConfiguration(new FinancialDocumentConfiguration());
-
             modelBuilder.ApplyConfiguration(new BillingConfiguration());
+            modelBuilder.ApplyConfiguration(new BillingPaymentConfiguration());
             modelBuilder.ApplyConfiguration(new InstallmentConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantBranchConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantBillingConfiguration());

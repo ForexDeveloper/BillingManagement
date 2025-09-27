@@ -1,21 +1,20 @@
-﻿using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using Domain.Core.Enums;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Enums;
+using System.Globalization;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Application.Service.Helper;
+using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
-public class TenantMerchantContractRepository(ApplicationDbContext applicationDbContext) : ITenantMerchantContractRepository
+public sealed class TenantMerchantContractRepository(ApplicationDbContext applicationDbContext) : ITenantMerchantContractRepository
 {
-    private readonly ApplicationDbContext _applicationDbContext = applicationDbContext;
-
     public async Task AddAsync(TenantMerchantContract tenantMerchantContract)
     {
         await applicationDbContext.TenantMerchantContracts.AddAsync(tenantMerchantContract);
@@ -185,5 +184,87 @@ public class TenantMerchantContractRepository(ApplicationDbContext applicationDb
         })
         .AsNoTracking()
         .ToListAsync(cancellationToken);
+    }
+
+    public (DateTime StartOfPeriod, DateTime EndOfPeriod) GetContractActivePeriod(TenantMerchantContract contract)
+    {
+        int difference;
+        DateTime endOfPeriod;
+        DateTime startOfPeriod;
+
+        var today = DateTime.Today;
+        var pc = new PersianCalendar();
+
+        var year = pc.GetYear(today);
+        var month = pc.GetMonth(today);
+        var dayOfWeek = pc.GetDayOfWeek(today);
+        var dayOfMonth = pc.GetDayOfMonth(today);
+        var daysInMonth = pc.GetDaysInMonth(year, month);
+
+        var billingPeriod = contract.BillingPeriod;
+
+        switch (contract.BillingPeriodType)
+        {
+            case TimeInterval.Day:
+
+                if (!contract.DailyBillingOriginDate.HasValue) throw new Exception();
+
+                var originDate = contract.DailyBillingOriginDate.Value;
+
+                if (today.Date < originDate.Date) throw new Exception();
+
+                var totalDays = (today.Date - originDate.Date).Days;
+
+                difference = billingPeriod - (totalDays % billingPeriod);
+
+                endOfPeriod = pc.AddDays(new DateTime(year, month, dayOfMonth, pc), difference);
+
+                startOfPeriod = pc.AddDays(endOfPeriod, -billingPeriod);
+
+                break;
+
+            case TimeInterval.Week:
+
+                if ((DayOfWeek)billingPeriod >= dayOfWeek)
+                {
+                    difference = billingPeriod - (int)dayOfWeek;
+                }
+                else
+                {
+                    difference = 7 - ((int)dayOfWeek - billingPeriod);
+                }
+
+                endOfPeriod = pc.AddDays(new DateTime(year, month, dayOfMonth, pc), difference);
+
+                startOfPeriod = pc.AddWeeks(endOfPeriod, -1);
+
+                break;
+
+            case TimeInterval.Month:
+
+                billingPeriod = DateHelper.RegulateBillingPeriod(daysInMonth, billingPeriod);
+
+                if (billingPeriod >= dayOfMonth)
+                {
+                    difference = billingPeriod - dayOfMonth;
+
+                    endOfPeriod = pc.AddMonths(new DateTime(year, month, dayOfMonth, pc), difference);
+                }
+                else
+                {
+                    endOfPeriod = pc.AddMonths(new DateTime(year, month, billingPeriod, pc), 1);
+                }
+
+                startOfPeriod = pc.AddMonths(endOfPeriod, -1);
+
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        (DateTime StartOfPeriod, DateTime EndOfPeriod) period = new(startOfPeriod, endOfPeriod);
+
+        return new ValueTuple<DateTime, DateTime>(startOfPeriod, endOfPeriod);
     }
 }

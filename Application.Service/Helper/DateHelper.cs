@@ -82,18 +82,15 @@ public static class DateHelper
 
         var year = pc.GetYear(date);
         var month = pc.GetMonth(date);
+        var daysInMonth = pc.GetDaysInMonth(year, month);
 
-        periodOfMonth = RegulateBillingPeriod(year, month, periodOfMonth);
+        periodOfMonth = RegulateBillingPeriod(daysInMonth, periodOfMonth);
 
         return $"{year}/{month:00}/{periodOfMonth:00}";
     }
 
-    public static int RegulateBillingPeriod(int year, int month, int billingPeriod)
+    public static int RegulateBillingPeriod(int daysInMonth, int billingPeriod)
     {
-        PersianCalendar pc = new();
-
-        var daysInMonth = pc.GetDaysInMonth(year, month);
-
         if (daysInMonth == 29 && (billingPeriod == 30 || billingPeriod == 31))
         {
             billingPeriod = 29;

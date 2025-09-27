@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.FinancialDocumentAggregate;
@@ -34,6 +35,10 @@ public interface IFinancialDocumentRepository
     Task<bool> ExecuteQueryAnyAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
 
     Task<decimal> GetPeriodTotalTransactionsAmount(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
+
+    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod);
+
+    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod);
 
     Task<Dictionary<ContractIdentifier, List<FinancialDocument>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
 }

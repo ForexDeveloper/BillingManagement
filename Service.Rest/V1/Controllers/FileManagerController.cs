@@ -1,5 +1,5 @@
 ﻿using Application.Command.FileManagerCommands;
-using Application.Query.Queries;
+using Application.Query.Queries.Attachments;
 using Application.Query.ViewModels.Attachments;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;

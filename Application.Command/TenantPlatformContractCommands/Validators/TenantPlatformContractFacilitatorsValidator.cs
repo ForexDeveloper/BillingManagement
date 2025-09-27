@@ -1,4 +1,4 @@
-﻿using Application.Service.Dtos.TenantPlatformContract;
+﻿using Application.Service.Dtos.TenantPlatformContracts;
 using Domain.Core.Enums;
 using FluentValidation;
 

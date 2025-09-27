@@ -1,4 +1,4 @@
-﻿using Application.Query.Queries;
+﻿using Application.Query.Queries.Merchants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

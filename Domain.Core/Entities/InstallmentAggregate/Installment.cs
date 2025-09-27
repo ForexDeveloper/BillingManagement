@@ -1,11 +1,11 @@
-﻿using System;
-using Domain.Base;
-using Domain.Core.Enums;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.TenantAggregate;
+﻿using Domain.Base;
 using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Enums;
+using System;
 
 namespace Domain.Core.Entities.InstallmentAggregate;
 

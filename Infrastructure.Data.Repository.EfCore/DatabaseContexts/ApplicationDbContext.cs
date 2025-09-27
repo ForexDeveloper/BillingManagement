@@ -1,5 +1,5 @@
-﻿using System.Linq;
-using Domain.Core.Entities.BillingAggregate;
+﻿using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.BillingPaymentAggregate;
 using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
@@ -18,6 +18,7 @@ using Domain.Core.Entities.WalletContractAggregate;
 using Infrastructure.Data.Repository.EfCore.EntityConfigurations;
 using Microsoft.EntityFrameworkCore;
 using Shared.EventBus.Entities;
+using System.Linq;
 
 namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
 {
@@ -46,6 +47,7 @@ namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
         public DbSet<TenantIpgSetting> TenantIpgSettings { get; set; }
         public DbSet<FinancialDocument> FinancialDocuments { get; set; }
         public DbSet<Billing> Billings { get; set; }
+        public DbSet<BillingPayment> BillingPayments { get; set; }
         public DbSet<Installment> Installments { get; set; }
         public DbSet<MerchantBilling> MerchantBillings { get; set; }
         public DbSet<MerchantInstallment> MerchantInstallments { get; set; }
@@ -53,7 +55,6 @@ namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.HasDefaultSchema("Bill");
-
 
             var cascadeFKs = modelBuilder.Model.GetEntityTypes()
                             .SelectMany(t => t.GetForeignKeys())
@@ -68,29 +69,29 @@ namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
             modelBuilder.ApplyConfiguration(new TenantConfiguration());
             modelBuilder.ApplyConfiguration(new OutboxEntityConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantConfiguration());
-            modelBuilder.ApplyConfiguration(new TenantMerchantContractConfiguration());
             modelBuilder.ApplyConfiguration(new AttachmentConfiguration());
             modelBuilder.ApplyConfiguration(new OrganizationConfiguration());
             modelBuilder.ApplyConfiguration(new FinancierConfiguration());
             modelBuilder.ApplyConfiguration(new FacilitatorConfiguration());
             modelBuilder.ApplyConfiguration(new GuarantorConfiguration());
             modelBuilder.ApplyConfiguration(new BusinessIdentityConfiguration());
+            modelBuilder.ApplyConfiguration(new TenantMerchantContractConfiguration());
             modelBuilder.ApplyConfiguration(new TenantPlatformContractConfiguration());
             modelBuilder.ApplyConfiguration(new TenantPlatformContractFacilitatorConfiguration());
             modelBuilder.ApplyConfiguration(new TenantPlatformContractProviderConfiguration());
+            modelBuilder.ApplyConfiguration(new WalletContractConfiguration());
+            modelBuilder.ApplyConfiguration(new WalletContractFinancierConfiguration());
+            modelBuilder.ApplyConfiguration(new WalletContractFacilitatorConfiguration());
+            modelBuilder.ApplyConfiguration(new WalletContractGuarantorConfiguration());
             modelBuilder.ApplyConfiguration(new ProviderConfiguration());
             modelBuilder.ApplyConfiguration(new TenantIpgSettingConfiguration());
-
             modelBuilder.ApplyConfiguration(new FinancialDocumentConfiguration());
-
             modelBuilder.ApplyConfiguration(new MerchantBranchConfiguration());
             modelBuilder.ApplyConfiguration(new BillingConfiguration());
+            modelBuilder.ApplyConfiguration(new BillingPaymentConfiguration());
             modelBuilder.ApplyConfiguration(new InstallmentConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantBillingConfiguration());
             modelBuilder.ApplyConfiguration(new MerchantInstallmentConfiguration());
-            modelBuilder.ApplyConfiguration(new BillingPaymentConfiguration());
-
-
         }
     }
 }

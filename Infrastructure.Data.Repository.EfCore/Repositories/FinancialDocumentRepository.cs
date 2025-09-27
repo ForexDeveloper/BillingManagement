@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
@@ -93,6 +94,22 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             .Where(p => p.FromBusinessIdentityId == tenantId && p.ToBusinessIdentityId == merchantId)
             .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
             .Where(p => p.Type == FinancialDocumentType.Purchase).SumAsync(p => p.Amount, cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod)
+    {
+        return await applicationDbContext.FinancialDocuments
+            .Where(p => p.FromBusinessIdentityId == tenantId && p.ToBusinessIdentityId == merchantId)
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
+            .Where(p => p.Type == FinancialDocumentType.Purchase).SumAsync(p => p.Amount);
+    }
+
+    public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod)
+    {
+        return await applicationDbContext.FinancialDocuments
+            .Where(p => p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
+            .Where(p => p.Type == FinancialDocumentType.Purchase).SumAsync(p => p.Amount);
     }
 
     public async Task<Dictionary<ContractIdentifier, List<FinancialDocument>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)

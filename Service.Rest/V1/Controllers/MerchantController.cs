@@ -1,4 +1,4 @@
-﻿using Application.Query.Queries;
+﻿using Application.Query.Queries.Merchants;
 using Application.Query.ViewModels.Merchants;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -43,8 +43,8 @@ namespace Service.Rest.V1.Controllers
         [HttpGet("{id}/branches")]
         [ActionName(nameof(GetMerchantBranchesAsync))]
         [SwaggerOperation("Get a merchant branch by id")]
-        [SwaggerResponse((int)HttpStatusCode.OK, "merchant branch returned", typeof(GetMerchantBranchViewModel))]
-        public async Task<ActionResult<List<GetMerchantBranchViewModel>>> GetMerchantBranchesAsync([FromRoute] int id)
+        [SwaggerResponse((int)HttpStatusCode.OK, "merchant branch returned", typeof(GetMerchantBranchVM))]
+        public async Task<ActionResult<List<GetMerchantBranchVM>>> GetMerchantBranchesAsync([FromRoute] int id)
         {
             var result = await _mediator.Send(new GetMerchantBranchesByTenantIdQuery(id, _currentUserService.TenantId));
             return Ok(result);

@@ -1,5 +1,4 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.QueryModels;
 using Application.Query.ReadOnlyRepositoryContracts;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Enums;
@@ -7,6 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Threading.Tasks;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Application.Query.QueryModels.IpgSettings;
+using Application.Query.QueryModels.Tenants;
+using Application.Query.Queries.IpgSettings;
+using Application.Query.Queries.Tenants;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories
 {
