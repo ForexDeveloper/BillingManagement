@@ -14,6 +14,11 @@ namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
 public sealed class FinancialDocumentRepository(ApplicationDbContext applicationDbContext) : IFinancialDocumentRepository
 {
+    public void Attach(long id, decimal? commission)
+    {
+
+    }
+
     public async Task AddAsync(FinancialDocument financialDocument)
     {
         await applicationDbContext.FinancialDocuments.AddAsync(financialDocument);
@@ -123,11 +128,15 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             .SumAsync(p => p.Amount);
     }
 
-    public async Task<Dictionary<ContractIdentifier, List<FinancialDocument>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
+    public async Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
     {
-        return await query.Select(p => new
+        return await query.AsNoTracking().Select(p => new
         {
-            FinancialDocument = p,
+            p.Id,
+            p.Type,
+            p.Amount,
+            p.CreatedDateTime,
+            PurchaseCommission = p.Parent.Commission,
             p.TenantMerchantContract.TenantId,
             p.TenantMerchantContract.MerchantId,
             p.TenantMerchantContract.BillingPeriod,
@@ -142,6 +151,13 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             BillingPeriodType = p.BillingPeriodType,
             BillingDailyOriginDate = p.DailyBillingOriginDate
         })
-        .ToDictionaryAsync(p => p.Key, p => p.Select(q => q.FinancialDocument).ToList(), cancellationToken);
+        .ToDictionaryAsync(p => p.Key, p => p.Select(q => new FinancialDocumentDto()
+        {
+            Id = q.Id,
+            Type = q.Type,
+            Amount = q.Amount,
+            CreatedDateTime = q.CreatedDateTime,
+            PurchaseCommission = q.PurchaseCommission
+        }).ToList(), cancellationToken);
     }
 }
