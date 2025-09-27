@@ -60,12 +60,12 @@ public sealed class MerchantBillingService(
 
                 var contract = billingDto.ContractGroup;
 
-                var billingKey = new ContractIdentifier(contract.TenantId, contract.MerchantId, contract.BillingPeriod,
+                var contractIdentifier = new ContractIdentifier(contract.TenantId, contract.MerchantId, contract.BillingPeriod,
                     contract.BillingPeriodType, contract.BillingDailyOriginDate, contract.CommissionCalculationType);
 
-                var installments = installmentGroup.GetValueOrDefault(billingKey);
+                var installments = installmentGroup.GetValueOrDefault(contractIdentifier);
 
-                var financialDocuments = financialDocumentGroup.GetValueOrDefault(billingKey);
+                var financialDocuments = financialDocumentGroup.GetValueOrDefault(contractIdentifier);
 
                 var refundFinancialDocuments = financialDocuments.Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod).Where(p => p.Type == FinancialDocumentType.Refund);
 
@@ -268,12 +268,13 @@ public sealed class MerchantBillingService(
 
                 var startOfPeriod = billingDto.StartOfPeriod;
 
-                var billingKey = new ContractIdentifier(contract.TenantId, contract.MerchantId, contract.BillingPeriod,
-                    contract.BillingPeriodType, contract.BillingDailyOriginDate, contract.CommissionCalculationType);
+                var contractIdentifier = new ContractIdentifier(contract.TenantId, contract.MerchantId,
+                    contract.BillingPeriod, contract.BillingPeriodType, contract.BillingDailyOriginDate,
+                    contract.CommissionCalculationType);
 
-                var installments = installmentGroup.GetValueOrDefault(billingKey);
+                var installments = installmentGroup.GetValueOrDefault(contractIdentifier);
 
-                var financialDocuments = financialDocumentGroup.GetValueOrDefault(billingKey);
+                var financialDocuments = financialDocumentGroup.GetValueOrDefault(contractIdentifier);
 
                 var currentPeriodPurchaseTransactions = installments.Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod).Sum(p => p.Amount);
 

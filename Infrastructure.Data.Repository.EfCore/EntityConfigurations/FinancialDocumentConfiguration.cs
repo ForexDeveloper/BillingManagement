@@ -13,6 +13,10 @@ namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations
             builder.Property(p => p.Id).ValueGeneratedNever();
 
             builder.Property(p => p.Amount).HasColumnType("decimal(32, 10)").IsRequired();
+            builder.Property(p => p.CreditAmount).HasColumnType("decimal(32, 10)").IsRequired();
+            builder.Property(p => p.CashAmount).HasColumnType("decimal(32, 10)").IsRequired();
+            builder.Property(p => p.PrepaymentAmount).HasColumnType("decimal(32, 10)").IsRequired();
+
 
             builder.Property(p => p.Description).HasMaxLength(500);
             builder.Property(p => p.CheckSum).HasMaxLength(500).IsRequired();

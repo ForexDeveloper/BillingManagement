@@ -1,5 +1,5 @@
 using Application.Service.HealthChecks;
-using Infrastructure.Data.Repository.EfCore;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +14,6 @@ using Shared.Logging.Serilog;
 using Shared.Logging.Serilog.Configurations;
 using Shared.Logging.Serilog.Utilities;
 using System;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 try
 {
@@ -58,7 +57,7 @@ try
 
 
             services.AddHostedService<OutboxPublisherServiceWorker>();
-            services.AddHostedService<MerchantBillingServiceWorker>();
+            //services.AddHostedService<MerchantBillingServiceWorker>();
 
             //services.AddHostedService<CustomerWalletServiceWorker>();
             services.AddHealthChecks().AddCheck<DatabaseConnectionHealthCheck>("worker_database_health_check");

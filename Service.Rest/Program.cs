@@ -1,6 +1,6 @@
 using Application.Command.Base;
 using Application.Service.HealthChecks;
-using Infrastructure.Data.Repository.EfCore;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -16,7 +16,6 @@ using Shared.Swagger;
 using Shared.Swagger.Extensions;
 using System.Collections.ObjectModel;
 using System.Reflection;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 
 try
@@ -51,7 +50,7 @@ try
 
     builder.Services.AddCustomSwagger(cfg =>
     {
-        cfg.Title = "Financial Core Manegment Api";
+        cfg.Title = "Billing Management Api";
         cfg.IdpServer = new Uri($"{configuration["IDP:Server"]}/connect/token");
     });
     builder.Services.AddHttpContextAccessor();

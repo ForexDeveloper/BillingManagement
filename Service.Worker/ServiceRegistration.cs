@@ -1,5 +1,7 @@
 ﻿using Application.Query.ReadOnlyRepositoryContracts;
+using Application.Service.Contracts;
 using Application.Service.EventConsumers;
+using Application.Service.Services;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
@@ -9,7 +11,9 @@ using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.OrganizationAggregate;
 using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
+using Domain.Core.Entities.WalletContractAggregate;
 using Domain.Core.UnitOfWorkContracts;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
@@ -114,7 +118,6 @@ namespace Service.Worker
             services.AddScoped<IGuarantorRepository, GuarantorRepository>();
             services.AddScoped<IMerchantBillingRepository, MerchantBillingRepository>();
             services.AddScoped<IMerchantInstallmentRepository, MerchantInstallmentRepository>();
-
             services.AddScoped<ITenantReadOnlyRepository, TenantReadOnlyRepository>();
             services.AddScoped<IOrganizationReadOnlyRepository, OrganizationReadOnlyRepository>();
             services.AddScoped<IFinancierReadOnlyRepository, FinancierReadOnlyRepository>();
@@ -122,8 +125,10 @@ namespace Service.Worker
             services.AddScoped<IGuarantorReadOnlyRepository, GuarantorReadOnlyRepository>();
             services.AddScoped<IMerchantRepository, MerchantRepository>();
             services.AddScoped<ITenantPlatformContractRepository, TenantPlatformContractRepository>();
-
+            services.AddScoped<IWalletContractRepository, WalletContractRepository>();
             services.AddScoped<IFinancialDocumentRepository, FinancialDocumentRepository>();
+            services.AddScoped<ITenantMerchantContractRepository, TenantMerchantContractRepository>();
+            services.AddScoped<ITenantPlatformContractRepository, TenantPlatformContractRepository>();
         }
         internal static void RegisteRedisServices(this IServiceCollection services, IConfiguration configuration)
         {
@@ -135,7 +140,8 @@ namespace Service.Worker
         }
         internal static void RegisterServices(this IServiceCollection services)
         {
-            //services.AddScoped<IMerchantBillingService, MerchantBillingService>();
+            services.AddScoped<IMerchantBillingService, MerchantBillingService>();
+            services.AddScoped<IWalletContractService, WalletContractService>();
         }
     }
 }
