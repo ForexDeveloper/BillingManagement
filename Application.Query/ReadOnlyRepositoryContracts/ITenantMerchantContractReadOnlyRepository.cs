@@ -1,5 +1,5 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.Queries.TenantMerchantContracts;
+using Application.Query.QueryModels.TenantMerchantContracts;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using System.Threading.Tasks;
 

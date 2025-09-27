@@ -1,11 +1,13 @@
-﻿using Application.Query.Queries;
+﻿using Application.Query.Queries.Facilitators;
 using Application.Query.QueryModels;
+using Application.Query.QueryModels.Facilitators;
 using Application.Query.ReadOnlyRepositoryContracts;
 using Domain.Core.Entities.FacilitatorAggregate;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
 
@@ -93,4 +95,23 @@ public class FacilitatorReadOnlyRepository : IFacilitatorReadOnlyRepository
             TotalCount = totalCounts
         };
     }
+
+    public async Task<List<LookupItemQueryModel>> GetFacilitatorsLookupAsync(GetFacilitatorsLookupQuery request)
+    {
+        var query = _readonlyApplicationDbContext
+            .Facilitators
+            .Where(x => x.TenantId == request.TenantId)
+            .AsQueryable();
+
+        var facilitators = await query
+            .Select(x => new LookupItemQueryModel
+            {
+                Id = x.Id,
+                Name = x.Name,
+            })
+            .ToListAsync();
+
+        return facilitators;
+    }
+
 }

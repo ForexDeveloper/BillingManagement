@@ -1,5 +1,5 @@
 ﻿using Application.Service.Contracts;
-using Application.Service.Dtos.TenantMerchantContract;
+using Application.Service.Dtos.TenantMerchantContracts;
 using Domain.Core.Entities.Document;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;

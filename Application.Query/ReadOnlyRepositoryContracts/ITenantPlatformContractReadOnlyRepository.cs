@@ -1,5 +1,6 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.Queries.TenantPlatfromContracts;
+using Application.Query.QueryModels.Providers;
+using Application.Query.QueryModels.TenantPlatfromContracts;
 using Domain.Core.Enums;
 using System.Collections.Generic;
 using System.Threading.Tasks;

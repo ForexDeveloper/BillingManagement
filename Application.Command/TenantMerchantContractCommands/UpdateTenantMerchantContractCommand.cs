@@ -1,6 +1,6 @@
 ﻿using Application.Service.Contracts;
 using Application.Service.Dtos.Shared;
-using Application.Service.Dtos.TenantMerchantContract;
+using Application.Service.Dtos.TenantMerchantContracts;
 using Domain.Core.Entities;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantAggregate;

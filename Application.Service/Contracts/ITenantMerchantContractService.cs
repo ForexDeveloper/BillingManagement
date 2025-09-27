@@ -1,4 +1,4 @@
-﻿using Application.Service.Dtos.TenantMerchantContract;
+﻿using Application.Service.Dtos.TenantMerchantContracts;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Enums;
 using Shared.MinIO.Entities;

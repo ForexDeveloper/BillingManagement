@@ -1,5 +1,7 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.Queries.IpgSettings;
+using Application.Query.Queries.Tenants;
+using Application.Query.QueryModels.IpgSettings;
+using Application.Query.QueryModels.Tenants;
 using Domain.Core.Entities.TenantAggregate;
 using System.Threading.Tasks;
 

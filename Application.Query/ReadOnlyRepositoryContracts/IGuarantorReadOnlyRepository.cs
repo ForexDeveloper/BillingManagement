@@ -1,5 +1,5 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.Queries.Guarantors;
+using Application.Query.QueryModels.Guarantors;
 using Domain.Core.Entities.GuarantorAggregate;
 using System.Threading.Tasks;
 

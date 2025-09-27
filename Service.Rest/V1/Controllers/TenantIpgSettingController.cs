@@ -1,4 +1,4 @@
-﻿using Application.Query.Queries;
+﻿using Application.Query.Queries.IpgSettings;
 using Application.Query.ViewModels.IpgSettings;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -60,11 +60,10 @@ namespace Service.Rest.V1.Controllers
         [ActionName(nameof(GetIpgSettingIdAsync))]
         [SwaggerOperation("Get tenant ipg setting by wallet id")]
         [SwaggerResponse((int)HttpStatusCode.OK, "Tenant ipg setting returned", typeof(int))]
-        public async Task<ActionResult<int>> GetIpgSettingIdAsync([FromQuery] int? walletId)
+        public async Task<ActionResult<int>> GetIpgSettingIdAsync()
         {
             var tenantIpgSettingId = await _mediator.Send(new GetTenantIpgSettingByWalletIdQuery(
-                _currentUserService.TenantId,
-                walletId
+                _currentUserService.TenantId
             ));
 
             return Ok(tenantIpgSettingId);

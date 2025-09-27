@@ -1,5 +1,5 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.Providers;
+using Application.Query.Queries.Providers;
 using Domain.Core.Entities.Providers;
 using System.Threading.Tasks;
 

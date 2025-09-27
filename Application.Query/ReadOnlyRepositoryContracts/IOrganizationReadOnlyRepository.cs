@@ -1,5 +1,5 @@
-﻿using Application.Query.Queries;
-using Application.Query.QueryModels;
+﻿using Application.Query.Queries.Organizations;
+using Application.Query.QueryModels.Organizations;
 using Application.Query.ViewModels.Organizations;
 using System.Collections.Generic;
 using System.Threading.Tasks;
