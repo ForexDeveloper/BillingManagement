@@ -2,8 +2,8 @@
 using Domain.Core.Enums;
 using Domain.Core.Helper;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.InstallmentAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Domain.Core.Entities.MerchantInstallmentAggregate;

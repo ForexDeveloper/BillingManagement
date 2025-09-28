@@ -5,5 +5,5 @@ namespace Application.Service.Contracts;
 
 public interface IMerchantBillingService
 {
-    Task CreateMerchantBilling(CancellationToken cancellationToken);
+    Task IssueOrOverdueBilling(CancellationToken cancellationToken);
 }

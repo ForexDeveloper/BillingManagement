@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Linq;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
 using System.Collections.Generic;
-using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.InstallmentAggregate;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
@@ -23,6 +22,8 @@ public sealed class MerchantBilling : Billing
 
     public decimal CurrentPeriodFinalCommission { get; private set; }
 
+    public decimal CurrentPeriodCalculatedCommission { get; private set; }
+
     public decimal CurrentPeriodPurchaseTransactions { get; private set; }
 
     public decimal PreviousPeriodRefundedTransactions { get; private set; }
@@ -35,8 +36,9 @@ public sealed class MerchantBilling : Billing
     public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, decimal currentPeriodFinalCommission, decimal refundedTransactionsCommission,
-        decimal previousPeriodRefundedTransactions, decimal currentPeriodPurchaseTransactions,
+        IEnumerable<int> contractIds, decimal currentPeriodCalculatedCommission, decimal currentPeriodFinalCommission,
+        decimal refundedTransactionsCommission, decimal previousPeriodRefundedTransactions,
+        decimal currentPeriodPurchaseTransactions,
         Billing? parent = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType,
         previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds,
         parent)
@@ -46,6 +48,7 @@ public sealed class MerchantBilling : Billing
         CurrentPeriodFinalCommission = currentPeriodFinalCommission;
         RefundedTransactionsCommission = refundedTransactionsCommission;
         CurrentPeriodPurchaseTransactions = currentPeriodPurchaseTransactions;
+        CurrentPeriodCalculatedCommission = currentPeriodCalculatedCommission;
         PreviousPeriodRefundedTransactions = previousPeriodRefundedTransactions;
         CalculateAmount();
         SettleOrIssue();
@@ -55,9 +58,10 @@ public sealed class MerchantBilling : Billing
     public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, decimal currentPeriodFinalCommission, decimal refundedTransactionsCommission,
-        decimal previousPeriodRefundedTransactions, decimal currentPeriodPurchaseTransactions,
-        IEnumerable<Installment>? installments = null, Billing? parent = null) : base(tenantId,
+        IEnumerable<int> contractIds, decimal currentPeriodCalculatedCommission, decimal currentPeriodFinalCommission,
+        decimal refundedTransactionsCommission, decimal previousPeriodRefundedTransactions,
+        decimal currentPeriodPurchaseTransactions, IEnumerable<Installment>? installments = null,
+        Billing? parent = null) : base(tenantId,
         fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount, previousCreditAmount,
         previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds, installments, parent)
     {
@@ -66,6 +70,7 @@ public sealed class MerchantBilling : Billing
         CurrentPeriodFinalCommission = currentPeriodFinalCommission;
         RefundedTransactionsCommission = refundedTransactionsCommission;
         CurrentPeriodPurchaseTransactions = currentPeriodPurchaseTransactions;
+        CurrentPeriodCalculatedCommission = currentPeriodCalculatedCommission;
         PreviousPeriodRefundedTransactions = previousPeriodRefundedTransactions;
         CalculateAmount();
         SettleOrIssue();

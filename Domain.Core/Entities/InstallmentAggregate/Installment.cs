@@ -93,6 +93,16 @@ public abstract class Installment : BaseEntity<long>
         Amount = amount;
     }
 
+    public void SetCommission(decimal commission)
+    {
+        if (commission <= 0)
+        {
+            throw new ArgumentValidationException(nameof(commission), "مبلغ کمیسیون قسط نمی تواند کوچک تر مساوی صفر باشد");
+        }
+
+        Commission = commission;
+    }
+
     protected abstract void SetCheckSum();
 
     protected abstract void ValidateCheckSum();

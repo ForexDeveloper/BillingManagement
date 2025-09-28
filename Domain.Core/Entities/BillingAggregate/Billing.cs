@@ -3,11 +3,11 @@ using System.Linq;
 using Domain.Base;
 using Domain.Core.Enums;
 using System.Collections.Generic;
-using Domain.Core.Entities.BillingPaymentAggregate;
 using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.InstallmentAggregate;
+using Domain.Core.Entities.BillingPaymentAggregate;
 
 namespace Domain.Core.Entities.BillingAggregate;
 
