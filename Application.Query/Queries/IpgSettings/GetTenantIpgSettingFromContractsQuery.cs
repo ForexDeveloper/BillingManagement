@@ -10,18 +10,18 @@ using System.Threading.Tasks;
 
 namespace Application.Query.Queries.IpgSettings
 {
-    public class GetTenantIpgSettingByWalletIdQuery : IRequest<int>
+    public class GetTenantIpgSettingFromContractsQuery : IRequest<int>
     {
         public int TenantId { get; set; }
 
-        public GetTenantIpgSettingByWalletIdQuery(int tenantId)
+        public GetTenantIpgSettingFromContractsQuery(int tenantId)
         {
             TenantId = tenantId;
         }
 
     }
 
-    public class GetTenantIpgSettingByWalletIdQueryHandler : IRequestHandler<GetTenantIpgSettingByWalletIdQuery, int>
+    public class GetTenantIpgSettingByWalletIdQueryHandler : IRequestHandler<GetTenantIpgSettingFromContractsQuery, int>
     {
         private readonly ITenantRepository _tenantRepository;
         private readonly ITenantPlatformContractReadOnlyRepository _tenantPlatformContractReadOnlyRepository;
@@ -37,7 +37,7 @@ namespace Application.Query.Queries.IpgSettings
             _publicAppConfiguration = publicAppConfiguration.Value;
         }
 
-        public async Task<int> Handle(GetTenantIpgSettingByWalletIdQuery request, CancellationToken cancellationToken)
+        public async Task<int> Handle(GetTenantIpgSettingFromContractsQuery request, CancellationToken cancellationToken)
         {
             var tenantPlatformContacts = await _tenantPlatformContractReadOnlyRepository.GetActiveContractsAsync(request.TenantId);
             if (tenantPlatformContacts.Count == 0)

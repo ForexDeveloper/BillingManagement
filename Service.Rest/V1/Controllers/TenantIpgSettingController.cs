@@ -62,7 +62,7 @@ namespace Service.Rest.V1.Controllers
         [SwaggerResponse((int)HttpStatusCode.OK, "Tenant ipg setting returned", typeof(int))]
         public async Task<ActionResult<int>> GetIpgSettingIdAsync()
         {
-            var tenantIpgSettingId = await _mediator.Send(new GetTenantIpgSettingByWalletIdQuery(
+            var tenantIpgSettingId = await _mediator.Send(new GetTenantIpgSettingFromContractsQuery(
                 _currentUserService.TenantId
             ));
 
