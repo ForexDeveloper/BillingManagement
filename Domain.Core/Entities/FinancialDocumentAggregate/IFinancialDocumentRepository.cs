@@ -15,9 +15,9 @@ public interface IFinancialDocumentRepository
 
     void Update(FinancialDocument financialDocument);
 
-    void Attach(FinancialDocument financialDocument);
-
     void UpdateRange(List<FinancialDocument> financialDocuments);
+
+    void UpdatePartial(FinancialDocument financialDocument, string propertyName);
 
     Task<FinancialDocument> GetByIdAsync(long id);
 

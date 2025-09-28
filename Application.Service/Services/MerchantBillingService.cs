@@ -121,7 +121,7 @@ public sealed class MerchantBillingService(
 
                         financialDocument.SetCommission(commission);
 
-                        financialDocumentRepository.Attach(financialDocument);
+                        financialDocumentRepository.UpdatePartial(financialDocument, nameof(FinancialDocument.Commission));
                     }
                 }
 

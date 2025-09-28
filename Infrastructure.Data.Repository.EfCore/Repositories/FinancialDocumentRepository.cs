@@ -14,11 +14,6 @@ namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
 public sealed class FinancialDocumentRepository(ApplicationDbContext applicationDbContext) : IFinancialDocumentRepository
 {
-    public void Attach(long id, decimal? commission)
-    {
-
-    }
-
     public async Task AddAsync(FinancialDocument financialDocument)
     {
         await applicationDbContext.FinancialDocuments.AddAsync(financialDocument);
@@ -39,15 +34,15 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
         applicationDbContext.FinancialDocuments.Update(financialDocument);
     }
 
-    public void Attach(FinancialDocument financialDocument)
-    {
-        applicationDbContext.FinancialDocuments.Attach(financialDocument);
-        applicationDbContext.FinancialDocuments.Entry(financialDocument).State = EntityState.Modified;
-    }
-
     public void UpdateRange(List<FinancialDocument> financialDocuments)
     {
         applicationDbContext.FinancialDocuments.UpdateRange(financialDocuments);
+    }
+
+    public void UpdatePartial(FinancialDocument financialDocument, string propertyName)
+    {
+        applicationDbContext.FinancialDocuments.Attach(financialDocument);
+        applicationDbContext.FinancialDocuments.Entry(financialDocument).Property(propertyName).IsModified = true;
     }
 
     public async Task<List<FinancialDocument>> GetAllAsync()
