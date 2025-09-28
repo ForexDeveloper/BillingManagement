@@ -87,11 +87,11 @@ public sealed class MerchantBillingService(
                     switch (financialDocumentDto.Type)
                     {
                         case FinancialDocumentType.Purchase:
+                            purchaseFinancialDocuments.Add(financialDocumentDto);
                             totalTransactionsAmount += financialDocumentDto.Amount;
                             break;
 
                         case FinancialDocumentType.Refund:
-                            purchaseFinancialDocuments.Add(financialDocumentDto);
                             previousPeriodRefundedTransactions += financialDocumentDto.Amount;
                             refundedTransactionsCommission += financialDocumentDto.PurchaseCommission ?? 0;
                             break;
