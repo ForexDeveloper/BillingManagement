@@ -14,6 +14,11 @@ namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
 public sealed class FinancialDocumentRepository(ApplicationDbContext applicationDbContext) : IFinancialDocumentRepository
 {
+    public void Attach(long id, decimal? commission)
+    {
+
+    }
+
     public async Task AddAsync(FinancialDocument financialDocument)
     {
         await applicationDbContext.FinancialDocuments.AddAsync(financialDocument);
