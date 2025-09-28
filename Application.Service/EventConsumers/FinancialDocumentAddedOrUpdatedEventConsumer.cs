@@ -38,12 +38,12 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
             {
                 //purchase and refund
 
-                //financialDocument = await CreateFinancialDocument(context);
+                financialDocument = await CreateFinancialDocument(context);
 
-                //var contract = await tenantMerchantContractRepository.GetActiveContractAsync(
-                //    financialDocument.ToBusinessIdentityId, financialDocument.TenantId);
+                var contract = await tenantMerchantContractRepository.GetActiveContractAsync(
+                    financialDocument.ToBusinessIdentityId, financialDocument.TenantId);
 
-                //await CreateMerchantInstallments(contract, financialDocument);
+                await CreateMerchantInstallments(contract, financialDocument);
 
                 await CreateFinancialDocument(context);
 
@@ -165,7 +165,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
         var period = tenantMerchantContractRepository.GetContractActivePeriod(contract);
 
-        var sumOfTransactionsOfCurrentPeriod = await financialDocumentRepository.GetSumOfTransactionsOfCurrentPeriod(contract,
+        var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTransactionsOfCurrentPeriod(contract,
             period.StartOfPeriod, period.EndOfPeriod);
 
         decimal financialDocumentTargetAmount = 0;

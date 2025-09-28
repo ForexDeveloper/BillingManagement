@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
@@ -74,5 +76,32 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         return await applicationDbContext.MerchantInstallments
             .Where(p => financialDocumentIds.Contains(p.FinancialDocumentId))
             .SumAsync(p => p.Commission, cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod)
+    {
+        return await applicationDbContext.MerchantInstallments
+            .Where(p => p.Type == InstallmentType.Installment &&
+                        startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
+                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
+                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
+                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
+                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
+                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
+            .SumAsync(p => p.Amount);
+    }
+
+    public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, int billingPeriod,
+        TimeInterval billingPeriodType, DateTime? dailyBillingOriginDate,
+        CommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod)
+    {
+        return await applicationDbContext.MerchantInstallments
+            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
+                        p.TenantMerchantContract.BillingPeriod == billingPeriod &&
+                        p.TenantMerchantContract.BillingPeriodType == billingPeriodType &&
+                        p.TenantMerchantContract.DailyBillingOriginDate == dailyBillingOriginDate &&
+                        p.TenantMerchantContract.CommissionCalculationType == commissionCalculationType &&
+                        p.FromBusinessIdentityId == tenantId && p.ToBusinessIdentityId == merchantId)
+            .Where(p => p.Type == InstallmentType.Installment).SumAsync(p => p.Amount);
     }
 }

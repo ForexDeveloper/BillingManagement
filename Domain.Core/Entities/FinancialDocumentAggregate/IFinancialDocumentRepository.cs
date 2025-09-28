@@ -39,12 +39,6 @@ public interface IFinancialDocumentRepository
 
     Task<decimal> GetPeriodTotalTransactionsAmount(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
 
-    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, int billingPeriod,
-        TimeInterval billingPeriodType, DateTime? dailyBillingOriginDate,
-        CommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod);
-
-    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod);
-
     Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
 }
 

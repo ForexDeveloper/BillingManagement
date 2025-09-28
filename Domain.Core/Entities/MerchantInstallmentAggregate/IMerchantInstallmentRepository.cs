@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -21,6 +23,13 @@ public interface IMerchantInstallmentRepository
     Task<Dictionary<ContractIdentifier, List<MerchantInstallment>>> GetGroupContractInstallments(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken);
 
     Task<decimal?> GetSumOfCommissionsAsync(IEnumerable<long> financialDocumentIds, CancellationToken cancellationToken);
+
+    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod,
+    DateTime endOfPeriod);
+
+    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, int billingPeriod,
+        TimeInterval billingPeriodType, DateTime? dailyBillingOriginDate,
+        CommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod);
 }
 
 public sealed record InstallmentRange(DateTime MinDueDate, DateTime MaxDueDate)

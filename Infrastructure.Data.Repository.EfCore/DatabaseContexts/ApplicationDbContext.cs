@@ -1,24 +1,24 @@
-﻿using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.BillingPaymentAggregate;
+﻿using System.Linq;
+using Shared.EventBus.Entities;
+using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.Providers;
 using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.FacilitatorAggregate;
-using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.FinancierAggregate;
 using Domain.Core.Entities.GuarantorAggregate;
+using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.InstallmentAggregate;
-using Domain.Core.Entities.MerchantAggregate;
-using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.OrganizationAggregate;
-using Domain.Core.Entities.Providers;
-using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.WalletContractAggregate;
+using Domain.Core.Entities.BillingPaymentAggregate;
+using Domain.Core.Entities.MerchantBillingAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
-using Domain.Core.Entities.WalletContractAggregate;
 using Infrastructure.Data.Repository.EfCore.EntityConfigurations;
-using Microsoft.EntityFrameworkCore;
-using Shared.EventBus.Entities;
-using System.Linq;
 
 namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
 {
