@@ -18,6 +18,7 @@ public sealed class MerchantBillingConfiguration : IEntityTypeConfiguration<Merc
         builder.Property(p => p.Deductions).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.CurrentPeriodFinalCommission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.RefundedTransactionsCommission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+        builder.Property(p => p.CurrentPeriodCalculatedCommission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.CurrentPeriodPurchaseTransactions).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.PreviousPeriodRefundedTransactions).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
 

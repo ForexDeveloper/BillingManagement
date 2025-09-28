@@ -11,9 +11,9 @@ public interface IMerchantBillingRepository
 {
     Task AddRangeAsync(IEnumerable<MerchantBilling> billings, CancellationToken cancellationToken);
 
-    Task<List<NotSettledBilling>> GetNotAssignedBillings(CancellationToken cancellationToken);
-
     IQueryable<MerchantBilling> CreateJobBillingQuery(DateTime startOfPeriod, DateTime endOfPeriod);
+
+    Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken);
 
     Task<bool> FindInContractPeriodAsync(IQueryable<MerchantBilling> query, CancellationToken cancellation);
 

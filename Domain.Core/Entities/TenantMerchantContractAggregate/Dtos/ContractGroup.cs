@@ -1,6 +1,7 @@
 ﻿using System;
 using Domain.Core.Enums;
 using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
 
 namespace Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
@@ -18,9 +19,15 @@ public sealed record ContractGroup
 
     public bool HasEndorsement { get; set; }
 
-    public required DateTime EndorsementDate { get; set; }
+    public DateTime EndorsementDate { get; set; }
 
     public IEnumerable<int> ContractIds { get; set; }
 
-    public required CommissionCalculationType CommissionCalculationType { get; set; }
+    public decimal? PeriodMinCommissionAmount { get; set; }
+
+    public decimal? PeriodMaxCommissionAmount { get; set; }
+
+    public List<TieredCommission> TieredCommissions { get; set; }
+
+    public CommissionCalculationType CommissionCalculationType { get; set; }
 }

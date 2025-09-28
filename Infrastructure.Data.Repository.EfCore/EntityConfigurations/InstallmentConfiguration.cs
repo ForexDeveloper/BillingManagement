@@ -17,6 +17,7 @@ public sealed class InstallmentConfiguration : IEntityTypeConfiguration<Installm
         builder.Property(p => p.Number).IsRequired();
         builder.Property(p => p.DueDate).IsRequired();
         builder.Property(p => p.TenantId).IsRequired();
+        builder.Property(p => p.Commission).IsRequired();
         builder.Property(p => p.BillingId).IsRequired(false);
         builder.Property(p => p.ToBusinessIdentityId).IsRequired();
         builder.Property(p => p.FromBusinessIdentityId).IsRequired();

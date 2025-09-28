@@ -32,7 +32,7 @@ public class MerchantBillingServiceWorker(IServiceProvider services, IConfigurat
 
             try
             { 
-                await billingService.CreateMerchantBilling(stoppingToken);
+                await billingService.IssueOrOverdueBilling(stoppingToken);
             }
             catch (Exception exception)
             {
