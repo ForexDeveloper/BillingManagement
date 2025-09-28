@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Data.Repository.EfCore.Migrations
 {
     /// <inheritdoc />
-    public partial class Initialize_Database : Migration
+    public partial class Initial_Database : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -195,7 +195,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     PreviousCreditAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     PreviousPenaltyAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     GracePeriod = table.Column<int>(type: "int", nullable: false),
-                    ContractIds = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ContractIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -510,6 +510,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     DeductionsDescription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
                     RefundedTransactionsCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     CurrentPeriodFinalCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    CurrentPeriodCalculatedCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     CurrentPeriodPurchaseTransactions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     PreviousPeriodRefundedTransactions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     MerchantId = table.Column<int>(type: "int", nullable: true)
@@ -646,6 +647,10 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     RefundReason = table.Column<byte>(type: "tinyint", nullable: true),
                     RefundDescription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
                     RefundType = table.Column<byte>(type: "tinyint", nullable: true),
+                    CreditAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    CashAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    PrepaymentAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    Commission = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     ParentId = table.Column<long>(type: "bigint", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),

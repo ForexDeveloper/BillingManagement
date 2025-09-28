@@ -52,6 +52,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("ContractIds")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreatedDateTime")
@@ -219,7 +220,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasColumnType("decimal(32, 10)");
 
                     b.Property<decimal>("CashAmount")
-                        .HasColumnType("decimal(32,10)");
+                        .HasColumnType("decimal(32, 10)");
 
                     b.Property<string>("CheckSum")
                         .IsRequired()
@@ -230,6 +231,9 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("VARCHAR");
 
+                    b.Property<decimal?>("Commission")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime>("CreatedDateTime")
                         .HasColumnType("datetime2");
 
@@ -238,7 +242,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasColumnType("VARCHAR");
 
                     b.Property<decimal>("CreditAmount")
-                        .HasColumnType("decimal(32,10)");
+                        .HasColumnType("decimal(32, 10)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(500)
@@ -263,7 +267,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasColumnType("tinyint");
 
                     b.Property<decimal>("PrepaymentAmount")
-                        .HasColumnType("decimal(32,10)");
+                        .HasColumnType("decimal(32, 10)");
 
                     b.Property<string>("RefundDescription")
                         .HasMaxLength(1000)
@@ -1208,6 +1212,9 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<string>("AdditionsDescription")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal>("CurrentPeriodCalculatedCommission")
+                        .HasColumnType("decimal(32, 10)");
 
                     b.Property<decimal>("CurrentPeriodFinalCommission")
                         .HasColumnType("decimal(32, 10)");
