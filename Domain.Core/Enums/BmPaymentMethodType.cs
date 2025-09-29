@@ -2,7 +2,7 @@
 
 namespace Domain.Core.Enums;
 
-public enum PaymentMethodType : byte
+public enum BmPaymentMethodType : byte
 {
     [Description("چک")]
     Cheque = 1,

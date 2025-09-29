@@ -2,7 +2,7 @@
 
 namespace Domain.Core.Enums
 {
-    public enum CommissionCalculationType
+    public enum BmCommissionCalculationType
     {
         [Description("کارمزد پلکانی یکنواخت")]
         UniformTiered = 1,

@@ -15,7 +15,7 @@ public class WalletContractFinancier : BaseEntity<int>
     public int FinancierId { get; private set; }
     public Financier Financier { get; private set; }
     public List<WalletPortionType> PortionTypes { get; private set; }
-    public CommissionCalculationType? CommissionCalculationType { get; private set; }
+    public BmCommissionCalculationType? CommissionCalculationType { get; private set; }
     public decimal? FixedAmountCommission { get; private set; }
     public decimal? FixedPercentageCommission { get; private set; }
     public decimal? TransactionMinCommissionAmount { get; private set; }
@@ -23,7 +23,7 @@ public class WalletContractFinancier : BaseEntity<int>
     public decimal? PeriodMinCommissionAmount { get; private set; }
     public decimal? PeriodMaxCommissionAmount { get; private set; }
     public List<TieredCommission>? TieredCommissions { get; private set; } = [];
-    public PaymentMethodType? PaymentMethodType { get; private set; }
+    public BmPaymentMethodType? PaymentMethodType { get; private set; }
 
     private WalletContractFinancier() { }
 
@@ -37,14 +37,14 @@ public class WalletContractFinancier : BaseEntity<int>
         WalletContractId = walletContractId;
         FinancierId = financierId;
         PortionTypes = portionTypes.Select(b => (WalletPortionType)b).ToList();
-        CommissionCalculationType = (CommissionCalculationType)commissionCalculationType;
+        CommissionCalculationType = (BmCommissionCalculationType)commissionCalculationType;
         FixedAmountCommission = fixedAmountCommission;
         FixedPercentageCommission = fixedPercentageCommission;
         TransactionMinCommissionAmount = transactionMinCommissionAmount;
         TransactionMaxCommissionAmount = transactionMaxCommissionAmount;
         PeriodMinCommissionAmount = periodMinCommissionAmount;
         PeriodMaxCommissionAmount = periodMaxCommissionAmount;
-        PaymentMethodType = (PaymentMethodType)paymentMethodType;
+        PaymentMethodType = (BmPaymentMethodType)paymentMethodType;
     }
 
     public void SetTieredCommissions(List<TieredCommission> tieredCommissions)
@@ -55,18 +55,18 @@ public class WalletContractFinancier : BaseEntity<int>
         TieredCommission.ValidateInputList(tieredCommissions);
 
         if (tieredCommissions != null &&
-            (CommissionCalculationType == Enums.CommissionCalculationType.UniformTiered ||
-            CommissionCalculationType == Enums.CommissionCalculationType.CumulativeTiered))
+            (CommissionCalculationType == Enums.BmCommissionCalculationType.UniformTiered ||
+            CommissionCalculationType == Enums.BmCommissionCalculationType.CumulativeTiered))
         {
             TieredCommissions = tieredCommissions;
         }
     }
 
     public void Update(List<WalletPortionType> portionTypes,
-        CommissionCalculationType? commissionCalculationType,
+        BmCommissionCalculationType? commissionCalculationType,
         decimal? fixedAmountCommission, decimal? fixedPercentageCommission,
         decimal? transactionMinCommissionAmount, decimal? transactionMaxCommissionAmount,
-        decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount, PaymentMethodType? paymentMethodType)
+        decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount, BmPaymentMethodType? paymentMethodType)
     {
         PortionTypes = portionTypes;
         CommissionCalculationType = commissionCalculationType;

@@ -103,7 +103,7 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
 
     public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, int billingPeriod,
         TimeInterval billingPeriodType, DateTime? dailyBillingOriginDate,
-        CommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod)
+        BmCommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod)
     {
         return await applicationDbContext.FinancialDocuments
             .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod &&

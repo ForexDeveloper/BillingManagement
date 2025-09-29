@@ -180,19 +180,19 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
             {
                 switch (contractCommissionReferenceType)
                 {
-                    case CommissionReferenceType.CashAmount:
+                    case BmCommissionReferenceType.CashAmount:
                         financialDocumentTargetAmount += financialDocument.CashAmount;
                         break;
 
-                    case CommissionReferenceType.CreditAmount:
+                    case BmCommissionReferenceType.CreditAmount:
                         financialDocumentTargetAmount += financialDocument.CreditAmount;
                         break;
 
-                    case CommissionReferenceType.PrepaymentAmount:
+                    case BmCommissionReferenceType.PrepaymentAmount:
                         financialDocumentTargetAmount += financialDocument.PrepaymentAmount;
                         break;
 
-                    case CommissionReferenceType.InterestAmount:
+                    case BmCommissionReferenceType.InterestAmount:
                         break;
 
                     default:
@@ -203,10 +203,10 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
         switch (contract.CommissionCalculationType)
         {
-            case CommissionCalculationType.UniformTiered:
+            case BmCommissionCalculationType.UniformTiered:
                 break;
 
-            case CommissionCalculationType.CumulativeTiered:
+            case BmCommissionCalculationType.CumulativeTiered:
 
                 var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
                     p.FromAmount < sumOfTransactionsOfCurrentPeriod && sumOfTransactionsOfCurrentPeriod <= p.ToAmount);
@@ -244,7 +244,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                 break;
 
-            case CommissionCalculationType.FixedPercentage:
+            case BmCommissionCalculationType.FixedPercentage:
 
                 if (!contract.FixedPercentageCommission.HasValue) break;
 
@@ -262,7 +262,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                 break;
 
-            case CommissionCalculationType.FixedAmount:
+            case BmCommissionCalculationType.FixedAmount:
 
                 commission = contract.FixedAmountCommission ?? 0;
 

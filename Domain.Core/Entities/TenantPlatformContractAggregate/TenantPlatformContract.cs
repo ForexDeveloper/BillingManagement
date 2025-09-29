@@ -17,12 +17,12 @@ namespace Domain.Core.Entities.TenantPlatformContractAggregate
         public DateTime EndDate { get; private set; }
         public string Description { get; private set; }
         public FeeCalculationType FeeCalculationType { get; private set; }
-        public CommissionCalculationType CommissionCalculationType { get; private set; }
+        public BmCommissionCalculationType CommissionCalculationType { get; private set; }
         public decimal? FixedAmount { get; private set; }
         public List<TieredCommission> TieredCommissions { get; private set; }
         public decimal? FixedAmountCommission { get; private set; }
         public decimal? FixedPercentageCommission { get; private set; }
-        public List<CommissionReferenceType> CommissionReferenceTypes { get; private set; }
+        public List<BmCommissionReferenceType> CommissionReferenceTypes { get; private set; }
         public decimal? TransactionMinCommissionAmount { get; private set; }
         public decimal? TransactionMaxCommissionAmount { get; private set; }
         public decimal? PeriodMinCommissionAmount { get; private set; }
@@ -44,9 +44,9 @@ namespace Domain.Core.Entities.TenantPlatformContractAggregate
         }
 
         public TenantPlatformContract(int tenantId, string contractNumber, DateTime startDate, DateTime endDate,
-           string description, FeeCalculationType feeCalculationType, CommissionCalculationType commissionCalculationType,
+           string description, FeeCalculationType feeCalculationType, BmCommissionCalculationType commissionCalculationType,
            decimal? fixedAmount, decimal? fixedAmountCommission, decimal? fixedPercentageCommission,
-           List<CommissionReferenceType> commissionReferenceTypes,
+           List<BmCommissionReferenceType> commissionReferenceTypes,
            decimal? transactionMinCommissionAmount, decimal? transactionMaxCommissionAmount,
            decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount,
            TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? gracePeriod, decimal? penaltyPercent,
@@ -77,9 +77,9 @@ namespace Domain.Core.Entities.TenantPlatformContractAggregate
         }
 
         public void Update(int tenantId, string contractNumber, DateTime startDate, DateTime endDate,
-           string description, FeeCalculationType feeCalculationType, CommissionCalculationType commissionCalculationType,
+           string description, FeeCalculationType feeCalculationType, BmCommissionCalculationType commissionCalculationType,
            decimal? fixedAmount, decimal? fixedAmountCommission, decimal? fixedPercentageCommission,
-           List<CommissionReferenceType> commissionReferenceTypes,
+           List<BmCommissionReferenceType> commissionReferenceTypes,
            decimal? transactionMinCommissionAmount, decimal? transactionMaxCommissionAmount,
            decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount,
            TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? gracePeriod, decimal? penaltyPercent,
@@ -125,8 +125,8 @@ namespace Domain.Core.Entities.TenantPlatformContractAggregate
                 TieredCommission.ValidateInputList(tieredCommissions);
 
                 if (tieredCommissions != null &&
-                    (CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                    CommissionCalculationType == CommissionCalculationType.CumulativeTiered))
+                    (CommissionCalculationType == BmCommissionCalculationType.UniformTiered ||
+                    CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered))
                 {
                     TieredCommissions = tieredCommissions;
                 }

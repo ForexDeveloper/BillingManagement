@@ -141,8 +141,8 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
                     input.TransactionMaxCommissionAmount, input.PeriodMinCommissionAmount, input.PeriodMaxCommissionAmount, input.PaymentMethodType);
                 guarantorToUpdate.ClearTieredCommissions();
 
-                if (input.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                    input.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                if (input.CommissionCalculationType == BmCommissionCalculationType.UniformTiered ||
+                    input.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered)
                 {
                     guarantorToUpdate.SetTieredCommissions(input.TieredCommissions);
                 }
@@ -155,8 +155,8 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
                     (byte)input.CommissionCalculationType,
                     input.FixedAmountCommission, input.FixedPercentageCommission, input.TransactionMinCommissionAmount, input.TransactionMaxCommissionAmount, input.PeriodMinCommissionAmount, input.PeriodMaxCommissionAmount, (byte)input.PaymentMethodType);
 
-                if (input.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                    input.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                if (input.CommissionCalculationType == BmCommissionCalculationType.UniformTiered ||
+                    input.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered)
                 {
                     newGuarantor.SetTieredCommissions(input.TieredCommissions);
                 }
@@ -239,8 +239,8 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
 
                 financierToUpdate.ClearTieredCommissions();
 
-                if (input.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                    input.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                if (input.CommissionCalculationType == BmCommissionCalculationType.UniformTiered ||
+                    input.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered)
                 {
                     financierToUpdate.SetTieredCommissions(input.TieredCommissions);
                 }
@@ -254,8 +254,8 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
                     input.FixedAmountCommission, input.FixedPercentageCommission, input.TransactionMinCommissionAmount, input.TransactionMaxCommissionAmount,
                     input.PeriodMinCommissionAmount, input.PeriodMaxCommissionAmount, (byte)input.PaymentMethodType);
 
-                if (input.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                   input.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                if (input.CommissionCalculationType == BmCommissionCalculationType.UniformTiered ||
+                   input.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered)
                 {
                     newFinancier.SetTieredCommissions(input.TieredCommissions);
                 }
@@ -302,8 +302,8 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
                     facilitator.CommissionCalculationType, facilitator.FixedAmountCommission, facilitator.FixedPercentageCommission,
                     facilitator.TransactionMinCommissionAmount, facilitator.TransactionMaxCommissionAmount, facilitator.PeriodMinCommissionAmount, facilitator.PeriodMaxCommissionAmount, facilitator.PaymentMethodType);
 
-                if ((CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                    (CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                if ((BmCommissionCalculationType)facilitator.CommissionCalculationType == BmCommissionCalculationType.UniformTiered ||
+                    (BmCommissionCalculationType)facilitator.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered)
                 {
                     newFacilitator.SetTieredCommissions(facilitator.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
                 }
@@ -345,8 +345,8 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
 
                 facilitatorToUpdate.ClearTieredCommissions();
 
-                if (input.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                    input.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                if (input.CommissionCalculationType == BmCommissionCalculationType.UniformTiered ||
+                    input.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered)
                 {
                     facilitatorToUpdate.SetTieredCommissions(input.TieredCommissions);
                 }
@@ -360,8 +360,8 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
                     input.FixedAmountCommission, input.FixedPercentageCommission, input.TransactionMinCommissionAmount, input.TransactionMaxCommissionAmount,
                     input.PeriodMinCommissionAmount, input.PeriodMaxCommissionAmount, (byte)input.PaymentMethodType);
 
-                if (input.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                    input.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                if (input.CommissionCalculationType == BmCommissionCalculationType.UniformTiered ||
+                    input.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered)
                 {
                     newFacilitator.SetTieredCommissions(input.TieredCommissions);
                 }

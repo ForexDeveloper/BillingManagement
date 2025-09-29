@@ -24,7 +24,7 @@ public class TenantPlatformContractFacilitatorsValidator : AbstractValidator<Ten
             .When(x => x.FixedAmountCommissionPercentage != null || x.TransactionsCommissionPercentage != null);
 
         RuleFor(c => c.PaymentMethodType)
-            .Must(x => x == PaymentMethodType.Cheque || x == PaymentMethodType.BankAccountDeposit)
+            .Must(x => x == BmPaymentMethodType.Cheque || x == BmPaymentMethodType.BankAccountDeposit)
             .WithMessage("نوع پرداختی تسهیلگر نامعتبر است.")
             .When(x => x.FixedAmountCommissionPercentage != null || x.TransactionsCommissionPercentage != null);
     }

@@ -26,7 +26,7 @@ public sealed record GetMerchantBillingContractViewModel
 
     public string CommissionCalculationTypeTitle { get; set; }
 
-    public CommissionCalculationType? CommissionCalculationType { get; set; }
+    public BmCommissionCalculationType? CommissionCalculationType { get; set; }
 
     public IEnumerable<TieredCommissionViewModel> TieredCommissions { get; set; }
 }

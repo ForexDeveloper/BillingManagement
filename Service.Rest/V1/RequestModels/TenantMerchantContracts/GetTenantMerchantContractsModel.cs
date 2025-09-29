@@ -13,6 +13,6 @@ namespace Service.Rest.V1.RequestModels.TenantMerchantContracts
         public int? MerchantId { get; set; }
         public GuaranteeType? GuaranteeType { get; set; }
         public SettlementType? SettlementType { get; set; }
-        public PaymentMethodType? PaymentMethodType { get; set; }
+        public BmPaymentMethodType? PaymentMethodType { get; set; }
     }
 }

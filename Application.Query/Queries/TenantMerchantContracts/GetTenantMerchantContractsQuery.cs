@@ -18,11 +18,11 @@ namespace Application.Query.Queries.TenantMerchantContracts
         public int? MerchantId { get; set; }
         public GuaranteeType? GuaranteeType { get; set; }
         public SettlementType? SettlementType { get; set; }
-        public PaymentMethodType? PaymentMethodType { get; set; }
+        public BmPaymentMethodType? PaymentMethodType { get; set; }
 
         public GetTenantMerchantContractsQuery(int? tenantId, int? merchantId, GuaranteeType? guaranteeType,
             SettlementType? settlementType,
-            PaymentMethodType? paymentMethodType,
+            BmPaymentMethodType? paymentMethodType,
             int pageIndex, int pageSize, string sortColumn, SortDirection? sortDirection, string searchValue)
         {
             PageIndex = pageIndex;

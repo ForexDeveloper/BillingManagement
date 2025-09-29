@@ -12,10 +12,10 @@ namespace Domain.Core.Entities.TenantPlatformContractAggregate
         public Facilitator Facilitator { get; private set; }
         public decimal? FixedAmountCommissionPercentage { get; private set; }
         public decimal? TransactionsCommissionPercentage { get; private set; }
-        public PaymentMethodType? PaymentMethodType { get; private set; }
+        public BmPaymentMethodType? PaymentMethodType { get; private set; }
 
         public TenantPlatformContractFacilitator(int facilitatorId, decimal? fixedAmountCommissionPercentage,
-        decimal? transactionsCommissionPercentage, PaymentMethodType? paymentMethodType)
+        decimal? transactionsCommissionPercentage, BmPaymentMethodType? paymentMethodType)
         {
             FacilitatorId = facilitatorId;
             FixedAmountCommissionPercentage = fixedAmountCommissionPercentage;
@@ -24,7 +24,7 @@ namespace Domain.Core.Entities.TenantPlatformContractAggregate
         }
 
         public void Update(decimal? fixedAmountCommissionPercentage,
-        decimal? transactionsCommissionPercentage, PaymentMethodType? paymentMethodType)
+        decimal? transactionsCommissionPercentage, BmPaymentMethodType? paymentMethodType)
         {
             FixedAmountCommissionPercentage = fixedAmountCommissionPercentage;
             TransactionsCommissionPercentage = transactionsCommissionPercentage;

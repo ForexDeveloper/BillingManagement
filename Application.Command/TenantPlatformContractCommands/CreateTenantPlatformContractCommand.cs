@@ -26,11 +26,11 @@ namespace Application.Command.TenantPlatformContractCommands
         public string Description { get; set; }
         public FeeCalculationType FeeCalculationType { get; set; }
         public decimal? FixedAmount { get; set; }
-        public CommissionCalculationType CommissionCalculationType { get; set; }
+        public BmCommissionCalculationType CommissionCalculationType { get; set; }
         public List<TieredCommissionDto> TieredCommissions { get; set; }
         public decimal? FixedAmountCommission { get; set; }
         public decimal? FixedPercentageCommission { get; set; }
-        public List<CommissionReferenceType> CommissionReferenceTypes { get; set; }
+        public List<BmCommissionReferenceType> CommissionReferenceTypes { get; set; }
         public decimal? TransactionMinCommissionAmount { get; set; }
         public decimal? TransactionMaxCommissionAmount { get; set; }
         public decimal? PeriodMinCommissionAmount { get; set; }
@@ -46,9 +46,9 @@ namespace Application.Command.TenantPlatformContractCommands
 
         public CreateTenantPlatformContractCommand(int tenantId, string contractNumber, DateTime startDate, DateTime endDate,
             string description,
-            FeeCalculationType feeCalculationType, CommissionCalculationType commissionCalculationType,
+            FeeCalculationType feeCalculationType, BmCommissionCalculationType commissionCalculationType,
             List<TieredCommissionDto> tieredCommissions, decimal? fixedAmount, decimal? fixedAmountCommission,
-            decimal? fixedPercentageCommission, List<CommissionReferenceType> commissionReferenceTypes,
+            decimal? fixedPercentageCommission, List<BmCommissionReferenceType> commissionReferenceTypes,
             decimal? transactionMinCommissionAmount, decimal? transactionMaxCommissionAmount,
             decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount,
             TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? gracePeriod, decimal? penaltyPercent,
@@ -138,7 +138,7 @@ namespace Application.Command.TenantPlatformContractCommands
             _tenantPlatformContractService.SetTenantPlatformContractFacilitators(contract, request.Facilitators);
             _tenantPlatformContractService.SetTenantPlatformContractProviders(contract, request.Providers);
 
-            if (request.CommissionCalculationType == CommissionCalculationType.UniformTiered || request.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+            if (request.CommissionCalculationType == BmCommissionCalculationType.UniformTiered || request.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered)
             {
                 var tieredCommissions = request.TieredCommissions.Select(x =>
                 new TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList();

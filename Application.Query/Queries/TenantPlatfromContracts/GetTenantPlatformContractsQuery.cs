@@ -19,11 +19,11 @@ namespace Application.Query.Queries.TenantPlatfromContracts
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public FeeCalculationType? FeeCalculationType { get; set; }
-        public CommissionCalculationType? CommissionCalculationType { get; set; }
+        public BmCommissionCalculationType? CommissionCalculationType { get; set; }
 
         public GetTenantPlatformContractsQuery(string contractNumber, int? tenantId, DateTime? startDate, DateTime? endDate,
             FeeCalculationType? feeCalculationType,
-            CommissionCalculationType? commissionCalculationType,
+            BmCommissionCalculationType? commissionCalculationType,
         int pageIndex, int pageSize, string sortColumn, SortDirection? sortDirection, string searchValue)
         {
             TenantId = tenantId;
