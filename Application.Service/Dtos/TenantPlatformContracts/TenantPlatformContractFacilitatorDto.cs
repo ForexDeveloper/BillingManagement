@@ -7,5 +7,5 @@ public class TenantPlatformContractFacilitatorDto
     public int FacilitatorId { get; set; }
     public decimal? FixedAmountCommissionPercentage { get; set; }
     public decimal? TransactionsCommissionPercentage { get; set; }
-    public BmPaymentMethodType? PaymentMethodType { get; set; }
+    public PaymentMethodType? PaymentMethodType { get; set; }
 }

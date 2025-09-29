@@ -16,12 +16,12 @@ namespace Service.Rest.V1.RequestModels.TenantPlatfromContracts
 
         #region FinancialInfo
         public FeeCalculationType FeeCalculationType { get; set; }
-        public BmCommissionCalculationType CommissionCalculationType { get; set; }
+        public CommissionCalculationType CommissionCalculationType { get; set; }
         public decimal? FixedAmount { get; set; }
         public List<TieredCommissionDto> TieredCommissions { get; set; }
         public decimal? FixedAmountCommission { get; set; }
         public decimal? FixedPercentageCommission { get; set; }
-        public List<BmCommissionReferenceType> CommissionReferenceTypes { get; set; }
+        public List<CommissionReferenceType> CommissionReferenceTypes { get; set; }
         public decimal? TransactionMinCommissionAmount { get; set; }
         public decimal? TransactionMaxCommissionAmount { get; set; }
         public decimal? PeriodMinCommissionAmount { get; set; }

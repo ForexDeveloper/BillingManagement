@@ -29,5 +29,5 @@ public sealed record ContractGroup
 
     public List<TieredCommission> TieredCommissions { get; set; }
 
-    public BmCommissionCalculationType CommissionCalculationType { get; set; }
+    public CommissionCalculationType CommissionCalculationType { get; set; }
 }

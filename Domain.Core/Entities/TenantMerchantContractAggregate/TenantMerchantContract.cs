@@ -29,19 +29,19 @@ namespace Domain.Core.Entities.TenantMerchantContractAggregate
         public int? InstallmentsCount { get; private set; }
         public CommissionDeductionMethodType? CommissionDeductionMethodType { get; private set; }
         public decimal? InterestPercentage { get; private set; }
-        public List<BmInterestReferenceType> InterestReferenceTypes { get; private set; }
+        public List<InterestReferenceType> InterestReferenceTypes { get; private set; }
         public TimeInterval BillingPeriodType { get; private set; }
         public int BillingPeriod { get; private set; }
         public DateTime? DailyBillingOriginDate { get; private set; }
         public int? BillingBreak { get; private set; }
-        public BmPaymentMethodType PaymentMethodType { get; private set; }
+        public PaymentMethodType PaymentMethodType { get; private set; }
         public GuaranteeType? GuaranteeType { get; private set; }
         public string GuaranteeDescription { get; private set; }
-        public BmCommissionCalculationType CommissionCalculationType { get; private set; }
+        public CommissionCalculationType CommissionCalculationType { get; private set; }
         public List<TieredCommission> TieredCommissions { get; private set; }
         public decimal? FixedAmountCommission { get; private set; }
         public decimal? FixedPercentageCommission { get; private set; }
-        public List<BmCommissionReferenceType> CommissionReferenceTypes { get; private set; }
+        public List<CommissionReferenceType> CommissionReferenceTypes { get; private set; }
         public decimal? TransactionMinCommissionAmount { get; private set; }
         public decimal? TransactionMaxCommissionAmount { get; private set; }
         public decimal? PeriodMinCommissionAmount { get; private set; }
@@ -61,13 +61,13 @@ namespace Domain.Core.Entities.TenantMerchantContractAggregate
             string contractNumber, DateTime startDate, DateTime endDate,
             SettlementType settlementType, bool isCommissionExchanged, int? installmentsCount,
             CommissionDeductionMethodType? commissionDeductionMethodType,
-            decimal? interestPercentage, List<BmInterestReferenceType> interestReferenceTypes,
+            decimal? interestPercentage, List<InterestReferenceType> interestReferenceTypes,
             TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? billingBreak,
-            BmPaymentMethodType paymentMethodType,
+            PaymentMethodType paymentMethodType,
             GuaranteeType? guaranteeType, string guaranteeDescription,
-            BmCommissionCalculationType commissionCalculationType,
+            CommissionCalculationType commissionCalculationType,
             decimal? fixedAmountCommission, decimal? fixedPercentageCommission,
-            List<BmCommissionReferenceType> commissionReferenceTypes,
+            List<CommissionReferenceType> commissionReferenceTypes,
             decimal? transactionMinCommissionAmount, decimal? transactionMaxCommissionAmount,
             decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount)
         {
@@ -105,13 +105,13 @@ namespace Domain.Core.Entities.TenantMerchantContractAggregate
             string contractNumber, DateTime startDate, DateTime endDate,
             SettlementType settlementType, bool isCommissionExchanged, int? installmentsCount,
             CommissionDeductionMethodType? commissionDeductionMethodType,
-            decimal? interestPercentage, List<BmInterestReferenceType> interestReferenceTypes,
+            decimal? interestPercentage, List<InterestReferenceType> interestReferenceTypes,
             TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? billingBreak,
-            BmPaymentMethodType paymentMethodType,
+            PaymentMethodType paymentMethodType,
             GuaranteeType? guaranteeType, string guaranteeDescription,
-            BmCommissionCalculationType commissionCalculationType,
+            CommissionCalculationType commissionCalculationType,
             decimal? fixedAmountCommission, decimal? fixedPercentageCommission,
-            List<BmCommissionReferenceType> commissionReferenceTypes,
+            List<CommissionReferenceType> commissionReferenceTypes,
             decimal? transactionMinCommissionAmount, decimal? transactionMaxCommissionAmount,
             decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount)
         {
@@ -188,8 +188,8 @@ namespace Domain.Core.Entities.TenantMerchantContractAggregate
                 TieredCommission.ValidateInputList(tieredCommissions);
 
                 if (tieredCommissions != null &&
-                    (CommissionCalculationType == BmCommissionCalculationType.UniformTiered ||
-                    CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered))
+                    (CommissionCalculationType == CommissionCalculationType.UniformTiered ||
+                    CommissionCalculationType == CommissionCalculationType.CumulativeTiered))
                 {
                     TieredCommissions = tieredCommissions;
                 }

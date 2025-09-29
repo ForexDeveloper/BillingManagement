@@ -39,7 +39,7 @@ public interface IFinancialDocumentRepository
 
     Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, int billingPeriod,
         TimeInterval billingPeriodType, DateTime? dailyBillingOriginDate,
-        BmCommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod);
+        CommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod);
 
     Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod);
 

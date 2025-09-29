@@ -8,6 +8,6 @@ public class TenantPlatformContractFacilitatorVm
     public string FacilitatorName { get; set; }
     public decimal? FixedAmountCommissionPercentage { get; set; }
     public decimal? TransactionsCommissionPercentage { get; set; }
-    public BmPaymentMethodType? PaymentMethodType { get; set; }
+    public PaymentMethodType? PaymentMethodType { get; set; }
     public string PaymentMethodTypeTitle { get; set; }
 }

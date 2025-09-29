@@ -61,84 +61,84 @@ public class UpdateTenantPlatformContractCommandValidator : AbstractValidator<Up
 
         RuleFor(x => x.TieredCommissions)
           .NotNull().WithMessage("تعیین کارمزد پلکانی اجباریست.")
-          .When(x => x.CommissionCalculationType == BmCommissionCalculationType.UniformTiered || x.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered);
+          .When(x => x.CommissionCalculationType == CommissionCalculationType.UniformTiered || x.CommissionCalculationType == CommissionCalculationType.CumulativeTiered);
 
         RuleFor(x => x.TieredCommissions)
            .Must(tieredCommissions => tieredCommissions == null || tieredCommissions.Count == 0)
            .WithMessage("کارمزد پلکانی نامعتبر است.")
-          .When(x => x.CommissionCalculationType == BmCommissionCalculationType.FixedAmount || x.CommissionCalculationType == BmCommissionCalculationType.FixedPercentage);
+          .When(x => x.CommissionCalculationType == CommissionCalculationType.FixedAmount || x.CommissionCalculationType == CommissionCalculationType.FixedPercentage);
 
         RuleFor(x => x.TieredCommissions)
            .Must(tieredCommissions => tieredCommissions != null && tieredCommissions.Count >= 2)
            .WithMessage("وارد کردن حداقل دو کارمزد پلکانی اجباریست.")
-            .When(x => x.CommissionCalculationType == BmCommissionCalculationType.UniformTiered || x.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered);
+            .When(x => x.CommissionCalculationType == CommissionCalculationType.UniformTiered || x.CommissionCalculationType == CommissionCalculationType.CumulativeTiered);
 
         RuleFor(x => x.TieredCommissions.OrderBy(x => x.FromAmount).First().FromAmount)
            .Equal(0).WithMessage("مبلغ وارد شده در اولین بازه کارمزد پلکانی نامعتبر است.")
-            .When(x => x.TieredCommissions != null && x.TieredCommissions.Count != 0 && (x.CommissionCalculationType == BmCommissionCalculationType.UniformTiered || x.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered));
+            .When(x => x.TieredCommissions != null && x.TieredCommissions.Count != 0 && (x.CommissionCalculationType == CommissionCalculationType.UniformTiered || x.CommissionCalculationType == CommissionCalculationType.CumulativeTiered));
 
         RuleFor(x => x.TieredCommissions.OrderBy(x => x.FromAmount).Last().ToAmount)
            .Null().WithMessage("مبلغ وارد شده در آخرین بازه کارمزد پلکانی نامعتبر است.")
-            .When(x => x.TieredCommissions != null && x.TieredCommissions.Count != 0 && (x.CommissionCalculationType == BmCommissionCalculationType.UniformTiered || x.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered));
+            .When(x => x.TieredCommissions != null && x.TieredCommissions.Count != 0 && (x.CommissionCalculationType == CommissionCalculationType.UniformTiered || x.CommissionCalculationType == CommissionCalculationType.CumulativeTiered));
 
         RuleFor(x => x.TieredCommissions)
             .Must(x => new CreateTenantPlatformContractCommandValidator().NoOverlapInTieredCommissionsAmounts(x))
             .WithMessage("مبالغ موجود در کارمزد پلکانی همپوشانی دارند.")
-            .When(x => x.TieredCommissions != null && x.TieredCommissions.Count != 0 && (x.CommissionCalculationType == BmCommissionCalculationType.UniformTiered || x.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered));
+            .When(x => x.TieredCommissions != null && x.TieredCommissions.Count != 0 && (x.CommissionCalculationType == CommissionCalculationType.UniformTiered || x.CommissionCalculationType == CommissionCalculationType.CumulativeTiered));
 
         RuleForEach(x => x.TieredCommissions)
             .SetValidator(new TieredCommissionsValidator())
-            .When(x => x.TieredCommissions != null && x.TieredCommissions.Count != 0 && (x.CommissionCalculationType == BmCommissionCalculationType.UniformTiered || x.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered));
+            .When(x => x.TieredCommissions != null && x.TieredCommissions.Count != 0 && (x.CommissionCalculationType == CommissionCalculationType.UniformTiered || x.CommissionCalculationType == CommissionCalculationType.CumulativeTiered));
 
         RuleFor(x => x.FixedAmountCommission)
             .Must(x => x == null)
             .WithMessage("مبلغ کارمزد نامعتبر است.")
-            .When(x => x.CommissionCalculationType != BmCommissionCalculationType.FixedAmount);
+            .When(x => x.CommissionCalculationType != CommissionCalculationType.FixedAmount);
 
         RuleFor(x => x.FixedAmountCommission)
            .Must(x => x != null && x.Value > 0)
            .WithMessage("مبلغ کارمزد نامعتبر است.")
-           .When(x => x.CommissionCalculationType == BmCommissionCalculationType.FixedAmount);
+           .When(x => x.CommissionCalculationType == CommissionCalculationType.FixedAmount);
 
         RuleFor(x => x.FixedPercentageCommission)
             .Must(x => x == null)
             .WithMessage("درصد کارمزد نامعتبر است.")
-            .When(x => x.CommissionCalculationType != BmCommissionCalculationType.FixedPercentage);
+            .When(x => x.CommissionCalculationType != CommissionCalculationType.FixedPercentage);
 
         RuleFor(x => x.FixedPercentageCommission)
             .Must(x => x != null && x.Value > 0)
            .WithMessage("درصد کارمزد نامعتبر است.")
-           .When(x => x.CommissionCalculationType == BmCommissionCalculationType.FixedPercentage);
+           .When(x => x.CommissionCalculationType == CommissionCalculationType.FixedPercentage);
 
         RuleFor(x => x.TransactionMinCommissionAmount)
             .Must(x => x == null)
             .WithMessage("حداقل مبلغ کارمزد هر تراکنش در حالت کارمزد درصد ثابت نامعتبر است.")
-            .When(x => x.CommissionCalculationType != BmCommissionCalculationType.FixedPercentage);
+            .When(x => x.CommissionCalculationType != CommissionCalculationType.FixedPercentage);
 
         RuleFor(x => x.TransactionMinCommissionAmount)
             .GreaterThanOrEqualTo(0)
             .WithMessage("حداقل مبلغ کارمزد هر تراکنش در حالت کارمزد درصد ثابت نامعتبر است.")
-            .When(x => x.CommissionCalculationType == BmCommissionCalculationType.FixedPercentage && x.TransactionMinCommissionAmount != null);
+            .When(x => x.CommissionCalculationType == CommissionCalculationType.FixedPercentage && x.TransactionMinCommissionAmount != null);
 
         RuleFor(x => x.TransactionMaxCommissionAmount)
             .Must(x => x == null)
             .WithMessage("حداکثر مبلغ کارمزد هر تراکنش در حالت کارمزد درصد ثابت نامعتبر است.")
-            .When(x => x.CommissionCalculationType != BmCommissionCalculationType.FixedPercentage);
+            .When(x => x.CommissionCalculationType != CommissionCalculationType.FixedPercentage);
 
         RuleFor(x => x.TransactionMaxCommissionAmount)
            .GreaterThanOrEqualTo(0)
            .WithMessage("حداکثر مبلغ کارمزد هر تراکنش در حالت کارمزد درصد ثابت نامعتبر است.")
-           .When(x => x.CommissionCalculationType == BmCommissionCalculationType.FixedPercentage && x.TransactionMaxCommissionAmount != null);
+           .When(x => x.CommissionCalculationType == CommissionCalculationType.FixedPercentage && x.TransactionMaxCommissionAmount != null);
 
         RuleFor(x => x.CommissionReferenceTypes)
            .Must(x => x == null)
            .WithMessage("نحوه محاسبه کارمزد نامعتبر است.")
-           .When(x => x.CommissionCalculationType == BmCommissionCalculationType.FixedAmount);
+           .When(x => x.CommissionCalculationType == CommissionCalculationType.FixedAmount);
 
         RuleForEach(x => x.CommissionReferenceTypes)
             .NotNull().WithMessage("نحوه محاسبه کارمزد اجباریست.")
             .IsInEnum().WithMessage("نحوه محاسبه کارمزد نامعتبر است.")
-           .When(x => x.CommissionCalculationType != BmCommissionCalculationType.FixedAmount);
+           .When(x => x.CommissionCalculationType != CommissionCalculationType.FixedAmount);
 
         RuleFor(x => x.PeriodMinCommissionAmount)
            .GreaterThanOrEqualTo(0)

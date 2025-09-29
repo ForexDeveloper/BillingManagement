@@ -10,5 +10,5 @@ public class GetTenantPlatformContractsModel : BasePaginatedListRequest
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public FeeCalculationType? FeeCalculationType { get; set; }
-    public BmCommissionCalculationType? CommissionCalculationType { get; set; }
+    public CommissionCalculationType? CommissionCalculationType { get; set; }
 }

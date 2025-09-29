@@ -2,7 +2,7 @@
 
 namespace Domain.Core.Enums
 {
-    public enum BmInterestReferenceType
+    public enum InterestReferenceType
     {
         [Description("مبلغ پیش پرداخت")]
         PrepaymentAmount = 1,

@@ -80,7 +80,7 @@ public sealed class MerchantBillingService(
                     .Where(p => billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod)
                     .Sum(p => p.Amount);
 
-                if (contract.CommissionCalculationType == BmCommissionCalculationType.UniformTiered)
+                if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
                     currentPeriodCalculatedCommission = CalculateUniformedTieredCommission(contract, totalTransactionsAmount);
                 }
@@ -93,7 +93,7 @@ public sealed class MerchantBillingService(
 
                 var currentPeriodFinalCommission = CalculateFinalCommission(contract, currentPeriodCalculatedCommission);
 
-                if (contract.CommissionCalculationType == BmCommissionCalculationType.UniformTiered)
+                if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
                     var purchaseDocuments = financialDocuments
                         .Where(p => p.Type == FinancialDocumentType.Purchase)
@@ -277,7 +277,7 @@ public sealed class MerchantBillingService(
 
                 var previousPeriodRefundedTransactions = financialDocuments.Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod).Where(p => p.Type == FinancialDocumentType.Refund).Sum(p => p.Amount);
 
-                if (contract.CommissionCalculationType == BmCommissionCalculationType.UniformTiered)
+                if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
                     var totalTransactionsAmount = await financialDocumentRepository.GetPeriodTotalTransactionsAmount(contract.TenantId, contract.MerchantId,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);

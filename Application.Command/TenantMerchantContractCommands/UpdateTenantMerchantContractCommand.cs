@@ -37,19 +37,19 @@ public class UpdateTenantMerchantContractCommand : IRequest<int>
     public int? InstallmentsCount { get; set; }
     public CommissionDeductionMethodType? CommissionDeductionMethodType { get; set; }
     public decimal? InterestPercentage { get; set; }
-    public List<BmInterestReferenceType> InterestReferenceTypes { get; set; }
+    public List<InterestReferenceType> InterestReferenceTypes { get; set; }
     public TimeInterval BillingPeriodType { get; set; }
     public int BillingPeriod { get; set; }
     public DateTime? DailyBillingOriginDate { get; set; }
     public int? BillingBreak { get; set; }
-    public BmPaymentMethodType PaymentMethodType { get; set; }
+    public PaymentMethodType PaymentMethodType { get; set; }
     public GuaranteeType? GuaranteeType { get; set; }
     public string GuaranteeDescription { get; set; }
-    public BmCommissionCalculationType CommissionCalculationType { get; set; }
+    public CommissionCalculationType CommissionCalculationType { get; set; }
     public List<TieredCommissionDto> TieredCommissions { get; set; } = [];
     public decimal? FixedAmountCommission { get; set; }
     public decimal? FixedPercentageCommission { get; set; }
-    public List<BmCommissionReferenceType> CommissionReferenceTypes { get; set; }
+    public List<CommissionReferenceType> CommissionReferenceTypes { get; set; }
     public decimal? TransactionMinCommissionAmount { get; set; }
     public decimal? TransactionMaxCommissionAmount { get; set; }
     public decimal? PeriodMinCommissionAmount { get; set; }
@@ -61,12 +61,12 @@ public class UpdateTenantMerchantContractCommand : IRequest<int>
             string contractNumber, DateTime startDate, DateTime endDate,
             SettlementType settlementType, bool isCommissionExchanged,
             int? installmentsCount, CommissionDeductionMethodType? commissionDeductionMethodType,
-            decimal? interestPercentage, List<BmInterestReferenceType> interestReferenceTypes,
+            decimal? interestPercentage, List<InterestReferenceType> interestReferenceTypes,
             TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate,
-            int? billingBreak, BmPaymentMethodType paymentMethodType, GuaranteeType? guaranteeType,
-            string guaranteeDescription, BmCommissionCalculationType commissionCalculationType,
+            int? billingBreak, PaymentMethodType paymentMethodType, GuaranteeType? guaranteeType,
+            string guaranteeDescription, CommissionCalculationType commissionCalculationType,
             List<TieredCommissionDto> tieredCommissions, decimal? fixedAmountCommission,
-            decimal? fixedPercentageCommission, List<BmCommissionReferenceType> commissionReferenceTypes,
+            decimal? fixedPercentageCommission, List<CommissionReferenceType> commissionReferenceTypes,
             decimal? transactionMinCommissionAmount, decimal? transactionMaxCommissionAmount,
             decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount)
     {
@@ -236,7 +236,7 @@ public class UpdateTenantMerchantContractCommandHandler : IRequestHandler<Update
                     request.PeriodMaxCommissionAmount
             );
 
-        if (request.CommissionCalculationType == BmCommissionCalculationType.UniformTiered || request.CommissionCalculationType == BmCommissionCalculationType.CumulativeTiered)
+        if (request.CommissionCalculationType == CommissionCalculationType.UniformTiered || request.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
         {
             var tieredCommissions = request.TieredCommissions.Select(x =>
             new TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList();
