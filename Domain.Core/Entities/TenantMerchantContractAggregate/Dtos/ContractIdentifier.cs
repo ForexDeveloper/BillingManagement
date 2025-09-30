@@ -35,3 +35,13 @@ public sealed record ContractIdentifier
 
     }
 }
+
+/// <summary>
+/// به هیچ وجه از رکورد به کلاس تبدیل نشود. جاب صورتسحاب منفجر می شود
+/// </summary>
+public sealed record TenantMerchantIdentifier(int TenantId, int MerchantId)
+{
+    public int TenantId { get; set; } = TenantId;
+
+    public int MerchantId { get; set; } = MerchantId;
+}
