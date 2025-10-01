@@ -7,13 +7,17 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.BillingAggregate.Dtos;
 using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
 public sealed class MerchantBillingRepository(ApplicationDbContext applicationDbContext) : IMerchantBillingRepository
 {
+    public async Task AddRangeAsync(IEnumerable<MerchantBilling> billings, CancellationToken cancellationToken)
+    {
+        await applicationDbContext.MerchantBillings.AddRangeAsync(billings, cancellationToken);
+    }
+
     public async Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken)
     {
         var billings = await applicationDbContext.MerchantBillings
@@ -23,17 +27,29 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
             {
                 Billing = p,
                 PaidAmount = p.Payments.Sum(q => q.Amount),
-                Contract = applicationDbContext.TenantMerchantContracts.Include(q => q.Children)
-                    .OrderByDescending(q => q.CreatedDateTime).FirstOrDefault(q => p.ContractIds.Contains(q.Id))
+                ActiveContractId = applicationDbContext.TenantMerchantContracts.Where(q =>
+                    q.Status &&
+                    q.TenantId == p.FromBusinessIdentityId &&
+                    q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
             })
             .ToListAsync(cancellationToken);
 
-        foreach (var billing in billings)
-        {
-            billing.FinalEndorsementContractId = GetFinalContractId(billing.Contract);
-        }
-
         return billings;
+    }
+
+    public async Task<List<SettledNegativeBilling>> GetSettledNegativeBillings(CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.MerchantBillings
+            .Where(p => p.Status == BillingStatus.Settled && p.Amount < 0 && p.Children.Any() == false)
+            .Select(p => new SettledNegativeBilling
+            {
+                Billing = p,
+                ActiveContractId = applicationDbContext.TenantMerchantContracts.Where(q =>
+                    q.Status &&
+                    q.TenantId == p.FromBusinessIdentityId &&
+                    q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
+            })
+            .ToListAsync(cancellationToken);
     }
 
     public IQueryable<MerchantBilling> CreateJobBillingQuery(DateTime startOfPeriod, DateTime endOfPeriod)
@@ -50,22 +66,5 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
     {
         return await applicationDbContext.MerchantBillings
             .Where(p => startOfPeriod == p.StartDate && endOfPeriod == p.EndDate).AnyAsync(cancellationToken);
-    }
-
-    public async Task AddRangeAsync(IEnumerable<MerchantBilling> billings, CancellationToken cancellationToken)
-    {
-        await applicationDbContext.MerchantBillings.AddRangeAsync(billings, cancellationToken);
-    }
-
-    private static int GetFinalContractId(TenantMerchantContract contract)
-    {
-        if (contract.Children == null || !contract.Children.Any()) return contract.Id;
-
-        foreach (var child in contract.Children)
-        {
-            return GetFinalContractId(child);
-        }
-
-        return contract.Id;
     }
 }

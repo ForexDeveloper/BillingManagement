@@ -1,21 +1,19 @@
-﻿using Application.Service.Contracts;
+﻿using System;
+using System.Linq;
+using System.Threading;
+using Domain.Core.Enums;
+using System.Globalization;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 using Application.Service.Helper;
-using Domain.Core.Entities.BillingAggregate;
+using Application.Service.Contracts;
+using Domain.Core.UnitOfWorkContracts;
 using Domain.Core.Entities.BillingAggregate.Dtos;
-using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
-using System.Globalization;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Application.Service.Services;
 
@@ -32,6 +30,8 @@ public sealed class MerchantBillingService(
 
         var overdueBillings = await OverdueExpiredBillings(cancellationToken);
 
+        var negativeBillings = await merchantBillingRepository.GetSettledNegativeBillings(cancellationToken);
+
         var allContracts = await tenantMerchantContractRepository.GetAllGroupContractAsync(cancellationToken);
 
         var billingGroups = await CreateBillingGroups(allContracts, financialQuery, cancellationToken);
@@ -46,19 +46,24 @@ public sealed class MerchantBillingService(
 
         foreach (var billingGroup in billingGroups)
         {
+            var billingDtos = billingGroup.Value;
+
             var oneDeactiveContractHasBilling = false;
 
             List<MerchantBilling> alternativeBillings = [];
 
-            foreach (var billingDto in billingGroup.Value.OrderBy(p => p.EndOfPeriod))
+            for (var i = 0; i < billingDtos.Count; i++)
             {
                 decimal previousDebitAmount = 0;
+                decimal previousCreditAmount = 0;
                 decimal totalTransactionsAmount = 0;
                 decimal currentPeriodFinalCommission = 0;
                 decimal refundedTransactionsCommission = 0;
                 decimal currentPeriodCalculatedCommission = 0;
                 decimal currentPeriodPurchaseTransactions = 0;
                 decimal previousPeriodRefundedTransactions = 0;
+
+                var billingDto = billingDtos[i];
 
                 var contract = billingDto.ContractGroup;
 
@@ -122,13 +127,24 @@ public sealed class MerchantBillingService(
                     }
                 }
 
+                var negativeBilling = negativeBillings.FirstOrDefault(p => billingDto.ContractIds.Any(q => p.Billing.ContractIds.Contains(q)))?.Billing ?? 
+                                      negativeBillings.FirstOrDefault(p => billingDto.ContractIds.Contains(p.ActiveContractId))?.Billing;
+
+                previousCreditAmount = negativeBilling.Amount;
+
                 MerchantBilling overdueBilling = null;
 
-                var alternativeBilling = alternativeBillings.LastOrDefault();
-
-                if (contract.BillingPeriodType == alternativeBilling.PeriodType)
+                if (i != 0)
                 {
-                    if (alternativeBilling != null)
+                    var alternativeBilling = alternativeBillings.Last();
+
+                    var previousContract = billingDtos[i - 1].ContractGroup;
+
+                    var previousContractIdentifier = new ContractIdentifier(previousContract.TenantId,
+                        previousContract.MerchantId, previousContract.BillingPeriod, previousContract.BillingPeriodType,
+                        previousContract.BillingDailyOriginDate, previousContract.CommissionCalculationType);
+
+                    if (contractIdentifier == previousContractIdentifier)
                     {
                         previousDebitAmount = alternativeBilling.GetDebitAmount();
 
@@ -140,24 +156,28 @@ public sealed class MerchantBillingService(
                     }
                     else
                     {
-                        overdueBilling = overdueBillings.FirstOrDefault(p => billingDto.ContractIds.Any(q => p.Billing.ContractIds.Contains(q)))?.Billing ??
-                                         overdueBillings.FirstOrDefault(p => billingDto.ContractIds.Contains(p.FinalEndorsementContractId))?.Billing;
+                        alternativeBillings.Clear();
+
+                        overdueBilling = FindOverdueBilling(overdueBillings, billingDto);
+
+                        previousDebitAmount = overdueBilling?.GetDebitAmount() ?? 0;
                     }
                 }
                 else
                 {
-                    alternativeBillings.Clear();
+                    overdueBilling = FindOverdueBilling(overdueBillings, billingDto);
 
-                    overdueBilling = overdueBillings.FirstOrDefault(p => billingDto.ContractIds.Any(q => p.Billing.ContractIds.Contains(q)))?.Billing ??
-                                     overdueBillings.FirstOrDefault(p => billingDto.ContractIds.Contains(p.FinalEndorsementContractId))?.Billing;
+                    previousDebitAmount = overdueBilling?.GetDebitAmount() ?? 0;
                 }
 
                 var billing = new MerchantBilling(contract.TenantId, contract.TenantId, contract.MerchantId,
-                    BillingType.TenantToMerchant, contract.BillingPeriodType, previousDebitAmount, 0, 0,
+                    BillingType.TenantToMerchant, contract.BillingPeriodType, previousDebitAmount, previousCreditAmount, 0,
                     billingDto.StartOfPeriod, billingDto.EndOfPeriod, 0, billingDto.ContractIds,
                     currentPeriodCalculatedCommission, currentPeriodFinalCommission, refundedTransactionsCommission,
                     previousPeriodRefundedTransactions, currentPeriodPurchaseTransactions, installments,
                     overdueBilling);
+
+                alternativeBillings.Add(billing);
 
                 if (billing.Amount == 0)
                 {
@@ -176,8 +196,6 @@ public sealed class MerchantBillingService(
                 }
 
                 billings.Add(billing);
-
-                alternativeBillings.Add(billing);
             }
         }
 
@@ -294,7 +312,7 @@ public sealed class MerchantBillingService(
                         ContractIds = contract.ContractIds
                     };
 
-                    billingDtos.Add(billingDto);
+                    billingDtos.Insert(0, billingDto);
 
                     financialQuery.BuildQueries(installmentQuery, financialDocumentQuery);
                 }
@@ -320,7 +338,7 @@ public sealed class MerchantBillingService(
                             ContractIds = contract.ContractIds
                         };
 
-                        billingDtos.Add(billingDto);
+                        billingDtos.Insert(0, billingDto);
 
                         financialQuery.BuildQueries(installmentQuery, financialDocumentQuery);
                     }
@@ -382,27 +400,6 @@ public sealed class MerchantBillingService(
         notAssignedBillings.RemoveAll(p => p.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid);
     }
 
-    private static bool ShouldSkipBilling(decimal billingAmount, bool contractStatus, bool isCurrentPeriod, ref bool oneDeactiveContractHasBilling)
-    {
-        if (billingAmount == 0)
-        {
-            if (!contractStatus) return true;
-
-            if (contractStatus && !isCurrentPeriod) return true;
-
-            if (contractStatus && isCurrentPeriod && oneDeactiveContractHasBilling) return true;
-        }
-        else
-        {
-            if (!contractStatus && isCurrentPeriod)
-            {
-                oneDeactiveContractHasBilling = true;
-            }
-        }
-
-        return false;
-    }
-
     private static decimal CalculateFinalCommission(ContractGroup contract, decimal currentPeriodCalculatedCommission)
     {
         decimal currentPeriodFinalCommission;
@@ -461,6 +458,41 @@ public sealed class MerchantBillingService(
         }
 
         return currentPeriodCalculatedCommission;
+    }
+
+    private static MerchantBilling FindOverdueBilling(List<NotSettledBilling> overdueBillings, BillingDto billingDto)
+    {
+        var matchedBillings = overdueBillings.Where(p => billingDto.ContractIds.Any(q => p.Billing.ContractIds.Contains(q)))
+            .Select(p => p.Billing);
+
+        if (!matchedBillings.Any())
+        {
+            matchedBillings = overdueBillings.Where(p => billingDto.ContractIds.Contains(p.ActiveContractId)).Select(p => p.Billing);
+        }
+
+        return overdueBillings.FirstOrDefault(p => billingDto.ContractIds.Any(q => p.Billing.ContractIds.Contains(q)))?.Billing ??
+               overdueBillings.FirstOrDefault(p => billingDto.ContractIds.Contains(p.ActiveContractId))?.Billing;
+    }
+
+    private static bool ShouldSkipBilling(decimal billingAmount, bool contractStatus, bool isCurrentPeriod, ref bool oneDeactiveContractHasBilling)
+    {
+        if (billingAmount == 0)
+        {
+            if (!contractStatus) return true;
+
+            if (!isCurrentPeriod) return true;
+
+            if (oneDeactiveContractHasBilling) return true;
+        }
+        else
+        {
+            if (!contractStatus && isCurrentPeriod)
+            {
+                oneDeactiveContractHasBilling = true;
+            }
+        }
+
+        return false;
     }
 
     private async Task ScanPreviousBilling(FinancialQuery finalQuery, List<BillingDto> billingDtos, ContractGroup contract, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
@@ -524,7 +556,7 @@ public sealed class MerchantBillingService(
                 StartOfPeriod = startOfPeriod
             };
 
-            billingDtos.Add(billingDto);
+            billingDtos.Insert(0, billingDto);
 
             finalQuery.BuildQueries(installmentQuery, financialDocumentQuery);
         }
@@ -587,7 +619,7 @@ public sealed class MerchantBillingService(
                 StartOfPeriod = startOfPeriod
             };
 
-            billingDtos.Add(billingDto);
+            billingDtos.Insert(0, billingDto);
 
             finalQuery.BuildQueries(installmentQuery, financialDocumentQuery);
         }

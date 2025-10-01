@@ -78,30 +78,63 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
             .SumAsync(p => p.Commission, cancellationToken);
     }
 
-    public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod)
+    public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod)
     {
-        return await applicationDbContext.MerchantInstallments
+        var query = applicationDbContext.MerchantInstallments
             .Where(p => p.Type == InstallmentType.Installment &&
-                        startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
+                        startOfPeriod <= p.DueDate && p.DueDate <= DateTime.Today &&
                         p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
                         p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
                         p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
                         p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
-                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
-            .SumAsync(p => p.Amount);
-    }
+                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId);
 
-    public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, int billingPeriod,
-        TimeInterval billingPeriodType, DateTime? dailyBillingOriginDate,
-        CommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod)
-    {
-        return await applicationDbContext.MerchantInstallments
-            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
-                        p.TenantMerchantContract.BillingPeriod == billingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == billingPeriodType &&
-                        p.TenantMerchantContract.DailyBillingOriginDate == dailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == commissionCalculationType &&
-                        p.FromBusinessIdentityId == tenantId && p.ToBusinessIdentityId == merchantId)
-            .Where(p => p.Type == InstallmentType.Installment).SumAsync(p => p.Amount);
+        IQueryable<decimal> amountsQuery = null;
+
+        if (!contract.CommissionReferenceTypes.Any())
+        {
+            amountsQuery = query.Select(p => p.Amount);
+        }
+
+        foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
+        {
+            switch (contractCommissionReferenceType)
+            {
+                case CommissionReferenceType.CashAmount:
+
+                    var cashAmountQuery = query.Select(p => p.CashAmount);
+
+                    amountsQuery = amountsQuery != null ?
+                        amountsQuery.Union(cashAmountQuery) : cashAmountQuery;
+
+                    break;
+
+                case CommissionReferenceType.CreditAmount:
+
+                    var creditAmountQuery = query.Select(p => p.CreditAmount);
+
+                    amountsQuery = amountsQuery != null ?
+                        amountsQuery.Union(creditAmountQuery) : creditAmountQuery;
+
+                    break;
+
+                case CommissionReferenceType.PrepaymentAmount:
+
+                    var prePaymentAmountQuery = query.Select(p => p.PrepaymentAmount);
+
+                    amountsQuery = amountsQuery != null ?
+                        amountsQuery.Union(prePaymentAmountQuery) : prePaymentAmountQuery;
+
+                    break;
+
+                case CommissionReferenceType.InterestAmount:
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        amountsQuery ??= query.Select(p => p.Amount);
+
+        return await amountsQuery.SumAsync(p => p);
     }
 }

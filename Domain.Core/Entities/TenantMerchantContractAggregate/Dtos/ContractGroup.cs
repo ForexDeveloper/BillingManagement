@@ -32,4 +32,14 @@ public sealed record ContractGroup
     public List<TieredCommission> TieredCommissions { get; set; }
 
     public CommissionCalculationType CommissionCalculationType { get; set; }
+
+    public ContractIdentifier CreateIdentifier()
+    {
+        return new ContractIdentifier(TenantId,
+            MerchantId,
+            BillingPeriod,
+            BillingPeriodType,
+            BillingDailyOriginDate,
+            CommissionCalculationType);
+    }
 }

@@ -43,7 +43,10 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 var contract = await tenantMerchantContractRepository.GetActiveContractAsync(
                     financialDocument.ToBusinessIdentityId, financialDocument.TenantId);
 
-                await CreateMerchantInstallments(contract, financialDocument);
+                if (financialDocument.Type == FinancialDocumentType.Purchase)
+                {
+                    await CreateMerchantInstallments(contract, financialDocument);
+                }
 
                 await CreateFinancialDocument(context);
 
@@ -150,23 +153,10 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
     private async Task CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
     {
-        decimal commission = 0;
-
         List<MerchantInstallment> installments = [];
 
         var installmentDates = DateHelper.CalculateInstallments(DateTime.Now, contract.InstallmentsCount,
             TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
-
-        var installmentCount = contract.InstallmentsCount ?? 1;
-
-        var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
-
-        var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
-
-        var period = tenantMerchantContractRepository.GetContractActivePeriod(contract);
-
-        var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTransactionsOfCurrentPeriod(contract,
-            period.StartOfPeriod, period.EndOfPeriod);
 
         decimal financialDocumentTargetAmount = 0;
 
@@ -174,32 +164,32 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
         {
             financialDocumentTargetAmount = financialDocument.Amount;
         }
-        else
+
+        foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
         {
-            foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
+            switch (contractCommissionReferenceType)
             {
-                switch (contractCommissionReferenceType)
-                {
-                    case CommissionReferenceType.CashAmount:
-                        financialDocumentTargetAmount += financialDocument.CashAmount;
-                        break;
+                case CommissionReferenceType.CashAmount:
+                    financialDocumentTargetAmount += financialDocument.CashAmount;
+                    break;
 
-                    case CommissionReferenceType.CreditAmount:
-                        financialDocumentTargetAmount += financialDocument.CreditAmount;
-                        break;
+                case CommissionReferenceType.CreditAmount:
+                    financialDocumentTargetAmount += financialDocument.CreditAmount;
+                    break;
 
-                    case CommissionReferenceType.PrepaymentAmount:
-                        financialDocumentTargetAmount += financialDocument.PrepaymentAmount;
-                        break;
+                case CommissionReferenceType.PrepaymentAmount:
+                    financialDocumentTargetAmount += financialDocument.PrepaymentAmount;
+                    break;
 
-                    case CommissionReferenceType.InterestAmount:
-                        break;
+                case CommissionReferenceType.InterestAmount:
+                    break;
 
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
+
+        decimal financialDocumentCommission = 0;
 
         switch (contract.CommissionCalculationType)
         {
@@ -207,6 +197,10 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 break;
 
             case CommissionCalculationType.CumulativeTiered:
+
+                var startOfPeriod = tenantMerchantContractRepository.GetActiveContractStartOfPeriod(contract);
+
+                var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTransactionsOfCurrentPeriod(contract, startOfPeriod);
 
                 var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
                     p.FromAmount < sumOfTransactionsOfCurrentPeriod && sumOfTransactionsOfCurrentPeriod <= p.ToAmount);
@@ -229,16 +223,16 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                     if (tieredCommission == null) break;
 
-                    commission = sumOfTransactionsOfCurrentPeriod * tieredCommission.Percentage;
+                    financialDocumentCommission = financialDocumentTargetAmount * tieredCommission.Percentage;
 
-                    if (commission > tieredCommission.MaxAmount)
+                    if (financialDocumentCommission > tieredCommission.MaxAmount)
                     {
-                        commission = tieredCommission.MaxAmount.Value;
+                        financialDocumentCommission = tieredCommission.MaxAmount.Value;
                     }
 
-                    if (commission < tieredCommission.MinAmount)
+                    if (financialDocumentCommission < tieredCommission.MinAmount)
                     {
-                        commission = tieredCommission.MinAmount.Value;
+                        financialDocumentCommission = tieredCommission.MinAmount.Value;
                     }
                 }
 
@@ -248,23 +242,23 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                 if (!contract.FixedPercentageCommission.HasValue) break;
 
-                commission = financialDocumentTargetAmount * contract.FixedPercentageCommission.Value;
+                financialDocumentCommission = financialDocumentTargetAmount * contract.FixedPercentageCommission.Value;
 
-                if (commission > contract.TransactionMaxCommissionAmount)
+                if (financialDocumentCommission > contract.TransactionMaxCommissionAmount)
                 {
-                    commission = contract.TransactionMaxCommissionAmount.Value;
+                    financialDocumentCommission = contract.TransactionMaxCommissionAmount.Value;
                 }
 
-                if (commission < contract.TransactionMinCommissionAmount)
+                if (financialDocumentCommission < contract.TransactionMinCommissionAmount)
                 {
-                    commission = contract.TransactionMinCommissionAmount.Value;
+                    financialDocumentCommission = contract.TransactionMinCommissionAmount.Value;
                 }
 
                 break;
 
             case CommissionCalculationType.FixedAmount:
 
-                commission = contract.FixedAmountCommission ?? 0;
+                financialDocumentCommission = contract.FixedAmountCommission ?? 0;
 
                 break;
 
@@ -272,33 +266,71 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 throw new ArgumentOutOfRangeException();
         }
 
-        financialDocument.SetCommission(commission);
+        financialDocument.SetCommission(financialDocumentCommission);
 
-        var installmentCommission = RoundHelper.RoundAmount(commission / installmentCount);
+        var installmentCount = contract.InstallmentsCount ?? 1;
 
-        var lastInstallmentCommission = commission - (installmentCommission * (installmentCount - 1));
+        var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
+        var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
+
+        var installmentCashAmount = RoundHelper.RoundAmount(financialDocument.CashAmount / installmentCount);
+        var lastInstallmentCashAmount = financialDocument.CashAmount - (installmentCashAmount * (installmentCount - 1));
+
+        var installmentCreditAmount = RoundHelper.RoundAmount(financialDocument.CreditAmount / installmentCount);
+        var lastInstallmentCreditAmount = financialDocument.CreditAmount - (installmentCreditAmount * (installmentCount - 1));
+
+        var installmentPrepaymentAmount = RoundHelper.RoundAmount(financialDocument.PrepaymentAmount / installmentCount);
+        var lastInstallmentPrepaymentAmount = financialDocument.PrepaymentAmount - (installmentPrepaymentAmount * (installmentCount - 1));
+
+        var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
+        var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
 
         for (var i = 0; i < installmentDates.Count; i++)
         {
-            var installmentDate = installmentDates[i];
+            decimal amount;
+            decimal cashAmount;
+            decimal creditAmount;
+            decimal prePaymentAmount;
+            decimal commission;
 
-            var amount = i == installmentDates.Count - 1 ? lastInstallmentAmount : installmentAmount;
-
-            var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
-                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contract.Id, amount, i + 1,
-                installmentDate, InstallmentType.Installment);
-
-            installments.Add(installment);
-
-            if (contract.CommissionDeductionMethodType == CommissionDeductionMethodType.DeductFromFirstInstallment)
+            if (i == installmentDates.Count - 1)
             {
-                installments[0].SetCommission(commission);
+                amount = lastInstallmentAmount;
+                cashAmount = lastInstallmentCashAmount;
+                creditAmount = lastInstallmentCreditAmount;
+                prePaymentAmount = lastInstallmentPrepaymentAmount;
+                commission = lastInstallmentCommission;
             }
             else
             {
-                installment.SetCommission(i == installmentDates.Count - 1
-                    ? lastInstallmentCommission
-                    : installmentCommission);
+                amount = installmentAmount;
+                cashAmount = installmentCashAmount;
+                creditAmount = installmentCreditAmount;
+                prePaymentAmount = installmentPrepaymentAmount;
+                commission = installmentCommission;
+            }
+
+            var installmentDate = installmentDates[i];
+
+            var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
+                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contract.Id, amount, cashAmount,
+                creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Installment);
+
+            installments.Add(installment);
+
+            switch (contract.CommissionDeductionMethodType)
+            {
+                case null:
+                case CommissionDeductionMethodType.DeductEquallyFromInstallments:
+                    installment.SetCommission(commission);
+                    break;
+
+                case CommissionDeductionMethodType.DeductFromFirstInstallment:
+                    installments[0].SetCommission(financialDocumentCommission);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

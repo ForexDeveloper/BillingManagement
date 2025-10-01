@@ -30,5 +30,5 @@ public interface ITenantMerchantContractRepository
 
     Task<List<ContractGroup>> GetCurrentGroupContractsAsync(CancellationToken cancellationToken);
 
-    (DateTime StartOfPeriod, DateTime EndOfPeriod) GetContractActivePeriod(TenantMerchantContract contract);
+    DateTime GetActiveContractStartOfPeriod(TenantMerchantContract contract);
 }

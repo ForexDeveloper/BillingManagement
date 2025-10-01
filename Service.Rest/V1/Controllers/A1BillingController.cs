@@ -374,7 +374,7 @@ public class A1BillingController(
             {
                 var installment = new MerchantInstallment(tenantId: 2, financialDocumentId: 1,
                     fromBusinessIdentityId: 2, toBusinessIdentityId: 3,
-                    tenantMerchantContractId: (int)tenantMerchantContractId, amount: 31, number: 2, dueDate: installmentDate,
+                    tenantMerchantContractId: (int)tenantMerchantContractId, amount: 31, 0, 0, 0, number: 2, dueDate: installmentDate,
                     type: InstallmentType.Installment);
 
                 installments.Add(installment);

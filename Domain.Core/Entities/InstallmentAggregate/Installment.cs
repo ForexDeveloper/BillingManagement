@@ -1,11 +1,11 @@
-﻿using Domain.Base;
-using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantAggregate;
+﻿using System;
+using Domain.Base;
 using Domain.Core.Enums;
-using System;
+using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 
 namespace Domain.Core.Entities.InstallmentAggregate;
 
@@ -22,6 +22,12 @@ public abstract class Installment : BaseEntity<long>
     public int ToBusinessIdentityId { get; protected set; }
 
     public decimal Amount { get; protected set; }
+
+    public decimal CashAmount { get; protected set; }
+
+    public decimal CreditAmount { get; protected set; }
+
+    public decimal PrepaymentAmount { get; protected set; }
 
     public decimal Commission { get; protected set; }
 
@@ -53,44 +59,56 @@ public abstract class Installment : BaseEntity<long>
     }
 
     protected Installment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
-        int toBusinessIdentityId, decimal amount, int number,
-        DateTime dueDate, InstallmentType type)
+        int toBusinessIdentityId, decimal amount, decimal cashAmount, decimal creditAmount, decimal prepaymentAmount,
+        int number, DateTime dueDate, InstallmentType type)
     {
         Type = type;
-        Amount = amount;
         Number = number;
         DueDate = dueDate;
         TenantId = tenantId;
+        CashAmount = cashAmount;
+        CreditAmount = creditAmount;
+        PrepaymentAmount = prepaymentAmount;
         Status = InstallmentStatus.Pending;
         FinancialDocument = financialDocument;
         ToBusinessIdentityId = toBusinessIdentityId;
         FromBusinessIdentityId = fromBusinessIdentityId;
-        SetAmount(amount);
+        CalculateAmount(amount);
     }
 
     protected Installment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
-        int toBusinessIdentityId, decimal amount, int number,
+        int toBusinessIdentityId, decimal amount, decimal cashAmount, decimal creditAmount, decimal prepaymentAmount, int number,
         DateTime dueDate, InstallmentType type)
     {
         Type = type;
         Number = number;
         DueDate = dueDate;
         TenantId = tenantId;
+        CashAmount = cashAmount;
+        CreditAmount = creditAmount;
+        PrepaymentAmount = prepaymentAmount;
         Status = InstallmentStatus.Pending;
         FinancialDocumentId = financialDocumentId;
         ToBusinessIdentityId = toBusinessIdentityId;
         FromBusinessIdentityId = fromBusinessIdentityId;
-        SetAmount(amount);
+        CalculateAmount(amount);
     }
 
-    private void SetAmount(decimal amount)
+    private void CalculateAmount(decimal amount)
     {
-        if (amount <= 0)
+        if (amount < 0)
         {
-            throw new ArgumentValidationException(nameof(amount), "مبلغ قسط نمی تواند کوچک تر مساوی صفر باشد");
+            throw new ArgumentValidationException(nameof(amount), "مبلغ قسط نمی تواند کوچک تر از صفر باشد");
         }
 
         Amount = amount;
+
+        var compare = Amount == (CashAmount + CreditAmount + PrepaymentAmount);
+
+        if (!compare)
+        {
+            throw new ArgumentValidationException(nameof(amount), "جمع ریز مبالغ با مبلغ کل قسط برابر نمی باشد");
+        }
     }
 
     public void SetCommission(decimal commission)

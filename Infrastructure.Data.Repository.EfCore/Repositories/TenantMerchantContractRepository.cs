@@ -108,6 +108,7 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
             PeriodMaxCommissionAmount = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().PeriodMaxCommissionAmount
         })
         .AsNoTracking()
+        .OrderBy(p => p.Status)
         .ToListAsync(cancellationToken);
     }
 
@@ -188,7 +189,7 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
         .ToListAsync(cancellationToken);
     }
 
-    public (DateTime StartOfPeriod, DateTime EndOfPeriod) GetContractActivePeriod(TenantMerchantContract contract)
+    public DateTime GetActiveContractStartOfPeriod(TenantMerchantContract contract)
     {
         int difference;
         DateTime endOfPeriod;
@@ -265,8 +266,6 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
                 throw new ArgumentOutOfRangeException();
         }
 
-        (DateTime StartOfPeriod, DateTime EndOfPeriod) period = new(startOfPeriod, endOfPeriod);
-
-        return new ValueTuple<DateTime, DateTime>(startOfPeriod, endOfPeriod);
+        return startOfPeriod;
     }
 }

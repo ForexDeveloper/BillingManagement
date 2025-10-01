@@ -20,18 +20,20 @@ public sealed class MerchantInstallment : Installment
     }
 
     public MerchantInstallment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
-        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, int number, DateTime dueDate,
-        InstallmentType type) : base(financialDocument, tenantId,
-        fromBusinessIdentityId, toBusinessIdentityId, amount, number, dueDate, type)
+        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, decimal cashAmount,
+        decimal creditAmount, decimal prepaymentAmount, int number, DateTime dueDate, InstallmentType type) : base(
+        financialDocument, tenantId, fromBusinessIdentityId, toBusinessIdentityId, amount, cashAmount, creditAmount,
+        prepaymentAmount, number, dueDate, type)
     {
         TenantMerchantContractId = tenantMerchantContractId;
         SetCheckSum();
     }
 
     public MerchantInstallment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
-        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, int number, DateTime dueDate,
-        InstallmentType type) : base(tenantId, financialDocumentId,
-        fromBusinessIdentityId, toBusinessIdentityId, amount, number, dueDate, type)
+        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, decimal cashAmount,
+        decimal creditAmount, decimal prepaymentAmount, int number, DateTime dueDate, InstallmentType type) : base(
+        tenantId, financialDocumentId, fromBusinessIdentityId, toBusinessIdentityId, amount, cashAmount, creditAmount,
+        prepaymentAmount, number, dueDate, type)
     {
         TenantMerchantContractId = tenantMerchantContractId;
         SetCheckSum();
