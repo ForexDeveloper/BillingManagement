@@ -4,7 +4,7 @@ using System.Threading;
 using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.FinancialDocumentAggregate;
@@ -37,20 +37,5 @@ public interface IFinancialDocumentRepository
 
     Task<bool> ExecuteQueryAnyAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
 
-    Task<decimal> GetPeriodTotalTransactionsAmount(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
-
     Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
-}
-
-public sealed record FinancialDocumentDto
-{
-    public long Id { get; set; }
-
-    public decimal Amount { get; set; }
-
-    public FinancialDocumentType Type { get; set; }
-
-    public decimal? PurchaseCommission { get; set; }
-
-    public DateTime CreatedDateTime { get; set; }
 }

@@ -21,6 +21,8 @@ public sealed record ContractGroup
 
     public required bool Status { get; set; }
 
+    public DateTime CreatedDateTime { get; set; }
+
     public DateTime EndorsementDate { get; set; }
 
     public IEnumerable<int> ContractIds { get; set; }

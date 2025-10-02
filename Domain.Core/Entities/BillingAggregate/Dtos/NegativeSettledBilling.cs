@@ -2,7 +2,7 @@
 
 namespace Domain.Core.Entities.BillingAggregate.Dtos;
 
-public sealed record SettledNegativeBilling
+public sealed record NegativeSettledBilling
 {
     public MerchantBilling Billing { get; set; }
 

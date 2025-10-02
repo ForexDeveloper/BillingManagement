@@ -5,6 +5,7 @@ using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
@@ -26,6 +27,11 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
             .Where(p => p.BillingId.HasValue == false)
             .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId));
+    }
+
+    public async Task<bool> ExecuteQueryAnyAsync(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken)
+    {
+        return await query.AnyAsync(cancellationToken);
     }
 
     public async Task<bool> FindInContractPeriodAsync(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken)

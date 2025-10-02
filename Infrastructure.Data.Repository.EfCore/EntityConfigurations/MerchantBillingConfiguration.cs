@@ -10,7 +10,8 @@ public sealed class MerchantBillingConfiguration : IEntityTypeConfiguration<Merc
     public void Configure(EntityTypeBuilder<MerchantBilling> builder)
     {
         builder.Property(p => p.Status).IsRequired();
-        builder.Property(p => p.ParentId).IsRequired(false);
+        builder.Property(p => p.DebtorId).IsRequired(false);
+        builder.Property(p => p.CreditorId).IsRequired(false);
         builder.Property(p => p.Code).HasMaxLength(100).IsRequired();
         builder.Property(p => p.AdditionsDescription).HasMaxLength(1000).IsRequired(false);
         builder.Property(p => p.DeductionsDescription).HasMaxLength(1000).IsRequired(false);
@@ -21,11 +22,6 @@ public sealed class MerchantBillingConfiguration : IEntityTypeConfiguration<Merc
         builder.Property(p => p.CurrentPeriodCalculatedCommission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.CurrentPeriodPurchaseTransactions).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.PreviousPeriodRefundedTransactions).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
-
-        builder.HasOne(p => p.Parent)
-            .WithOne()
-            .HasForeignKey<MerchantBilling>(p => p.ParentId)
-            .OnDelete(DeleteBehavior.Restrict);
 
         builder.ToTable(nameof(MerchantBilling));
     }
