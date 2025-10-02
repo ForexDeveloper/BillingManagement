@@ -15,7 +15,7 @@ public interface IMerchantBillingRepository
 
     Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken);
 
-    Task<List<SettledNegativeBilling>> GetSettledNegativeBillings(CancellationToken cancellationToken);
+    Task<List<NegativeSettledBilling>> GetNegativeSettledBillings(CancellationToken cancellationToken);
 
     Task<bool> FindInContractPeriodAsync(IQueryable<MerchantBilling> query, CancellationToken cancellation);
 

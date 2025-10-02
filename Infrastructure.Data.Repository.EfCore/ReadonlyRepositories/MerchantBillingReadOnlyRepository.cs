@@ -95,10 +95,10 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
             .Select(p => new GetPreviousDebitViewModel
             {
-                Id = p.Parent.Id,
-                EndDate = p.Parent.EndDate,
-                StartDate = p.Parent.StartDate,
-                Amount = p.Parent.Amount - p.Parent.Payments.Sum(q => q.Amount)
+                Id = p.Debtor.Id,
+                EndDate = p.Debtor.EndDate,
+                StartDate = p.Debtor.StartDate,
+                Amount = p.Debtor.Amount - p.Debtor.Payments.Sum(q => q.Amount)
             }).FirstOrDefaultAsync();
     }
 

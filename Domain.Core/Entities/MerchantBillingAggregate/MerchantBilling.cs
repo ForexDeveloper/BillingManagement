@@ -38,10 +38,9 @@ public sealed class MerchantBilling : Billing
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
         IEnumerable<int> contractIds, decimal currentPeriodCalculatedCommission, decimal currentPeriodFinalCommission,
         decimal refundedTransactionsCommission, decimal previousPeriodRefundedTransactions,
-        decimal currentPeriodPurchaseTransactions,
-        Billing? parent = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType,
-        previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds,
-        parent)
+        decimal currentPeriodPurchaseTransactions, Billing? debtor = null, Billing? creditor = null) : base(tenantId,
+        fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount, previousCreditAmount,
+        previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds, debtor, creditor)
     {
         Additions = 0;
         Deductions = 0;
@@ -61,9 +60,9 @@ public sealed class MerchantBilling : Billing
         IEnumerable<int> contractIds, decimal currentPeriodCalculatedCommission, decimal currentPeriodFinalCommission,
         decimal refundedTransactionsCommission, decimal previousPeriodRefundedTransactions,
         decimal currentPeriodPurchaseTransactions, IEnumerable<Installment>? installments = null,
-        Billing? parent = null) : base(tenantId,
-        fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount, previousCreditAmount,
-        previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds, installments, parent)
+        Billing? debtor = null, Billing? creditor = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId,
+        type, periodType, previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate,
+        gracePeriod, contractIds, installments, debtor, creditor)
     {
         Additions = 0;
         Deductions = 0;
@@ -110,11 +109,11 @@ public sealed class MerchantBilling : Billing
 
     private void CalculateAmount()
     {
-        var totalCredit = PreviousDebitAmount + CurrentPeriodPurchaseTransactions + RefundedTransactionsCommission + Additions;
+        var totalDebit = PreviousDebitAmount + CurrentPeriodPurchaseTransactions + RefundedTransactionsCommission + Additions;
 
-        var totalDebit = PreviousCreditAmount + CurrentPeriodFinalCommission + PreviousPeriodRefundedTransactions + Deductions;
+        var totalCredit = PreviousCreditAmount + CurrentPeriodFinalCommission + PreviousPeriodRefundedTransactions + Deductions;
 
-        Amount = totalCredit - totalDebit;
+        Amount = totalDebit - totalCredit;
 
         SetCheckSum();
     }

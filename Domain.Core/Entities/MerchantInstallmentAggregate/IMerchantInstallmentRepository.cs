@@ -15,6 +15,8 @@ public interface IMerchantInstallmentRepository
     IQueryable<MerchantInstallment> CreateJobInstallmentQuery(DateTime startOfPeriod,
         DateTime endOfPeriod, IEnumerable<int> contractIds);
 
+    Task<bool> ExecuteQueryAnyAsync(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken);
+
     Task<bool> FindInContractPeriodAsync(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken);
 
     Task<InstallmentRange?> GetInstallmentRanges(IEnumerable<int> contractIds, CancellationToken cancellationToken);

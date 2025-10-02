@@ -29,13 +29,23 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.CheckSum).HasMaxLength(500).IsRequired();
         builder.Property(e => e.RowVersion).IsRowVersion();
 
+        builder.HasOne(p => p.Debtor)
+            .WithMany(p => p.DebtorChildren)
+            .HasForeignKey(p => p.DebtorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(p => p.Creditor)
+            .WithMany(p => p.CreditorChildren)
+            .HasForeignKey(p => p.CreditorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(p => p.Payments)
            .WithOne(b => b.Billing)
            .HasForeignKey(p => p.BillingId)
            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasQueryFilter(p => !p.IsDeleted);
-        builder.ToTable("Billing");
 
+        builder.ToTable(nameof(Billing));
     }
 }

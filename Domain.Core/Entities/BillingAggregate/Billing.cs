@@ -15,8 +15,6 @@ public abstract class Billing : BaseEntity<long>
 {
     public int TenantId { get; protected set; }
 
-    public long? ParentId { get; protected set; }
-
     public int FromBusinessIdentityId { get; protected set; }
 
     public int ToBusinessIdentityId { get; protected set; }
@@ -47,13 +45,19 @@ public abstract class Billing : BaseEntity<long>
 
     public DateTime DueDate { get; protected set; }
 
+    public long? DebtorId { get; protected set; }
+
+    public long? CreditorId { get; protected set; }
+
     public byte[] RowVersion { get; protected set; }
 
     public string CheckSum { get; protected set; }
 
     public Tenant Tenant { get; protected set; }
 
-    public Billing? Parent { get; protected set; }
+    public Billing? Debtor { get; protected set; }
+
+    public Billing? Creditor { get; protected set; }
 
     public BusinessIdentity FromBusinessIdentity { get; protected set; }
 
@@ -63,7 +67,9 @@ public abstract class Billing : BaseEntity<long>
 
     public List<BillingPayment> Payments { get; protected set; } = [];
 
-    public ICollection<Billing> Children { get; protected set; } = [];
+    public ICollection<Billing> DebtorChildren { get; protected set; } = [];
+
+    public ICollection<Billing> CreditorChildren { get; protected set; } = [];
 
     protected decimal PayableAmount => Amount - PaidAmount;
 
@@ -77,10 +83,11 @@ public abstract class Billing : BaseEntity<long>
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, Billing? parent = null)
+        IEnumerable<int> contractIds, Billing? debtor = null, Billing? creditor = null)
     {
         Type = type;
-        Parent = parent;
+        Debtor = debtor;
+        Creditor = creditor;
         TenantId = tenantId;
         PeriodType = periodType;
         GracePeriod = gracePeriod;
@@ -99,10 +106,12 @@ public abstract class Billing : BaseEntity<long>
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, IEnumerable<Installment> installments, Billing? parent = null)
+        IEnumerable<int> contractIds, IEnumerable<Installment> installments, Billing? debtor = null,
+        Billing? creditor = null)
     {
         Type = type;
-        Parent = parent;
+        Debtor = debtor;
+        Creditor = creditor;
         TenantId = tenantId;
         PeriodType = periodType;
         GracePeriod = gracePeriod;
@@ -129,12 +138,12 @@ public abstract class Billing : BaseEntity<long>
         UpdateStatus(BillingStatus.Overdue);
     }
 
-    public decimal GetDebitAmount()
+    public decimal GetPayableAmount()
     {
         return PayableAmount;
     }
 
-    public decimal CalculateDebitAmount()
+    public decimal CalculatePayableAmount()
     {
         return Amount - Payments.Sum(p => p.Amount);
     }
@@ -185,7 +194,7 @@ public abstract class Billing : BaseEntity<long>
 
     protected void SettleOrIssue()
     {
-        Status = Amount == 0 ? BillingStatus.Settled : BillingStatus.Issued;
+        Status = Amount <= 0 ? BillingStatus.Settled : BillingStatus.Issued;
     }
 
     protected abstract void SetCheckSum();

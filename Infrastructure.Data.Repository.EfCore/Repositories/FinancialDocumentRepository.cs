@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
@@ -91,14 +92,6 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
     public async Task<bool> ExecuteQueryAnyAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
     {
         return await query.AnyAsync(cancellationToken);
-    }
-
-    public async Task<decimal> GetPeriodTotalTransactionsAmount(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
-    {
-        return await applicationDbContext.FinancialDocuments
-            .Where(p => p.FromBusinessIdentityId == tenantId && p.ToBusinessIdentityId == merchantId)
-            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
-            .Where(p => p.Type == FinancialDocumentType.Purchase).SumAsync(p => p.Amount, cancellationToken);
     }
 
     public async Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
