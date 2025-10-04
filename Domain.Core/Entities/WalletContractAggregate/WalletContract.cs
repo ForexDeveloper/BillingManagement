@@ -26,7 +26,7 @@ public class WalletContract : BaseEntity<int>
         int? parentId, int? rootParentId,
         int? tenantIpgSettingId)
     {
-        Id = Id;
+        Id = id;
         TenantId = tenantId;
         TenantIpgSettingId = tenantIpgSettingId;
         StartDate = startDate;
