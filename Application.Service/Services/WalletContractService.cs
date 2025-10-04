@@ -41,10 +41,13 @@ namespace Application.Service.Services
                 guarantor.FixedAmountCommission, guarantor.FixedPercentageCommission, guarantor.TransactionMinCommissionAmount, guarantor.TransactionMaxCommissionAmount,
                 guarantor.PeriodMinCommissionAmount, guarantor.PeriodMaxCommissionAmount, guarantor.PaymentMethodType);
 
-            if ((CommissionCalculationType)guarantor.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                (CommissionCalculationType)guarantor.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+            if (guarantor.CommissionCalculationType != null)
             {
-                newGuarantor.SetTieredCommissions(guarantor.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                if ((CommissionCalculationType)guarantor.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
+               (CommissionCalculationType)guarantor.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                {
+                    newGuarantor.SetTieredCommissions(guarantor.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                }
             }
 
             guarantorsList.Add(newGuarantor);
@@ -53,7 +56,7 @@ namespace Application.Service.Services
 
         public void SetWalletContractFinancier(WalletContract contract, List<FcmWalletContractFinancier> financiers)
         {
-            if (financiers == null)
+            if (financiers == null || financiers.Count == 0)
             {
                 return;
             }
@@ -63,10 +66,13 @@ namespace Application.Service.Services
             var newFinancier = new WalletContractFinancier(financier.Id, contract.Id, financier.FinancierId, financier.PortionTypes, financier.CommissionCalculationType,
                 financier.FixedAmountCommission, financier.FixedPercentageCommission, financier.TransactionMaxCommissionAmount, financier.TransactionMinCommissionAmount, financier.PeriodMinCommissionAmount, financier.PeriodMaxCommissionAmount, financier.PaymentMethodType);
 
-            if ((CommissionCalculationType)financier.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                (CommissionCalculationType)financier.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+            if (financier.CommissionCalculationType != null)
             {
-                newFinancier.SetTieredCommissions(financier.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                if ((CommissionCalculationType)financier.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
+                (CommissionCalculationType)financier.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                {
+                    newFinancier.SetTieredCommissions(financier.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                }
             }
 
             financiersList.Add(newFinancier);
@@ -75,7 +81,7 @@ namespace Application.Service.Services
 
         public void SetWalletContractFacilitators(WalletContract contract, List<FcmWalletContractFacilitator> facilitators)
         {
-            if (facilitators == null)
+            if (facilitators == null || facilitators.Count == 0)
             {
                 return;
             }
@@ -87,11 +93,15 @@ namespace Application.Service.Services
                 var newFacilitator = new WalletContractFacilitator(facilitator.Id, contract.Id, facilitator.FacilitatorId, facilitator.PortionTypes, facilitator.CommissionCalculationType,
                     facilitator.FixedAmountCommission, facilitator.FixedPercentageCommission, facilitator.TransactionMinCommissionAmount, facilitator.TransactionMaxCommissionAmount, facilitator.PeriodMinCommissionAmount, facilitator.PeriodMaxCommissionAmount, facilitator.PaymentMethodType);
 
-                if ((CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
-                    (CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                if (facilitator.CommissionCalculationType != null)
                 {
-                    newFacilitator.SetTieredCommissions(facilitator.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                    if ((CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
+                    (CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                    {
+                        newFacilitator.SetTieredCommissions(facilitator.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                    }
                 }
+
                 facilitatorsList.Add(newFacilitator);
             }
 
