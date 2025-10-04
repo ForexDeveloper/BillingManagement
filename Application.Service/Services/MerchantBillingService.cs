@@ -299,56 +299,54 @@ public sealed class MerchantBillingService(
                     throw new ArgumentOutOfRangeException();
             }
 
-            var installmentQuery = merchantInstallmentRepository.CreateJobInstallmentQuery(startOfPeriod, endOfPeriod, contract.ContractIds);
+            IQueryable<MerchantInstallment> installmentQuery;
+            IQueryable<FinancialDocument> financialDocumentQuery;
 
-            var financialDocumentQuery = financialDocumentRepository.CreateJobFinancialDocumentQuery(startOfPeriod, endOfPeriod, contract.ContractIds);
+            var lastBillingDueDate = await merchantBillingRepository.GetLastBillingDueDate(contract.ContractIds,
+                cancellationToken);
 
             if (contract.Status)
             {
-                if (currentPeriod)
+                var billingDto = new BillingDto
+                {
+                    CurrentPeriod = currentPeriod,
+                    ContractGroup = contract,
+                    EndOfPeriod = endOfPeriod,
+                    StartOfPeriod = startOfPeriod,
+                    ContractIds = contract.ContractIds
+                };
+
+                billingDtos.Add(billingDto);
+
+                installmentQuery = merchantInstallmentRepository.CreateJobInstallmentQuery(lastBillingDueDate ?? startOfPeriod, endOfPeriod, contract.ContractIds);
+
+                financialDocumentQuery = financialDocumentRepository.CreateJobFinancialDocumentQuery(lastBillingDueDate ?? startOfPeriod, endOfPeriod, contract.ContractIds);
+
+                financialQuery.BuildQueries(installmentQuery, financialDocumentQuery);
+            }
+            else
+            {
+                var installmentRanges = await merchantInstallmentRepository.GetInstallmentRanges(contract.ContractIds, cancellationToken);
+
+                if (installmentRanges != null)
                 {
                     var billingDto = new BillingDto
                     {
-                        CurrentPeriod = true,
+                        CurrentPeriod = currentPeriod,
                         ContractGroup = contract,
                         EndOfPeriod = endOfPeriod,
                         StartOfPeriod = startOfPeriod,
                         ContractIds = contract.ContractIds
                     };
 
-                    billingDtos.Insert(0, billingDto);
+                    billingDtos.Add(billingDto);
+
+                    installmentQuery = merchantInstallmentRepository.CreateJobInstallmentQuery(lastBillingDueDate ?? startOfPeriod, endOfPeriod, contract.ContractIds);
+
+                    financialDocumentQuery = financialDocumentRepository.CreateJobFinancialDocumentQuery(lastBillingDueDate ?? startOfPeriod, endOfPeriod, contract.ContractIds);
 
                     financialQuery.BuildQueries(installmentQuery, financialDocumentQuery);
                 }
-
-                await ScanPreviousBilling(financialQuery, billingDtos, contract, startOfPeriod, endOfPeriod, cancellationToken);
-            }
-            else
-            {
-                var installmentRanges = await merchantInstallmentRepository.GetInstallmentRanges(contract.ContractIds, cancellationToken);
-
-                if (installmentRanges == null) continue;
-
-                if (currentPeriod)
-                {
-                    if (installmentRanges.HasIntersection(startOfPeriod, endOfPeriod))
-                    {
-                        var billingDto = new BillingDto
-                        {
-                            CurrentPeriod = true,
-                            ContractGroup = contract,
-                            EndOfPeriod = endOfPeriod,
-                            StartOfPeriod = startOfPeriod,
-                            ContractIds = contract.ContractIds
-                        };
-
-                        billingDtos.Insert(0, billingDto);
-
-                        financialQuery.BuildQueries(installmentQuery, financialDocumentQuery);
-                    }
-                }
-
-                ScanPreviousInstallments(financialQuery, billingDtos, contract, startOfPeriod, endOfPeriod, installmentRanges);
             }
 
             var tenantMerchantId = new TenantMerchantIdentifier(contract.TenantId, contract.MerchantId);
@@ -464,7 +462,7 @@ public sealed class MerchantBillingService(
         return currentPeriodCalculatedCommission;
     }
 
-    private static ICollection<MerchantBilling> GetDebtorBillings(List<NotSettledBilling> overdueBillings, BillingDto billingDto)
+    private static List<MerchantBilling> GetDebtorBillings(List<NotSettledBilling> overdueBillings, BillingDto billingDto)
     {
         var debtorBillings = overdueBillings.Where(p => billingDto.ContractIds.Any(q => p.Billing.ContractIds.Contains(q)))
             .Select(p => p.Billing).ToList();
@@ -478,7 +476,7 @@ public sealed class MerchantBillingService(
         return debtorBillings;
     }
 
-    private static ICollection<MerchantBilling> GetCreditorBillings(List<NegativeSettledBilling> negativeSettledBillings, BillingDto billingDto)
+    private static List<MerchantBilling> GetCreditorBillings(List<NegativeSettledBilling> negativeSettledBillings, BillingDto billingDto)
     {
         var creditorBillings = negativeSettledBillings.Where(p => billingDto.ContractIds.Any(q => p.Billing.ContractIds.Contains(q)))
             .Select(p => p.Billing).ToList();
