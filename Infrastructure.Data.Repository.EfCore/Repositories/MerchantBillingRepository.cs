@@ -54,10 +54,16 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<DateTime> GetLastBillingEndDate(IEnumerable<int> contractIds, CancellationToken cancellationToken)
+    public async Task<DateTime?> GetLastBillingDueDate(IEnumerable<int> contractIds, CancellationToken cancellationToken)
     {
-        return await applicationDbContext.MerchantBillings.AsNoTracking().OrderByDescending(p => p.EndDate)
-            .Where(p => p.ContractIds.Any(contractIds.Contains)).Select(p => p.EndDate)
+        //return await applicationDbContext.MerchantBillings.AsNoTracking()
+        //    .Where(p => p.ContractIds.Any(contractIds.Contains))
+        //    .MaxAsync(p => p.DueDate, cancellationToken);
+
+        return await applicationDbContext.MerchantBillings.AsNoTracking()
+            .OrderByDescending(p => p.DueDate)
+            .Where(p => p.ContractIds.Any(contractIds.Contains))
+            .Select(p => p.DueDate)
             .FirstOrDefaultAsync(cancellationToken);
     }
 
