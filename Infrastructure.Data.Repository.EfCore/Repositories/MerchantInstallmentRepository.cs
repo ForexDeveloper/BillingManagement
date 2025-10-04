@@ -41,7 +41,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
 
     public async Task<InstallmentRange?> GetInstallmentRanges(IEnumerable<int> contractIds, CancellationToken cancellationToken)
     {
-        var query = applicationDbContext.MerchantInstallments
+        var query = applicationDbContext.MerchantInstallments.AsNoTracking()
             .Where(p => p.DueDate < DateTime.Today)
             .Where(p => p.BillingId.HasValue == false)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId));
@@ -55,6 +55,17 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         var maxDueDate = await query.MaxAsync(p => p.DueDate, cancellationToken);
 
         return new InstallmentRange(minDueDate, maxDueDate);
+    }
+
+    public async Task<DateTime?> GetMinInstallmentDueDate(IEnumerable<int> contractIds, CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.MerchantInstallments.AsNoTracking()
+            .Where(p => p.DueDate < DateTime.Today)
+            .Where(p => p.BillingId.HasValue == false)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId))
+            .OrderBy(p => p.DueDate)
+            .Select(p => p.DueDate)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
     public async Task<Dictionary<ContractIdentifier, List<MerchantInstallment>>> GetGroupContractInstallments(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken)
@@ -75,13 +86,6 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
                 p.DailyBillingOriginDate,
                 p.CommissionCalculationType))
             .ToDictionaryAsync(p => p.Key, p => p.Select(q => q.Installemnt).ToList(), cancellationToken);
-    }
-
-    public async Task<decimal?> GetSumOfCommissionsAsync(IEnumerable<long> financialDocumentIds, CancellationToken cancellationToken)
-    {
-        return await applicationDbContext.MerchantInstallments
-            .Where(p => financialDocumentIds.Contains(p.FinancialDocumentId))
-            .SumAsync(p => p.Commission, cancellationToken);
     }
 
     public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod)

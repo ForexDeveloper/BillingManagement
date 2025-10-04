@@ -37,6 +37,8 @@ public abstract class Billing : BaseEntity<long>
 
     public int GracePeriod { get; protected set; }
 
+    public bool HasAttachment { get; protected set; }
+
     public IEnumerable<int> ContractIds { get; protected set; }
 
     public DateTime StartDate { get; protected set; }
@@ -89,6 +91,7 @@ public abstract class Billing : BaseEntity<long>
         Debtor = debtor;
         Creditor = creditor;
         TenantId = tenantId;
+        HasAttachment = false;
         PeriodType = periodType;
         GracePeriod = gracePeriod;
         PreviousDebitAmount = previousDebitAmount;
@@ -113,6 +116,7 @@ public abstract class Billing : BaseEntity<long>
         Debtor = debtor;
         Creditor = creditor;
         TenantId = tenantId;
+        HasAttachment = false;
         PeriodType = periodType;
         GracePeriod = gracePeriod;
         PreviousDebitAmount = previousDebitAmount;
@@ -136,6 +140,11 @@ public abstract class Billing : BaseEntity<long>
     public void Overdue()
     {
         UpdateStatus(BillingStatus.Overdue);
+    }
+
+    public void SetAttachment()
+    {
+        HasAttachment = true;
     }
 
     public decimal GetPayableAmount()
