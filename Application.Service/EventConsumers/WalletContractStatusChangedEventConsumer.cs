@@ -84,6 +84,7 @@ public class WalletContractStatusChangedEventConsumer : IConsumer<FcmWalletContr
             contracts.ForEach(contract => contract.SetStatus(
                 contract.Id == currentContract.Id ? WalletContractStatus.Active : WalletContractStatus.DeActive));
 
+            currentContract.SetStatus(WalletContractStatus.Active);
             _walletContractRepository.UpdateRange(contracts);
         }
         else

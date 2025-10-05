@@ -64,5 +64,6 @@ public class WalletContract : BaseEntity<int>
     public void SetStatus(WalletContractStatus status)
     {
         Status = status;
+        SetEditDateTime(DateTime.Now);
     }
 }
