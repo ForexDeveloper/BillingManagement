@@ -1,20 +1,20 @@
-﻿using System;
-using System.Linq;
-using MassTransit;
-using Domain.Core.Enums;
-using System.Diagnostics;
-using Shared.EventBus.Events;
-using System.Threading.Tasks;
-using Application.Service.Helper;
-using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
-using Domain.Core.UnitOfWorkContracts;
-using Shared.Logging.Abstraction.Models;
-using Shared.Logging.Abstraction.Extensions;
-using Domain.Core.Entities.Shared.Exceptions;
+﻿using Application.Service.Helper;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Enums;
+using Domain.Core.UnitOfWorkContracts;
+using MassTransit;
+using Microsoft.Extensions.Logging;
+using Shared.EventBus.Events;
+using Shared.Logging.Abstraction.Extensions;
+using Shared.Logging.Abstraction.Models;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Application.Service.EventConsumers;
 
@@ -104,15 +104,15 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 context.Message.CashAmount,
                 context.Message.PrepaymentAmount,
                 type,
-                context.Message.State,
-                context.Message.PaymentGatewayType,
+                (FinancialDocumentState)context.Message.State,
+                (PaymentGatewayType)context.Message.PaymentGatewayType,
                 context.Message.Description,
                 context.Message.MerchantBranchId,
                 context.Message.TenantMerchantContractId,
                 context.Message.TenantPlatformContractId,
-                context.Message.RefundReason,
+                context.Message.RefundReason != null ? (RefundReason)context.Message.RefundReason : null,
                 context.Message.RefundDescription,
-                context.Message.RefundType,
+                context.Message.RefundType != null ? (FinancialDocumentRefundType)context.Message.RefundType : null,
                 context.Message.ParentId
             );
 
