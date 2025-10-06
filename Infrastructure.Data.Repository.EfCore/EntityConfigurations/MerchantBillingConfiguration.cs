@@ -9,19 +9,11 @@ public sealed class MerchantBillingConfiguration : IEntityTypeConfiguration<Merc
 {
     public void Configure(EntityTypeBuilder<MerchantBilling> builder)
     {
-        builder.Property(p => p.Status).IsRequired();
-        builder.Property(p => p.DebtorId).IsRequired(false);
-        builder.Property(p => p.CreditorId).IsRequired(false);
-        builder.Property(p => p.Code).HasMaxLength(100).IsRequired();
-        builder.Property(p => p.AdditionsDescription).HasMaxLength(1000).IsRequired(false);
-        builder.Property(p => p.DeductionsDescription).HasMaxLength(1000).IsRequired(false);
-        builder.Property(p => p.Additions).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
-        builder.Property(p => p.Deductions).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
-        builder.Property(p => p.CurrentPeriodFinalCommission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+        builder.Property(p => p.PurchaseTransactionsAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+        builder.Property(p => p.RefundedTransactionsAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+        builder.Property(p => p.PurchaseTransactionsCommission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.RefundedTransactionsCommission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
-        builder.Property(p => p.CurrentPeriodCalculatedCommission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
-        builder.Property(p => p.CurrentPeriodPurchaseTransactions).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
-        builder.Property(p => p.PreviousPeriodRefundedTransactions).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+        builder.Property(p => p.PurchaseTransactionsCalculatedCommission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
 
         builder.ToTable(nameof(MerchantBilling));
     }

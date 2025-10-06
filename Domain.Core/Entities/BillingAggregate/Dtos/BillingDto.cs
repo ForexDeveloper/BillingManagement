@@ -12,7 +12,7 @@ public sealed record BillingDto
 
     public required DateTime EndOfPeriod { get; set; }
 
-    public required IEnumerable<int> ContractIds { get; set; }
+    public required List<int> ContractIds { get; set; }
 
     public required ContractGroup ContractGroup { get; set; }
 }

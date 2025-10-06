@@ -17,7 +17,6 @@ namespace Domain.Core.Entities.MerchantAggregate
         public SaleType SaleType { get; private set; }
         public MerchantStatus Status { get; private set; }
         public List<MerchantBranch> MerchantBranches { get; private set; }
-        public ICollection<MerchantBilling> MerchantBillings { get; private set; }
 
         #endregion #region Property
 

@@ -25,7 +25,7 @@ public sealed record ContractGroup
 
     public DateTime EndorsementDate { get; set; }
 
-    public IEnumerable<int> ContractIds { get; set; }
+    public List<int> ContractIds { get; set; }
 
     public decimal? PeriodMinCommissionAmount { get; set; }
 

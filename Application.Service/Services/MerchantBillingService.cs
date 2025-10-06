@@ -56,11 +56,12 @@ public sealed class MerchantBillingService(
             {
                 decimal previousDebitAmount = 0;
                 decimal previousCreditAmount = 0;
-                decimal currentPeriodFinalCommission = 0;
+                decimal previousPenaltyAmount = 0;
+                decimal purchaseTransactionsAmount = 0;
+                decimal refundedTransactionsAmount = 0;
+                decimal purchaseTransactionsCommission = 0;
                 decimal refundedTransactionsCommission = 0;
-                decimal currentPeriodCalculatedCommission = 0;
-                decimal currentPeriodPurchaseTransactions = 0;
-                decimal previousPeriodRefundedTransactions = 0;
+                decimal purchaseTransactionsCalculatedCommission = 0;
 
                 var billingDto = billingDtos[i];
 
@@ -79,8 +80,8 @@ public sealed class MerchantBillingService(
 
                 foreach (var installment in installments)
                 {
-                    currentPeriodPurchaseTransactions += installment.Amount;
-                    currentPeriodCalculatedCommission += installment.Commission;
+                    purchaseTransactionsAmount += installment.Amount;
+                    purchaseTransactionsCalculatedCommission += installment.Commission;
                 }
 
                 foreach (var financialDocumentDto in financialDocuments)
@@ -92,7 +93,7 @@ public sealed class MerchantBillingService(
                             break;
 
                         case FinancialDocumentType.Refund:
-                            previousPeriodRefundedTransactions += financialDocumentDto.Amount;
+                            refundedTransactionsAmount += financialDocumentDto.Amount;
                             refundedTransactionsCommission += financialDocumentDto.PurchaseCommission ?? 0;
                             break;
 
@@ -106,10 +107,10 @@ public sealed class MerchantBillingService(
 
                 if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
-                    currentPeriodCalculatedCommission = CalculateUniformedTieredCommission(contract, currentPeriodPurchaseTransactions);
+                    purchaseTransactionsCalculatedCommission = CalculateUniformedTieredCommission(contract, purchaseTransactionsAmount);
                 }
 
-                currentPeriodFinalCommission = CalculateFinalCommission(contract, currentPeriodCalculatedCommission);
+                purchaseTransactionsCommission = CalculateFinalCommission(contract, purchaseTransactionsCalculatedCommission);
 
                 MerchantBilling debtorBilling = null;
 
@@ -180,12 +181,26 @@ public sealed class MerchantBillingService(
                     previousCreditAmount = creditorBillings.Sum(p => p.GetPayableAmount());
                 }
 
-                var billing = new MerchantBilling(contract.TenantId, contract.TenantId, contract.MerchantId,
-                    BillingType.TenantToMerchant, contract.BillingPeriodType, previousDebitAmount, previousCreditAmount, 0,
-                    billingDto.StartOfPeriod, billingDto.EndOfPeriod, 0, billingDto.ContractIds,
-                    currentPeriodCalculatedCommission, currentPeriodFinalCommission, refundedTransactionsCommission,
-                    previousPeriodRefundedTransactions, currentPeriodPurchaseTransactions, installments,
-                    debtorBilling, creditorBilling);
+                var billing = new MerchantBilling(contract.TenantId,
+                    contract.TenantId,
+                    contract.MerchantId,
+                    BillingType.TenantToMerchant,
+                    contract.BillingPeriodType,
+                    billingDto.StartOfPeriod,
+                    billingDto.EndOfPeriod,
+                    0,
+                    billingDto.ContractIds,
+                    previousDebitAmount,
+                    previousCreditAmount,
+                    previousPenaltyAmount,
+                    purchaseTransactionsAmount,
+                    refundedTransactionsAmount,
+                    purchaseTransactionsCommission,
+                    refundedTransactionsCommission,
+                    purchaseTransactionsCalculatedCommission,
+                    installments, 
+                    debtorBilling,
+                    creditorBilling);
 
                 replicateBillings.Add(billing);
 
@@ -218,6 +233,8 @@ public sealed class MerchantBillingService(
         FinancialQuery financialQuery, CancellationToken cancellationToken)
     {
         var billings = new Dictionary<TenantMerchantIdentifier, List<BillingDto>>();
+
+        var t = allContracts.Where(p => p.Status);
 
         foreach (var contract in allContracts)
         {
@@ -411,11 +428,11 @@ public sealed class MerchantBillingService(
 
     private async Task<List<NotSettledBilling>> OverdueExpiredBillings(CancellationToken cancellationToken)
     {
-        var notAssignedBillings = await merchantBillingRepository.GetOverdueOrNotSettledBillings(cancellationToken);
+        var notSettledBillings = await merchantBillingRepository.GetOverdueOrNotSettledBillings(cancellationToken);
 
-        for (var i = notAssignedBillings.Count - 1; i >= 0; i--)
+        for (var i = notSettledBillings.Count - 1; i >= 0; i--)
         {
-            var notAssignedBilling = notAssignedBillings[i];
+            var notAssignedBilling = notSettledBillings[i];
 
             if (notAssignedBilling.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid)
             {
@@ -427,15 +444,15 @@ public sealed class MerchantBillingService(
                 }
                 else
                 {
-                    notAssignedBillings.RemoveAt(i);
+                    notSettledBillings.RemoveAt(i);
                 }
             }
         }
 
-        return notAssignedBillings;
+        return notSettledBillings;
 
 
-        var notPaidBillings = notAssignedBillings.Where(p =>
+        var notPaidBillings = notSettledBillings.Where(p =>
             p.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid);
 
         foreach (var notPaidBilling in notPaidBillings)
@@ -448,7 +465,7 @@ public sealed class MerchantBillingService(
             }
         }
 
-        notAssignedBillings.RemoveAll(p => p.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid);
+        notSettledBillings.RemoveAll(p => p.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid);
     }
 
     private static decimal CalculateFinalCommission(ContractGroup contract, decimal currentPeriodCalculatedCommission)
@@ -640,7 +657,7 @@ public sealed class MerchantBillingService(
 
                 if ((DayOfWeek)period >= dayOfWeek)
                 {
-                    startOfPeriod = pc.AddWeeks(new DateTime(year, month, period, 0, 0, 0, pc), -1);
+                    startOfPeriod = pc.AddWeeks(new DateTime(year, month, period, pc), -1);
                 }
                 else
                 {
@@ -655,7 +672,7 @@ public sealed class MerchantBillingService(
 
                 if (period >= dayOfMonth)
                 {
-                    startOfPeriod = pc.AddMonths(new DateTime(year, month, period, 0, 0, 0, pc), -1);
+                    startOfPeriod = pc.AddMonths(new DateTime(year, month, period, pc), -1);
                 }
                 else
                 {

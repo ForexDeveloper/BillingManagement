@@ -35,11 +35,19 @@ public abstract class Billing : BaseEntity<long>
 
     public decimal PreviousPenaltyAmount { get; protected set; }
 
+    public decimal AdditionsAmount { get; protected set; }
+
+    public decimal DeductionsAmount { get; protected set; }
+
+    public string? AdditionsDescription { get; protected set; }
+
+    public string? DeductionsDescription { get; protected set; }
+
     public int GracePeriod { get; protected set; }
 
     public bool HasAttachment { get; protected set; }
 
-    public IEnumerable<int> ContractIds { get; protected set; }
+    public List<int> ContractIds { get; protected set; }
 
     public DateTime StartDate { get; protected set; }
 
@@ -84,13 +92,15 @@ public abstract class Billing : BaseEntity<long>
 
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
-        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, Billing? debtor = null, Billing? creditor = null)
+        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, List<int> contractIds,
+        Billing? debtor = null, Billing? creditor = null)
     {
         Type = type;
         Debtor = debtor;
         Creditor = creditor;
         TenantId = tenantId;
+        AdditionsAmount = 0;
+        DeductionsAmount = 0;
         HasAttachment = false;
         PeriodType = periodType;
         GracePeriod = gracePeriod;
@@ -102,20 +112,20 @@ public abstract class Billing : BaseEntity<long>
 
         GenerateCode();
         SetContractIds(contractIds);
-        SetDueDate(endDate, gracePeriod);
         SetBillingRanges(startDate, endDate);
     }
 
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
-        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, IEnumerable<Installment> installments, Billing? debtor = null,
-        Billing? creditor = null)
+        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, List<int> contractIds,
+        IEnumerable<Installment> installments, Billing? debtor = null, Billing? creditor = null)
     {
         Type = type;
         Debtor = debtor;
         Creditor = creditor;
         TenantId = tenantId;
+        AdditionsAmount = 0;
+        DeductionsAmount = 0;
         HasAttachment = false;
         PeriodType = periodType;
         GracePeriod = gracePeriod;
@@ -128,7 +138,6 @@ public abstract class Billing : BaseEntity<long>
         GenerateCode();
         SetContractIds(contractIds);
         AddInstallments(installments);
-        SetDueDate(endDate, gracePeriod);
         SetBillingRanges(startDate, endDate);
     }
 
@@ -165,17 +174,12 @@ public abstract class Billing : BaseEntity<long>
         SetEditDateTime(DateTime.Now);
     }
 
-    private void SetDueDate(DateTime endDate, int gracePeriod)
-    {
-        DueDate = endDate.AddDays(gracePeriod);
-    }
-
     private void GenerateCode()
     {
         Code = Guid.NewGuid().ToString();
     }
 
-    private void SetContractIds(IEnumerable<int> contractIds)
+    private void SetContractIds(List<int> contractIds)
     {
         if (contractIds == null || contractIds.Any() == false)
         {
@@ -194,6 +198,7 @@ public abstract class Billing : BaseEntity<long>
 
         StartDate = startDate;
         EndDate = endDate;
+        DueDate = endDate;
     }
 
     private void AddInstallments(IEnumerable<Installment> installments)

@@ -9,6 +9,7 @@ using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
 
 namespace Domain.Core.Entities.TenantMerchantContractAggregate;
 
@@ -49,7 +50,6 @@ public class TenantMerchantContract : BaseEntity<int>
     public int? ParentId { get; private set; }
     public TenantMerchantContract? Parent { get; private set; }
     public ICollection<TenantMerchantContract>? Children { get; private set; }
-    public ICollection<Installment> Installments { get; private set; }
     public ICollection<FinancialDocument> FinancialDocuments { get; private set; }
 
     private TenantMerchantContract()
