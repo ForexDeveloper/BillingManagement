@@ -591,7 +591,7 @@ public sealed class MerchantBillingService(
 
                 endOfPeriod = pc.AddMonths(startOfPeriod, 1);
 
-                //Adjustment 29 30 31
+                endOfPeriod = AdjustEndOfPeriod(pc, endOfPeriod, contract.BillingPeriod);
 
                 break;
 
@@ -664,6 +664,8 @@ public sealed class MerchantBillingService(
 
                 endOfPeriod = pc.AddMonths(startOfPeriod, 1);
 
+                endOfPeriod = AdjustEndOfPeriod(pc, endOfPeriod, contract.BillingPeriod);
+
                 break;
 
             default:
@@ -671,6 +673,20 @@ public sealed class MerchantBillingService(
         }
 
         return new ValueTuple<DateTime, DateTime>(startOfPeriod, endOfPeriod);
+    }
+
+    private static DateTime AdjustEndOfPeriod(PersianCalendar pc, DateTime endOfPeriod, int billingPeriod)
+    {
+        var year = pc.GetYear(endOfPeriod);
+        var month = pc.GetMonth(endOfPeriod);
+        var dayOfMonth = pc.GetDayOfMonth(endOfPeriod);
+
+        if (dayOfMonth is 29 or 30 && (billingPeriod is 30 or 31))
+        {
+            endOfPeriod = pc.ToDateTime(year, month, billingPeriod, 0, 0, 0, 0);
+        }
+
+        return endOfPeriod;
     }
 }
 

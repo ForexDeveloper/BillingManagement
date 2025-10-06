@@ -1,11 +1,13 @@
-﻿using System.Text.Json;
-using Domain.Core.Enums;
-using Microsoft.AspNetCore.Mvc;
-using Application.Service.Helper;
+﻿using Application.Query.ViewModels.Categories;
 using Application.Service.Contracts;
-using Application.Query.ViewModels.Categories;
+using Application.Service.Helper;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
+using Domain.Core.Enums;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.Contracts;
+using System.Globalization;
+using System.Text.Json;
 
 namespace Service.Rest.V1.Controllers;
 
@@ -23,6 +25,89 @@ public class A1BillingController(
     {
         try
         {
+            var today = DateTime.Now;
+
+            var pc = new PersianCalendar();
+
+            var year = pc.GetYear(today);
+            var month = pc.GetMonth(today);
+            var dayOfMonth = pc.GetDayOfMonth(today);
+
+            var next = pc.AddDays(today, 4);
+
+            var bahman30 = new DateTime(2026, 2, 19);
+
+            var esfand27 = new DateTime(2026, 3, 18);
+            var esfand29 = new DateTime(2026, 3, 20);
+
+            var mordad30 = new DateTime(2025, 8, 21);
+            var mordad31 = new DateTime(2025, 8, 22);
+
+            var shahrivar30 = new DateTime(2025, 9, 21);
+            var shahrivar31 = new DateTime(2025, 9, 22);
+
+            var period30 = 30;
+            var period31 = 31;
+
+            var time = pc.AddMonths(bahman30, 1);
+
+            year = pc.GetYear(time);
+            month = pc.GetMonth(time);
+            dayOfMonth = pc.GetDayOfMonth(time);
+
+            time = pc.AddMonths(time, 1);
+
+            year = pc.GetYear(time);
+            month = pc.GetMonth(time);
+            dayOfMonth = pc.GetDayOfMonth(time);
+
+            time = pc.AddMonths(esfand27, 1);
+
+            year = pc.GetYear(time);
+            month = pc.GetMonth(time);
+            dayOfMonth = pc.GetDayOfMonth(time);
+
+            time = pc.AddMonths(esfand29, 1);
+
+            year = pc.GetYear(time);
+            month = pc.GetMonth(time);
+            dayOfMonth = pc.GetDayOfMonth(time);
+
+            if (month is 1)
+            {
+                if (dayOfMonth is 29 or 30 && (period31 is 30 or 31))
+                {
+                    var endOfPeriod = pc.ToDateTime(year, 1, period31, 0, 0, 0, 0);
+
+                    year = pc.GetYear(endOfPeriod);
+                    month = pc.GetMonth(endOfPeriod);
+                    dayOfMonth = pc.GetDayOfMonth(endOfPeriod);
+                }
+            }
+
+            time = pc.AddMonths(mordad30, 1);
+
+            year = pc.GetYear(time);
+            month = pc.GetMonth(time);
+            dayOfMonth = pc.GetDayOfMonth(time);
+
+            time = pc.AddMonths(mordad31, 1);
+
+            year = pc.GetYear(time);
+            month = pc.GetMonth(time);
+            dayOfMonth = pc.GetDayOfMonth(time);
+
+            time = pc.AddMonths(shahrivar30, 1);
+
+            year = pc.GetYear(time);
+            month = pc.GetMonth(time);
+            dayOfMonth = pc.GetDayOfMonth(time);
+
+            time = pc.AddMonths(shahrivar31, 1);
+
+            year = pc.GetYear(time);
+            month = pc.GetMonth(time);
+            dayOfMonth = pc.GetDayOfMonth(time);
 
             //var contract = await _dbContext.TenantMerchantContracts.FirstOrDefaultAsync(p => p.Id == tenantMerchantContractId);
 
