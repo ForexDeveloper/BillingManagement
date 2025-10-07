@@ -52,6 +52,10 @@ public class A1BillingController(
             var shiftWeek1 = pc.AddWeeks(today, 1);
             var shiftMonth1 = pc.AddMonths(today, 1);
 
+            var financialDocument = await financialDocumentRepository.GetByIdAsync(financialDocumentId);
+
+            var contract = await tenantMerchantContractRepository.GetAsync(financialDocument.TenantMerchantContractId!.Value);
+
             var depositDate = DateTime.Now;
 
             var installments = new List<MerchantInstallment>();
@@ -60,10 +64,6 @@ public class A1BillingController(
                 TimeInterval.Day, 5, 4, TimeInterval.Month);
 
             var serializeDates = JsonSerializer.Serialize(installmentDates);
-
-            var financialDocument = await financialDocumentRepository.GetByIdAsync(financialDocumentId);
-
-            var contract = await tenantMerchantContractRepository.GetAsync(financialDocument.TenantMerchantContractId.Value);
 
             //var contract = await tenantMerchantContractRepository.GetActiveContractAsync(contract.TenantId, contract.MerchantId);
 
@@ -383,18 +383,7 @@ public class A1BillingController(
 
             var wallet = groupWallet.GetValueOrDefault(new WalletKey() { TenantId = 1, MerchantId = 2, AccountId = 3, PaymentId = 4 });
 
-            const int amount = 100000;
-
-            const int part = 7;
-
-            var t = amount / part;
-
-            var t1 = amount % part;
-
-
-            await Task.CompletedTask;
-
-            return Ok(installmentDates);
+            return Ok("Installments Created");
         }
         catch (Exception ex)
         {
@@ -493,7 +482,7 @@ public class A1BillingController(
 
                     if (tieredCommission == null) break;
 
-                    financialDocumentCommission = financialDocumentTargetAmount * tieredCommission.Percentage;
+                    financialDocumentCommission = financialDocumentTargetAmount * (tieredCommission.Percentage / 100);
 
                     if (financialDocumentCommission > tieredCommission.MaxAmount)
                     {
@@ -512,7 +501,7 @@ public class A1BillingController(
 
                 if (!contract.FixedPercentageCommission.HasValue) break;
 
-                financialDocumentCommission = financialDocumentTargetAmount * contract.FixedPercentageCommission.Value;
+                financialDocumentCommission = financialDocumentTargetAmount * (contract.FixedPercentageCommission.Value / 100);
 
                 if (financialDocumentCommission > contract.TransactionMaxCommissionAmount)
                 {

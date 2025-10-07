@@ -62,12 +62,15 @@ public static class DateHelper
         return installmentDates;
     }
 
-    public static int RegulateBillingPeriod(int daysInMonth, int billingPeriod)
+    public static int RegulateBillingPeriod(PersianCalendar pc, int year, int month, int billingPeriod)
     {
-        if (daysInMonth == 29 && (billingPeriod == 30 || billingPeriod == 31))
+        var daysInMonth = pc.GetDaysInMonth(year, month);
+
+        if (daysInMonth == 29 && billingPeriod is 30 or 31)
         {
             billingPeriod = 29;
         }
+
         else if (daysInMonth == 30 && billingPeriod == 31)
         {
             billingPeriod = 30;
@@ -76,33 +79,41 @@ public static class DateHelper
         return billingPeriod;
     }
 
-    private static DateTime AdjustPeriodOnBillingPeriod(PersianCalendar pc, DateTime dateTime, int billingPeriod)
+    public static DateTime RegulateDateOfPeriod(PersianCalendar pc, DateTime dateOfPeriod, int billingPeriod)
     {
-        var year = pc.GetYear(dateTime);
-        var month = pc.GetMonth(dateTime);
-        var dayOfMonth = pc.GetDayOfMonth(dateTime);
+        var year = pc.GetYear(dateOfPeriod);
+        var month = pc.GetMonth(dateOfPeriod);
+        var dayOfMonth = pc.GetDayOfMonth(dateOfPeriod);
+        var daysInMonth = pc.GetDaysInMonth(year, month);
 
-        if (dayOfMonth is 29 or 30 && (billingPeriod is 30 or 31))
+        switch (daysInMonth)
         {
-            dateTime = pc.ToDateTime(year, month, billingPeriod, 0, 0, 0, 0);
+            case 30:
+            {
+                if (dayOfMonth is 29 && billingPeriod is 30)
+                { 
+                    dateOfPeriod = pc.ToDateTime(year, month, 30, 0, 0, 0, 0);
+                }
+
+                break;
+            }
+
+            case 31:
+            {
+                if (dayOfMonth is 29 && billingPeriod is 30)
+                { 
+                    dateOfPeriod = pc.ToDateTime(year, month, 30, 0, 0, 0, 0);
+                }
+
+                if (dayOfMonth is 29 or 30 && billingPeriod is 31)
+                { 
+                    dateOfPeriod = pc.ToDateTime(year, month, 31, 0, 0, 0, 0);
+                }
+
+                break;
+            }
         }
 
-        return dateTime;
-    }
-
-    private static DateTime ConvertPersianToGregorian(string? persianDate)
-    {
-        if (string.IsNullOrEmpty(persianDate))
-            throw new Exception("Invalid persianDate");
-
-        PersianCalendar pc = new();
-
-        var persianDateParts = persianDate.Split("/");
-
-        int year = Convert.ToInt32(persianDateParts[0]);
-        int month = Convert.ToInt32(persianDateParts[1]);
-        int day = Convert.ToInt32(persianDateParts[2]);
-
-        return pc.ToDateTime(year, month, day, 0, 0, 0, 0);
+        return dateOfPeriod;
     }
 }

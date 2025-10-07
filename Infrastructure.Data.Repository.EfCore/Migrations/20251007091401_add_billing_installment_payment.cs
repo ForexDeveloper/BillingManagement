@@ -193,9 +193,9 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false),
                     PurchaseTransactionsAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
-                    RefundedTransactionsCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     RefundedTransactionsAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     PurchaseTransactionsCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    RefundedTransactionsCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     PurchaseTransactionsCalculatedCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false)
                 },
                 constraints: table =>

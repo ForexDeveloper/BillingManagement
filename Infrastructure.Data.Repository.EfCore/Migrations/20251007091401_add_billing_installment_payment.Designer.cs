@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Data.Repository.EfCore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251007085311_add_billing_installment_payment")]
+    [Migration("20251007091401_add_billing_installment_payment")]
     partial class add_billing_installment_payment
     {
         /// <inheritdoc />

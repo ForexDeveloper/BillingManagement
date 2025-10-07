@@ -17,8 +17,6 @@ public sealed record ContractGroup
 
     public DateTime? BillingDailyOriginDate { get; set; }
 
-    public bool HasEndorsement { get; set; }
-
     public required bool Status { get; set; }
 
     public DateTime CreatedDateTime { get; set; }

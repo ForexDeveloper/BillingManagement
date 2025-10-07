@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
-using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
@@ -35,7 +34,7 @@ public interface IFinancialDocumentRepository
 
     IQueryable<FinancialDocument> CreateJobFinancialDocumentQuery(DateTime startOfPeriod, DateTime endOfPeriod, IEnumerable<int> contractIds);
 
-    Task<bool> ExecuteQueryAnyAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
+    Task<FinancialDocumentRange?> GetFinancialDocumentRanges(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken);
 
     Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
 }

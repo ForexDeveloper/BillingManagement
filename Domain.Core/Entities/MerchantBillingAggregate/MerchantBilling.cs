@@ -12,11 +12,11 @@ public sealed class MerchantBilling : Billing
 {
     public decimal PurchaseTransactionsAmount { get; private set; }
 
-    public decimal RefundedTransactionsCommission { get; private set; }
-
     public decimal RefundedTransactionsAmount { get; private set; }
 
     public decimal PurchaseTransactionsCommission { get; private set; }
+
+    public decimal RefundedTransactionsCommission { get; private set; }
 
     public decimal PurchaseTransactionsCalculatedCommission { get; private set; }
 

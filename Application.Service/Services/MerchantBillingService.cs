@@ -4,8 +4,10 @@ using System.Threading;
 using Domain.Core.Enums;
 using System.Globalization;
 using System.Threading.Tasks;
+using Application.Service.Helper;
 using System.Collections.Generic;
 using Application.Service.Contracts;
+using Application.Service.Dtos.Shared;
 using Domain.Core.UnitOfWorkContracts;
 using Domain.Core.Entities.BillingAggregate.Dtos;
 using Domain.Core.Entities.MerchantBillingAggregate;
@@ -198,7 +200,6 @@ public sealed class MerchantBillingService(
                     purchaseTransactionsCommission,
                     refundedTransactionsCommission,
                     purchaseTransactionsCalculatedCommission,
-                    installments, 
                     debtorBilling,
                     creditorBilling);
 
@@ -234,7 +235,7 @@ public sealed class MerchantBillingService(
     {
         var billings = new Dictionary<TenantMerchantIdentifier, List<BillingDto>>();
 
-        var t = allContracts.Where(p => p.Status);
+        var activeContracts = allContracts.Where(p => p.Status).ToList();
 
         foreach (var contract in allContracts)
         {
@@ -242,21 +243,23 @@ public sealed class MerchantBillingService(
 
             var lastBillingDueDate = await merchantBillingRepository.GetLastBillingDueDate(contract.ContractIds, cancellationToken);
 
+            var installmentRange = await merchantInstallmentRepository.GetInstallmentRanges(contract.ContractIds, lastBillingDueDate, cancellationToken);
+
+            var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRanges(contract.ContractIds, lastBillingDueDate, cancellationToken);
+
+            var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
+
             switch (contract.Status)
             {
                 case true:
 
-                    var minInstallmentDueDate = await merchantInstallmentRepository.GetMinInstallmentDueDate(contract.ContractIds, cancellationToken);
-
-                    ScanPeriodsForActiveContract(contract, lastBillingDueDate, minInstallmentDueDate, financialQuery, billingDtos);
+                    await ScanPeriodsForActiveContract(contract, lastBillingDueDate, financialDataRange, financialQuery, billingDtos, cancellationToken);
 
                     break;
 
                 case false:
 
-                    var installmentRange = await merchantInstallmentRepository.GetInstallmentRanges(contract.ContractIds, cancellationToken);
-
-                    ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, installmentRange, financialQuery, billingDtos);
+                    ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, financialDataRange, financialQuery, billingDtos);
 
                     break;
             }
@@ -272,136 +275,94 @@ public sealed class MerchantBillingService(
         return billings;
     }
 
-    private void ScanPeriodsForActiveContract(ContractGroup contract, DateTime? lastBillingDueDate,
-        DateTime? minInstallmentDueDate, FinancialQuery financialQuery, List<BillingDto> billingDtos)
+    private async Task ScanPeriodsForActiveContract(ContractGroup contract, DateTime? lastBillingDueDate,
+        FinancialDataRange financialDataRange, FinancialQuery financialQuery, List<BillingDto> billingDtos,
+        CancellationToken cancellationToken)
+    {
+        bool currentPeriod;
+
+        DateTime endOfPeriod;
+        DateTime startOfPeriod;
+
+        var today = DateTime.Today;
+
+        if (lastBillingDueDate.HasValue)
+        {
+            (startOfPeriod, endOfPeriod) = GetPeriodByLastBillingDueDate(contract, lastBillingDueDate.Value);
+
+            if (endOfPeriod > today) return;
+
+            currentPeriod = endOfPeriod == today;
+
+            var anotherBillingFound = await merchantBillingRepository.FindAnotherBillingOnEndOfPeriod(endOfPeriod, cancellationToken);
+
+            if (!anotherBillingFound)
+            {
+                CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
+            }
+
+            await ScanPeriodsForActiveContract(contract, endOfPeriod, financialDataRange, financialQuery, billingDtos, cancellationToken);
+        }
+
+        else if (financialDataRange != null)
+        {
+            (startOfPeriod, endOfPeriod) = GetPeriodBySpecificDate(contract, financialDataRange.MinDate);
+
+            if (endOfPeriod > today) return;
+
+            currentPeriod = endOfPeriod == today;
+
+            CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
+
+            await ScanPeriodsForActiveContract(contract, endOfPeriod, financialDataRange, financialQuery, billingDtos, cancellationToken);
+        }
+
+        if (!lastBillingDueDate.HasValue && financialDataRange == null)
+        {
+            (startOfPeriod, endOfPeriod) = GetPeriodBySpecificDate(contract, today);
+
+            currentPeriod = endOfPeriod == today;
+
+            if (currentPeriod)
+            {
+                CreateBillingFinancialQuery(contract, financialQuery, billingDtos, true, startOfPeriod, endOfPeriod);
+            }
+        }
+    }
+
+    private void ScanPeriodsForDeactiveContract(ContractGroup contract, DateTime? lastBillingDueDate,
+        FinancialDataRange financialDataRange, FinancialQuery financialQuery, List<BillingDto> billingDtos)
     {
         DateTime endOfPeriod;
         DateTime startOfPeriod;
 
         var today = DateTime.Today;
 
-        if (!lastBillingDueDate.HasValue && !minInstallmentDueDate.HasValue) return;
+        if (financialDataRange == null) return;
 
         if (lastBillingDueDate.HasValue)
         {
             (startOfPeriod, endOfPeriod) = GetPeriodByLastBillingDueDate(contract, lastBillingDueDate.Value);
         }
+
         else
         {
-            (startOfPeriod, endOfPeriod) = GetPeriodByMinInstallmentDueDate(contract, minInstallmentDueDate.Value);
+            (startOfPeriod, endOfPeriod) = GetPeriodBySpecificDate(contract, financialDataRange.MinDate);
         }
 
         if (endOfPeriod > today) return;
 
         var currentPeriod = endOfPeriod == today;
 
-        CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-
-        if (!currentPeriod) ScanPeriodsForActiveContract(contract, endOfPeriod, minInstallmentDueDate, financialQuery, billingDtos);
-    }
-
-    private void ScanPeriodsForDeactiveContract(ContractGroup contract, DateTime? lastBillingDueDate,
-        InstallmentRange installmentRange, FinancialQuery financialQuery, List<BillingDto> billingDtos)
-    {
-        bool currentPeriod;
-        DateTime endOfPeriod;
-        DateTime startOfPeriod;
-
-        var today = DateTime.Today;
-
-        var endorsementDate = contract.EndorsementDate;
-
-        if (lastBillingDueDate.HasValue && installmentRange != null)
+        if (endOfPeriod > financialDataRange.MaxDate)
         {
-            var lastInstallmentDueDate = installmentRange.MaxDueDate;
-
-            if ((endorsementDate < lastBillingDueDate) ||
-                (lastBillingDueDate < endorsementDate && endorsementDate <= lastInstallmentDueDate))
-            {
-                (startOfPeriod, endOfPeriod) = GetPeriodByLastBillingDueDate(contract, lastBillingDueDate.Value);
-
-                if (endOfPeriod > today) return;
-
-                currentPeriod = endOfPeriod == today;
-
-                if (endOfPeriod > lastInstallmentDueDate)
-                {
-                    CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-                }
-                else
-                {
-                    CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-
-                    ScanPeriodsForDeactiveContract(contract, endOfPeriod, installmentRange, financialQuery, billingDtos);
-                }
-            }
-
-            else if (endorsementDate > lastInstallmentDueDate)
-            {
-                (startOfPeriod, endOfPeriod) = GetPeriodByLastBillingDueDate(contract, lastBillingDueDate.Value);
-
-                if (endOfPeriod > today) return;
-
-                currentPeriod = endOfPeriod == today;
-
-                if (endOfPeriod > endorsementDate) return;
-
-                CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-
-                ScanPeriodsForDeactiveContract(contract, endOfPeriod, installmentRange, financialQuery, billingDtos);
-            }
+            CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, endOfPeriod, startOfPeriod);
         }
-
-        if (lastBillingDueDate.HasValue && installmentRange == null)
+        else
         {
-            if (lastBillingDueDate > endorsementDate) return;
-
-            (startOfPeriod, endOfPeriod) = GetPeriodByLastBillingDueDate(contract, lastBillingDueDate.Value);
-
-            if (endOfPeriod > today) return;
-
-            currentPeriod = endOfPeriod == today;
-
-            if (endOfPeriod > endorsementDate) return;
-
             CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
 
-            ScanPeriodsForDeactiveContract(contract, endOfPeriod, installmentRange, financialQuery, billingDtos);
-        }
-
-        if (!lastBillingDueDate.HasValue && installmentRange != null)
-        {
-            var minInstallmentDueDate = installmentRange.MinDueDate;
-
-            var lastInstallmentDueDate = installmentRange.MaxDueDate;
-
-            (startOfPeriod, endOfPeriod) = GetPeriodByMinInstallmentDueDate(contract, minInstallmentDueDate);
-
-            if (endOfPeriod > today) return;
-
-            currentPeriod = endOfPeriod == today;
-
-            if (lastInstallmentDueDate >= endorsementDate)
-            {
-                if (endOfPeriod > lastInstallmentDueDate)
-                {
-                    CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, endOfPeriod, startOfPeriod);
-                }
-                else
-                {
-                    CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-
-                    ScanPeriodsForDeactiveContract(contract, endOfPeriod, installmentRange, financialQuery, billingDtos);
-                }
-            }
-            else
-            {
-                if (endOfPeriod > endorsementDate) return;
-
-                CreateBillingFinancialQuery(contract, financialQuery, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-
-                ScanPeriodsForDeactiveContract(contract, endOfPeriod, installmentRange, financialQuery, billingDtos);
-            }
+            ScanPeriodsForDeactiveContract(contract, endOfPeriod, financialDataRange, financialQuery, billingDtos);
         }
     }
 
@@ -577,6 +538,91 @@ public sealed class MerchantBillingService(
         return false;
     }
 
+    private static (DateTime StartOfPeriod, DateTime EndOfPeriod) GetPeriodBySpecificDate(ContractGroup contract, DateTime specificDate)
+    {
+        int difference;
+        DateTime startOfPeriod;
+        DateTime endOfPeriod;
+
+        var pc = new PersianCalendar();
+
+        var year = pc.GetYear(specificDate);
+        var month = pc.GetMonth(specificDate);
+        var dayOfWeek = pc.GetDayOfWeek(specificDate);
+        var dayOfMonth = pc.GetDayOfMonth(specificDate);
+
+        var period = contract.BillingPeriod;
+
+        switch (contract.BillingPeriodType)
+        {
+            case TimeInterval.Day:
+
+                if (!contract.BillingDailyOriginDate.HasValue) throw new Exception();
+
+                var originDate = contract.BillingDailyOriginDate.Value;
+
+                if (specificDate.Date < originDate.Date)
+                {
+                    startOfPeriod = DateTime.MaxValue;
+                    endOfPeriod = DateTime.MaxValue;
+                    break;
+                }
+
+                var totalDays = (specificDate.Date - originDate.Date).Days;
+
+                difference = period - (totalDays % period);
+
+                startOfPeriod = pc.AddDays(specificDate, -difference);
+
+                endOfPeriod = pc.AddDays(startOfPeriod, period);
+
+                break;
+
+            case TimeInterval.Week:
+
+                if ((DayOfWeek)period >= dayOfWeek)
+                {
+                    difference = 7 - (period - (int)dayOfWeek);
+                }
+                else
+                {
+                    difference = (int)dayOfWeek - period;
+                }
+
+                startOfPeriod = pc.AddDays(specificDate, -difference);
+
+                endOfPeriod = pc.AddWeeks(startOfPeriod, 1);
+
+                break;
+
+            case TimeInterval.Month:
+
+                var regulatePeriod = DateHelper.RegulateBillingPeriod(pc, year, month, period);
+
+                if (regulatePeriod >= dayOfMonth)
+                {
+                    startOfPeriod = pc.AddMonths(new DateTime(year, month, regulatePeriod, pc), -1);
+
+                    startOfPeriod = DateHelper.RegulateDateOfPeriod(pc, startOfPeriod, period);
+                }
+                else
+                {
+                    startOfPeriod = pc.ToDateTime(year, month, period, 0, 0, 0, 0);
+                }
+
+                endOfPeriod = pc.AddMonths(startOfPeriod, 1);
+
+                endOfPeriod = DateHelper.RegulateDateOfPeriod(pc, endOfPeriod, period);
+
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        return new ValueTuple<DateTime, DateTime>(startOfPeriod, endOfPeriod);
+    }
+
     private static (DateTime StartOfPeriod, DateTime EndOfPeriod) GetPeriodByLastBillingDueDate(ContractGroup contract, DateTime lastBillingDueDate)
     {
         DateTime startOfPeriod;
@@ -608,7 +654,7 @@ public sealed class MerchantBillingService(
 
                 endOfPeriod = pc.AddMonths(startOfPeriod, 1);
 
-                endOfPeriod = AdjustEndOfPeriod(pc, endOfPeriod, contract.BillingPeriod);
+                endOfPeriod = DateHelper.RegulateDateOfPeriod(pc, endOfPeriod, contract.BillingPeriod);
 
                 break;
 
@@ -617,93 +663,6 @@ public sealed class MerchantBillingService(
         }
 
         return new ValueTuple<DateTime, DateTime>(startOfPeriod, endOfPeriod);
-    }
-
-    private static (DateTime StartOfPeriod, DateTime EndOfPeriod) GetPeriodByMinInstallmentDueDate(ContractGroup contract, DateTime minInstallmentDueDate)
-    {
-        DateTime startOfPeriod;
-        DateTime endOfPeriod;
-
-        var pc = new PersianCalendar();
-
-        var year = pc.GetYear(minInstallmentDueDate);
-        var month = pc.GetMonth(minInstallmentDueDate);
-        var dayOfWeek = pc.GetDayOfWeek(minInstallmentDueDate);
-        var dayOfMonth = pc.GetDayOfMonth(minInstallmentDueDate);
-
-        var period = contract.BillingPeriod;
-
-        switch (contract.BillingPeriodType)
-        {
-            case TimeInterval.Day:
-
-                if (!contract.BillingDailyOriginDate.HasValue) throw new NullReferenceException();
-
-                var originDate = contract.BillingDailyOriginDate.Value;
-
-                if (minInstallmentDueDate.Date < originDate.Date) throw new NullReferenceException();
-
-                var totalDays = (minInstallmentDueDate.Date - originDate.Date).Days;
-
-                var difference = period - (totalDays % period);
-
-                startOfPeriod = pc.AddDays(minInstallmentDueDate, -difference);
-
-                endOfPeriod = pc.AddDays(startOfPeriod, period);
-
-                break;
-
-            case TimeInterval.Week:
-
-                if ((DayOfWeek)period >= dayOfWeek)
-                {
-                    startOfPeriod = pc.AddWeeks(new DateTime(year, month, period, pc), -1);
-                }
-                else
-                {
-                    startOfPeriod = pc.ToDateTime(year, month, period, 0, 0, 0, 0);
-                }
-
-                endOfPeriod = pc.AddWeeks(startOfPeriod, 1);
-
-                break;
-
-            case TimeInterval.Month:
-
-                if (period >= dayOfMonth)
-                {
-                    startOfPeriod = pc.AddMonths(new DateTime(year, month, period, pc), -1);
-                }
-                else
-                {
-                    startOfPeriod = pc.ToDateTime(year, month, period, 0, 0, 0, 0);
-                }
-
-                endOfPeriod = pc.AddMonths(startOfPeriod, 1);
-
-                endOfPeriod = AdjustEndOfPeriod(pc, endOfPeriod, contract.BillingPeriod);
-
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        return new ValueTuple<DateTime, DateTime>(startOfPeriod, endOfPeriod);
-    }
-
-    private static DateTime AdjustEndOfPeriod(PersianCalendar pc, DateTime endOfPeriod, int billingPeriod)
-    {
-        var year = pc.GetYear(endOfPeriod);
-        var month = pc.GetMonth(endOfPeriod);
-        var dayOfMonth = pc.GetDayOfMonth(endOfPeriod);
-
-        if (dayOfMonth is 29 or 30 && (billingPeriod is 30 or 31))
-        {
-            endOfPeriod = pc.ToDateTime(year, month, billingPeriod, 0, 0, 0, 0);
-        }
-
-        return endOfPeriod;
     }
 }
 
