@@ -1,14 +1,14 @@
-﻿using System;
-using Domain.Base;
-using Domain.Core.Enums;
-using Domain.Core.Helper;
-using System.Collections.Generic;
+﻿using Domain.Base;
 using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
+using Domain.Core.Enums;
+using Domain.Core.Helper;
+using System;
+using System.Collections.Generic;
 
 namespace Domain.Core.Entities.FinancialDocumentAggregate;
 
@@ -76,7 +76,7 @@ public class FinancialDocument : BaseEntity<long>
 
     private FinancialDocument()
     {
-        
+
     }
 
     public FinancialDocument(long id)
@@ -87,9 +87,9 @@ public class FinancialDocument : BaseEntity<long>
     public FinancialDocument(long id, int fromBusinessIdentityId, int toBusinessIdentityId, int tenantId, decimal amount,
         decimal creditAmount, decimal cashAmount, decimal prepaymentAmount,
         FinancialDocumentType type,
-        byte state, byte? paymentGatewayType = null,
+        FinancialDocumentState state, PaymentGatewayType? paymentGatewayType = null,
         string description = null, int? merchantBranchId = null, int? tenantMerchantContractId = null, int? tenantPlatformContractId = null,
-        byte? refundReason = null, string refundDescription = null, byte? refundType = null, long? parentId = null)
+        RefundReason? refundReason = null, string refundDescription = null, FinancialDocumentRefundType? refundType = null, long? parentId = null)
     {
         Id = id;
         FromBusinessIdentityId = fromBusinessIdentityId;
@@ -100,15 +100,15 @@ public class FinancialDocument : BaseEntity<long>
         CashAmount = cashAmount;
         PrepaymentAmount = prepaymentAmount;
         Type = type;
-        State = (FinancialDocumentState)state;
-        PaymentGatewayType = (PaymentGatewayType)paymentGatewayType;
+        State = state;
+        PaymentGatewayType = paymentGatewayType;
         Description = description;
         MerchantBranchId = merchantBranchId;
         TenantMerchantContractId = tenantMerchantContractId;
         TenantPlatformContractId = tenantPlatformContractId;
-        RefundReason = (RefundReason)refundReason;
+        RefundReason = refundReason;
         RefundDescription = refundDescription;
-        RefundType = (FinancialDocumentRefundType)refundType;
+        RefundType = refundType;
         ParentId = parentId;
         SetCheckSum();
     }

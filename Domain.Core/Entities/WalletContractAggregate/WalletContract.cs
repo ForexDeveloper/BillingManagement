@@ -26,7 +26,7 @@ public class WalletContract : BaseEntity<int>
         int? parentId, int? rootParentId,
         int? tenantIpgSettingId)
     {
-        Id = Id;
+        Id = id;
         TenantId = tenantId;
         TenantIpgSettingId = tenantIpgSettingId;
         StartDate = startDate;
@@ -64,5 +64,6 @@ public class WalletContract : BaseEntity<int>
     public void SetStatus(WalletContractStatus status)
     {
         Status = status;
+        SetEditDateTime(DateTime.Now);
     }
 }

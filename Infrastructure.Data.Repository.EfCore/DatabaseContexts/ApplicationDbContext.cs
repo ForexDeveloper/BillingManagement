@@ -78,14 +78,6 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<MerchantInstallment> MerchantInstallments { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseSqlServer(
-            "Server=.;Initial Catalog=BillingManagement;User ID=sa;Password=P@ssw0rd;MultipleActiveResultSets=True;Encrypt=false");
-
-        base.OnConfiguring(optionsBuilder);
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("Bill");
