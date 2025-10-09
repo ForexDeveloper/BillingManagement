@@ -1,20 +1,20 @@
-﻿using Application.Service.Helper;
+﻿using System;
+using MassTransit;
+using System.Linq;
+using Domain.Core.Enums;
+using System.Diagnostics;
+using Shared.EventBus.Events;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using Application.Service.Helper;
+using Microsoft.Extensions.Logging;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
-using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Application.Service.EventConsumers;
 
@@ -160,32 +160,35 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
         decimal financialDocumentTargetAmount = 0;
 
-        if (!contract.CommissionReferenceTypes.Any())
+        if (contract.CommissionReferenceTypes == null || !contract.CommissionReferenceTypes.Any())
         {
             financialDocumentTargetAmount = financialDocument.Amount;
         }
-
-        foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
+        else
         {
-            switch (contractCommissionReferenceType)
+            foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
             {
-                case CommissionReferenceType.CashAmount:
-                    financialDocumentTargetAmount += financialDocument.CashAmount;
-                    break;
+                switch (contractCommissionReferenceType)
+                {
+                    case CommissionReferenceType.CashAmount:
+                        financialDocumentTargetAmount += financialDocument.CashAmount;
 
-                case CommissionReferenceType.CreditAmount:
-                    financialDocumentTargetAmount += financialDocument.CreditAmount;
-                    break;
+                        break;
 
-                case CommissionReferenceType.PrepaymentAmount:
-                    financialDocumentTargetAmount += financialDocument.PrepaymentAmount;
-                    break;
+                    case CommissionReferenceType.CreditAmount:
+                        financialDocumentTargetAmount += financialDocument.CreditAmount;
+                        break;
 
-                case CommissionReferenceType.InterestAmount:
-                    break;
+                    case CommissionReferenceType.PrepaymentAmount:
+                        financialDocumentTargetAmount += financialDocument.PrepaymentAmount;
+                        break;
 
-                default:
-                    throw new ArgumentOutOfRangeException();
+                    case CommissionReferenceType.InterestAmount:
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
         }
 
@@ -200,7 +203,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                 var startOfPeriod = tenantMerchantContractRepository.GetActiveContractStartOfPeriod(contract);
 
-                var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTransactionsOfCurrentPeriod(contract, startOfPeriod);
+                var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTieredTransactionsFromStartOfPeriod(contract, startOfPeriod);
 
                 var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
                     p.FromAmount < sumOfTransactionsOfCurrentPeriod && sumOfTransactionsOfCurrentPeriod <= p.ToAmount);
@@ -223,7 +226,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                     if (tieredCommission == null) break;
 
-                    financialDocumentCommission = financialDocumentTargetAmount * tieredCommission.Percentage;
+                    financialDocumentCommission = financialDocumentTargetAmount * (tieredCommission.Percentage / 100);
 
                     if (financialDocumentCommission > tieredCommission.MaxAmount)
                     {
@@ -242,7 +245,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                 if (!contract.FixedPercentageCommission.HasValue) break;
 
-                financialDocumentCommission = financialDocumentTargetAmount * contract.FixedPercentageCommission.Value;
+                financialDocumentCommission = financialDocumentTargetAmount * (contract.FixedPercentageCommission.Value / 100);
 
                 if (financialDocumentCommission > contract.TransactionMaxCommissionAmount)
                 {
@@ -310,7 +313,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
             var installmentDate = installmentDates[i];
 
-            var installment = new MerchantInstallment(financialDocument, contract.TenantId,
+            var installment = new MerchantInstallment(financialDocument, contract.TenantId, 
                 contract.TenantId, contract.MerchantId, contract.Id, amount, cashAmount,
                 creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Installment);
 

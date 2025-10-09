@@ -36,5 +36,15 @@ public interface IFinancialDocumentRepository
 
     Task<FinancialDocumentRange?> GetFinancialDocumentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken);
 
-    Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
+    Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(
+        IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
+
+    Task<IEnumerable<FinancialDocumentDto>> GetFinancialDocumentsInSpecificPeriod(ContractGroup contract,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
+
+    Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
+        DateTime endOfPeriod, CancellationToken cancellationToken);
+
+    Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
+        DateTime endOfPeriod, CancellationToken cancellationToken);
 }

@@ -16,6 +16,11 @@ public sealed record InstallmentDto
     
     public DateTime DueDate { get; set; }
 
+    public InstallmentDto()
+    {
+        
+    }
+
     public InstallmentDto(decimal amount, decimal cashAmount, decimal creditAmount, decimal prepaymentAmount, decimal commission, DateTime dueDate)
     {
         Amount = amount;

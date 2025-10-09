@@ -1,16 +1,14 @@
-﻿using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
-using Domain.Core.Entities.InstallmentAggregate.Dtos;
-using Domain.Core.Entities.MerchantInstallmentAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using Domain.Core.Enums;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Enums;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
@@ -98,8 +96,8 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             .Where(p => p.Type == FinancialDocumentType.Refund)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value));
 
-        query = lastBillingDueDate.HasValue ? 
-            query.Where(p => lastBillingDueDate <= p.CreatedDateTime && p.CreatedDateTime < DateTime.Today) : 
+        query = lastBillingDueDate.HasValue ?
+            query.Where(p => lastBillingDueDate <= p.CreatedDateTime && p.CreatedDateTime < DateTime.Today) :
             query.Where(p => p.CreatedDateTime < DateTime.Today);
 
         var found = await query.AnyAsync(cancellationToken);
@@ -113,14 +111,13 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
         return new FinancialDocumentRange(minCreatedDateTime, maxCreatedDateTime);
     }
 
-    public async Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
+    public async Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(
+        IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
     {
         if (query == null) return new Dictionary<ContractIdentifier, List<FinancialDocumentDto>>();
 
         return await query.AsNoTracking().Select(p => new
         {
-            p.Id,
-            p.Type,
             p.Amount,
             p.CreatedDateTime,
             PurchaseCommission = p.Parent.Commission,
@@ -137,16 +134,62 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             MerchantId = p.MerchantId,
             BillingPeriod = p.BillingPeriod,
             BillingPeriodType = p.BillingPeriodType,
-            BillingDailyOriginDate = p.DailyBillingOriginDate,
+            DailyBillingOriginDate = p.DailyBillingOriginDate,
             CommissionCalculationType = p.CommissionCalculationType
         })
         .ToDictionaryAsync(p => p.Key, p => p.Select(q => new FinancialDocumentDto()
         {
-            Id = q.Id,
-            Type = q.Type,
             Amount = q.Amount,
             CreatedDateTime = q.CreatedDateTime,
             PurchaseCommission = q.PurchaseCommission
         }).ToList(), cancellationToken);
+    }
+
+    public async Task<IEnumerable<FinancialDocumentDto>> GetFinancialDocumentsInSpecificPeriod(ContractGroup contract,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.FinancialDocuments
+            .Where(p => p.Type == FinancialDocumentType.Refund &&
+                        startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod &&
+                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
+                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
+                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
+                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
+                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
+            .Select(p => new FinancialDocumentDto()
+            {
+                Amount = p.Amount,
+                CreatedDateTime = p.CreatedDateTime,
+                PurchaseCommission = p.Parent.Commission
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(ContractGroup contract,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.FinancialDocuments
+            .Where(p => p.Type == FinancialDocumentType.Refund &&
+                        startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod &&
+                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
+                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
+                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
+                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
+                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
+            .SumAsync(p => p.Amount, cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(ContractGroup contract,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.FinancialDocuments
+            .Where(p => p.Type == FinancialDocumentType.Refund &&
+                        startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod &&
+                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
+                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
+                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
+                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
+                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
+            .SumAsync(p => p.Parent.Commission, cancellationToken) ?? 0;
     }
 }

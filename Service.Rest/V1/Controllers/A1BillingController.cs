@@ -459,7 +459,7 @@ public class A1BillingController(
 
                 var startOfPeriod = tenantMerchantContractRepository.GetActiveContractStartOfPeriod(contract);
 
-                var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTransactionsOfCurrentPeriod(contract, startOfPeriod);
+                var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTieredTransactionsFromStartOfPeriod(contract, startOfPeriod);
 
                 var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
                     p.FromAmount < sumOfTransactionsOfCurrentPeriod && sumOfTransactionsOfCurrentPeriod <= p.ToAmount);

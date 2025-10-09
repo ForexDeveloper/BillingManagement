@@ -15,7 +15,7 @@ public sealed record ContractGroup
 
     public TimeInterval BillingPeriodType { get; set; }
 
-    public DateTime? BillingDailyOriginDate { get; set; }
+    public DateTime? DailyBillingOriginDate { get; set; }
 
     public required bool Status { get; set; }
 
@@ -33,13 +33,15 @@ public sealed record ContractGroup
 
     public CommissionCalculationType CommissionCalculationType { get; set; }
 
+    public required List<CommissionReferenceType> CommissionReferenceTypes { get; set; }
+
     public ContractIdentifier CreateIdentifier()
     {
         return new ContractIdentifier(TenantId,
             MerchantId,
             BillingPeriod,
             BillingPeriodType,
-            BillingDailyOriginDate,
+            DailyBillingOriginDate,
             CommissionCalculationType);
     }
 }

@@ -5,11 +5,7 @@ namespace Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
 
 public sealed record FinancialDocumentDto
 {
-    public long Id { get; set; }
-
     public decimal Amount { get; set; }
-
-    public FinancialDocumentType Type { get; set; }
 
     public decimal? PurchaseCommission { get; set; }
 
