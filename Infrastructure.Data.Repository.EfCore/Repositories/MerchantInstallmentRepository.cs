@@ -4,8 +4,8 @@ using System.Threading;
 using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Domain.Core.Entities.InstallmentAggregate.Dtos;
 using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.InstallmentAggregate.Dtos;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
@@ -24,11 +24,11 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         DateTime endOfPeriod, IEnumerable<int> contractIds)
     {
         return applicationDbContext.MerchantInstallments
-            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
-            .Where(p => contractIds.Contains(p.TenantMerchantContractId));
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId))
+            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod);
     }
 
-    public async Task<InstallmentRange?> GetInstallmentRanges(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken)
+    public async Task<InstallmentRange?> GetInstallmentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken)
     {
         var query = applicationDbContext.MerchantInstallments.AsNoTracking()
             .Where(p => contractIds.Contains(p.TenantMerchantContractId));

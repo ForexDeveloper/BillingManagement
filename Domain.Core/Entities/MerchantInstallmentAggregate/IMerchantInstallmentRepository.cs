@@ -16,7 +16,7 @@ public interface IMerchantInstallmentRepository
     IQueryable<MerchantInstallment> CreateJobInstallmentQuery(DateTime startOfPeriod,
         DateTime endOfPeriod, IEnumerable<int> contractIds);
 
-    Task<InstallmentRange?> GetInstallmentRanges(IEnumerable<int> contractIds, DateTime? lastBillingDueDate,
+    Task<InstallmentRange?> GetInstallmentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate,
         CancellationToken cancellationToken);
 
     Task<Dictionary<ContractIdentifier, List<InstallmentDto>>> GetGroupContractInstallments(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken);

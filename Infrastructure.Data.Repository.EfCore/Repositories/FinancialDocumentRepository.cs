@@ -88,11 +88,11 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
     {
         return applicationDbContext.FinancialDocuments
             .Where(p => p.Type == FinancialDocumentType.Refund)
-            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
-            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value));
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod);
     }
 
-    public async Task<FinancialDocumentRange> GetFinancialDocumentRanges(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken)
+    public async Task<FinancialDocumentRange> GetFinancialDocumentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken)
     {
         var query = applicationDbContext.FinancialDocuments.AsNoTracking()
             .Where(p => p.Type == FinancialDocumentType.Refund)
