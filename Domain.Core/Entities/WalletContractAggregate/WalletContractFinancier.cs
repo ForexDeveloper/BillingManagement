@@ -37,14 +37,14 @@ public class WalletContractFinancier : BaseEntity<int>
         WalletContractId = walletContractId;
         FinancierId = financierId;
         PortionTypes = portionTypes.Select(b => (WalletPortionType)b).ToList();
-        CommissionCalculationType = (CommissionCalculationType)commissionCalculationType;
+        CommissionCalculationType = commissionCalculationType != null ? (CommissionCalculationType)commissionCalculationType : null;
         FixedAmountCommission = fixedAmountCommission;
         FixedPercentageCommission = fixedPercentageCommission;
         TransactionMinCommissionAmount = transactionMinCommissionAmount;
         TransactionMaxCommissionAmount = transactionMaxCommissionAmount;
         PeriodMinCommissionAmount = periodMinCommissionAmount;
         PeriodMaxCommissionAmount = periodMaxCommissionAmount;
-        PaymentMethodType = (PaymentMethodType)paymentMethodType;
+        PaymentMethodType = paymentMethodType != null ? (PaymentMethodType)paymentMethodType : null;
     }
 
     public void SetTieredCommissions(List<TieredCommission> tieredCommissions)

@@ -66,14 +66,11 @@ public abstract class Installment : BaseEntity<long>
         Number = number;
         DueDate = dueDate;
         TenantId = tenantId;
-        CashAmount = cashAmount;
-        CreditAmount = creditAmount;
-        PrepaymentAmount = prepaymentAmount;
         Status = InstallmentStatus.Pending;
         FinancialDocument = financialDocument;
         ToBusinessIdentityId = toBusinessIdentityId;
         FromBusinessIdentityId = fromBusinessIdentityId;
-        CalculateAmount(amount);
+        SetTotalAmounts(amount, cashAmount, creditAmount, prepaymentAmount);
     }
 
     protected Installment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
@@ -84,31 +81,11 @@ public abstract class Installment : BaseEntity<long>
         Number = number;
         DueDate = dueDate;
         TenantId = tenantId;
-        CashAmount = cashAmount;
-        CreditAmount = creditAmount;
-        PrepaymentAmount = prepaymentAmount;
         Status = InstallmentStatus.Pending;
         FinancialDocumentId = financialDocumentId;
         ToBusinessIdentityId = toBusinessIdentityId;
         FromBusinessIdentityId = fromBusinessIdentityId;
-        CalculateAmount(amount);
-    }
-
-    private void CalculateAmount(decimal amount)
-    {
-        if (amount < 0)
-        {
-            throw new ArgumentValidationException(nameof(amount), "مبلغ قسط نمی تواند کوچک تر از صفر باشد");
-        }
-
-        Amount = amount;
-
-        var compare = Amount == (CashAmount + CreditAmount + PrepaymentAmount);
-
-        if (!compare)
-        {
-            throw new ArgumentValidationException(nameof(amount), "جمع ریز مبالغ با مبلغ کل قسط برابر نمی باشد");
-        }
+        SetTotalAmounts(amount, cashAmount, creditAmount, prepaymentAmount);
     }
 
     public void SetCommission(decimal commission)
@@ -119,6 +96,34 @@ public abstract class Installment : BaseEntity<long>
         }
 
         Commission = commission;
+    }
+
+    private void SetTotalAmounts(decimal amount, decimal cashAmount, decimal creditAmount, decimal prepaymentAmount)
+    {
+        if (amount < 0)
+        {
+            throw new ArgumentValidationException(nameof(amount), "مبلغ قسط نمی تواند کوچک تر از صفر باشد");
+        }
+
+        if (cashAmount < 0)
+        {
+            throw new ArgumentValidationException(nameof(cashAmount), "مبلغ نقدی قسط نمی تواند کوچک تر از صفر باشد");
+        }
+
+        if (creditAmount < 0)
+        {
+            throw new ArgumentValidationException(nameof(creditAmount), "مبلغ مازاد نقدی قسط نمی تواند کوچک تر از صفر باشد");
+        }
+
+        if (prepaymentAmount < 0)
+        {
+            throw new ArgumentValidationException(nameof(prepaymentAmount), "مبلغ پیش پرداخت قسط نمی تواند کوچک تر از صفر باشد");
+        }
+
+        Amount = amount;
+        CashAmount = cashAmount;
+        CreditAmount = creditAmount;
+        PrepaymentAmount = prepaymentAmount;
     }
 
     protected abstract void SetCheckSum();

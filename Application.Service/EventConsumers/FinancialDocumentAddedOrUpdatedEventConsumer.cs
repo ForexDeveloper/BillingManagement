@@ -1,20 +1,20 @@
-﻿using System;
-using System.Linq;
-using MassTransit;
-using Domain.Core.Enums;
-using System.Diagnostics;
-using Shared.EventBus.Events;
-using System.Threading.Tasks;
-using Application.Service.Helper;
-using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
-using Domain.Core.UnitOfWorkContracts;
-using Shared.Logging.Abstraction.Models;
-using Shared.Logging.Abstraction.Extensions;
-using Domain.Core.Entities.Shared.Exceptions;
+﻿using Application.Service.Helper;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Enums;
+using Domain.Core.UnitOfWorkContracts;
+using MassTransit;
+using Microsoft.Extensions.Logging;
+using Shared.EventBus.Events;
+using Shared.Logging.Abstraction.Extensions;
+using Shared.Logging.Abstraction.Models;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Application.Service.EventConsumers;
 
@@ -45,10 +45,10 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                 if (financialDocument.Type == FinancialDocumentType.Purchase)
                 {
-                    await CreateMerchantInstallments(contract, financialDocument);
-                }
+                    var commission = await CreateMerchantInstallments(contract, financialDocument);
 
-                await CreateFinancialDocument(context);
+                    financialDocument.SetCommission(commission);
+                }
 
                 await unitOfWork.SaveChangesAsync();
 
@@ -107,15 +107,15 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 context.Message.CashAmount,
                 context.Message.PrepaymentAmount,
                 type,
-                context.Message.State,
-                context.Message.PaymentGatewayType,
+                (FinancialDocumentState)context.Message.State,
+                (PaymentGatewayType)context.Message.PaymentGatewayType,
                 context.Message.Description,
                 context.Message.MerchantBranchId,
                 context.Message.TenantMerchantContractId,
                 context.Message.TenantPlatformContractId,
-                context.Message.RefundReason,
+                context.Message.RefundReason != null ? (RefundReason)context.Message.RefundReason : null,
                 context.Message.RefundDescription,
-                context.Message.RefundType,
+                context.Message.RefundType != null ? (FinancialDocumentRefundType)context.Message.RefundType : null,
                 context.Message.ParentId
             );
 
@@ -151,7 +151,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
         await unitOfWork.SaveChangesAsync();
     }
 
-    private async Task CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
+    private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
     {
         List<MerchantInstallment> installments = [];
 
@@ -266,8 +266,6 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 throw new ArgumentOutOfRangeException();
         }
 
-        financialDocument.SetCommission(financialDocumentCommission);
-
         var installmentCount = contract.InstallmentsCount ?? 1;
 
         var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
@@ -312,8 +310,8 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
             var installmentDate = installmentDates[i];
 
-            var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
-                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contract.Id, amount, cashAmount,
+            var installment = new MerchantInstallment(financialDocument, contract.TenantId,
+                contract.TenantId, contract.MerchantId, contract.Id, amount, cashAmount,
                 creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Installment);
 
             installments.Add(installment);
@@ -335,5 +333,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
         }
 
         await merchantInstallmentRepository.AddRangeAsync(installments);
+
+        return financialDocumentCommission;
     }
 }

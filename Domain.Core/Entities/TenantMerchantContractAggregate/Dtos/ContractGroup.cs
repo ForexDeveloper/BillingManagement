@@ -17,15 +17,13 @@ public sealed record ContractGroup
 
     public DateTime? BillingDailyOriginDate { get; set; }
 
-    public bool HasEndorsement { get; set; }
-
     public required bool Status { get; set; }
 
     public DateTime CreatedDateTime { get; set; }
 
     public DateTime EndorsementDate { get; set; }
 
-    public IEnumerable<int> ContractIds { get; set; }
+    public List<int> ContractIds { get; set; }
 
     public decimal? PeriodMinCommissionAmount { get; set; }
 

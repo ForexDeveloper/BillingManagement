@@ -1,14 +1,16 @@
-﻿using System;
+﻿using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
+using Domain.Core.Entities.InstallmentAggregate.Dtos;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
+using Domain.Core.Enums;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Domain.Core.Enums;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
@@ -85,17 +87,36 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
     public IQueryable<FinancialDocument> CreateJobFinancialDocumentQuery(DateTime startOfPeriod, DateTime endOfPeriod, IEnumerable<int> contractIds)
     {
         return applicationDbContext.FinancialDocuments
+            .Where(p => p.Type == FinancialDocumentType.Refund)
             .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value));
     }
 
-    public async Task<bool> ExecuteQueryAnyAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
+    public async Task<FinancialDocumentRange> GetFinancialDocumentRanges(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken)
     {
-        return await query.AnyAsync(cancellationToken);
+        var query = applicationDbContext.FinancialDocuments.AsNoTracking()
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value));
+
+        query = lastBillingDueDate.HasValue ? 
+            query.Where(p => lastBillingDueDate <= p.CreatedDateTime && p.CreatedDateTime < DateTime.Today) : 
+            query.Where(p => p.CreatedDateTime < DateTime.Today);
+
+        var found = await query.AnyAsync(cancellationToken);
+
+        if (found == false) return null;
+
+        var minCreatedDateTime = await query.MinAsync(p => p.CreatedDateTime, cancellationToken);
+
+        var maxCreatedDateTime = await query.MaxAsync(p => p.CreatedDateTime, cancellationToken);
+
+        return new FinancialDocumentRange(minCreatedDateTime, maxCreatedDateTime);
     }
 
     public async Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
     {
+        if (query == null) return new Dictionary<ContractIdentifier, List<FinancialDocumentDto>>();
+
         return await query.AsNoTracking().Select(p => new
         {
             p.Id,

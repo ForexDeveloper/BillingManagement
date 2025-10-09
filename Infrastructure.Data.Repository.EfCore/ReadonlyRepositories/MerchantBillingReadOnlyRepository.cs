@@ -64,10 +64,10 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 Code = p.Code,
                 Status = p.Status,
                 EndDate = p.EndDate,
-                Additions = p.Additions,
                 StartDate = p.StartDate,
                 PeriodType = p.PeriodType,
-                Deductions = p.Deductions,
+                Additions = p.AdditionsAmount,
+                Deductions = p.DeductionsAmount,
                 PaidAmount = p.Payments.Sum(q => q.Amount),
                 StatusTitle = p.Status.GetEnumDescription(),
                 PreviousDebitAmount = p.PreviousDebitAmount,
@@ -76,11 +76,11 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 PeriodTypeTitle = p.PeriodType.GetEnumDescription(),
                 PayableAmount = p.Amount - p.Payments.Sum(q => q.Amount),
                 RefundedPurchasesCommission = p.RefundedTransactionsCommission,
-                CurrentPeriodFinalCommission = p.CurrentPeriodFinalCommission,
-                PreviousPeriodRefundedPurchases = p.PreviousPeriodRefundedTransactions,
-                CurrentPeriodPurchaseTransactions = p.CurrentPeriodPurchaseTransactions,
-                TotalCreditAmount = p.PreviousDebitAmount + p.CurrentPeriodPurchaseTransactions + p.RefundedTransactionsCommission + p.Additions,
-                TotalDebitAmount = p.PreviousCreditAmount + p.CurrentPeriodFinalCommission + p.PreviousPeriodRefundedTransactions + p.Deductions,
+                CurrentPeriodFinalCommission = p.PurchaseTransactionsCommission,
+                PreviousPeriodRefundedPurchases = p.RefundedTransactionsAmount,
+                CurrentPeriodPurchaseTransactions = p.PurchaseTransactionsAmount,
+                TotalDebitAmount = p.PreviousDebitAmount + p.PurchaseTransactionsAmount + p.RefundedTransactionsCommission + p.AdditionsAmount,
+                TotalCreditAmount = p.PreviousCreditAmount + p.PurchaseTransactionsCommission + p.RefundedTransactionsAmount + p.DeductionsAmount,
                 Title = $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}",
                 Payments = p.Payments.Select(q => new GetBillingPaymentViewModel()
                 {
@@ -179,7 +179,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 Amount = 11000,
                 TransactionCount = 8058,
                 CalculatedCommission = 12000,
-                CurrentPeriodPurchaseTransactions = p.CurrentPeriodPurchaseTransactions,
+                CurrentPeriodPurchaseTransactions = p.PurchaseTransactionsAmount,
                 Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.CreatedDateTime)
                     .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractViewModel()
                     {

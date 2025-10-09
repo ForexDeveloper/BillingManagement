@@ -4,8 +4,8 @@ using System.Threading;
 using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Domain.Core.Entities.InstallmentAggregate.Dtos;
 using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
@@ -24,27 +24,18 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         DateTime endOfPeriod, IEnumerable<int> contractIds)
     {
         return applicationDbContext.MerchantInstallments
-            .Where(p => p.BillingId.HasValue == false)
             .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId));
     }
 
-    public async Task<bool> ExecuteQueryAnyAsync(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken)
-    {
-        return await query.AnyAsync(cancellationToken);
-    }
-
-    public async Task<bool> FindInContractPeriodAsync(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken)
-    {
-        return await query.AnyAsync(cancellationToken);
-    }
-
-    public async Task<InstallmentRange?> GetInstallmentRanges(IEnumerable<int> contractIds, CancellationToken cancellationToken)
+    public async Task<InstallmentRange?> GetInstallmentRanges(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken)
     {
         var query = applicationDbContext.MerchantInstallments.AsNoTracking()
-            .Where(p => p.DueDate < DateTime.Today)
-            .Where(p => p.BillingId.HasValue == false)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId));
+
+        query = lastBillingDueDate.HasValue ?
+            query.Where(p => lastBillingDueDate <= p.DueDate && p.DueDate < DateTime.Today) :
+            query.Where(p => p.DueDate < DateTime.Today);
 
         var found = await query.AnyAsync(cancellationToken);
 
@@ -57,22 +48,47 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         return new InstallmentRange(minDueDate, maxDueDate);
     }
 
-    public async Task<DateTime?> GetLastInstallmentDueDate(IEnumerable<int> contractIds, CancellationToken cancellationToken)
+    public async Task<Dictionary<ContractIdentifier, List<InstallmentDto>>> GetGroupContractInstallments(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken)
     {
-        return await applicationDbContext.MerchantInstallments.AsNoTracking()
-            .Where(p => p.DueDate < DateTime.Today)
-            .Where(p => p.BillingId.HasValue == false)
-            .Where(p => contractIds.Contains(p.TenantMerchantContractId))
-            .OrderByDescending(p => p.DueDate)
-            .Select(p => p.DueDate)
-            .FirstOrDefaultAsync(cancellationToken);
-    }
+        if (query == null) return new Dictionary<ContractIdentifier, List<InstallmentDto>>();
 
-    public async Task<Dictionary<ContractIdentifier, List<MerchantInstallment>>> GetGroupContractInstallments(IQueryable<MerchantInstallment> query, CancellationToken cancellationToken)
-    {
-        return await query.Select(p => new
+        var nullDailyOriginDateQuery = query.Where(p => p.TenantMerchantContract.DailyBillingOriginDate == null);
+
+        var notNullDailyOriginDateQuery = query.Where(p => p.TenantMerchantContract.DailyBillingOriginDate != null);
+
+        var nullDailyOriginDateInstallments = await nullDailyOriginDateQuery.Select(p => new
         {
-            Installemnt = p,
+            p.Amount,
+            p.DueDate,
+            p.Commission,
+            p.CashAmount,
+            p.CreditAmount,
+            p.PrepaymentAmount,
+            p.TenantMerchantContract.TenantId,
+            p.TenantMerchantContract.MerchantId,
+            p.TenantMerchantContract.BillingPeriod,
+            p.TenantMerchantContract.BillingPeriodType,
+            p.TenantMerchantContract.CommissionCalculationType
+        }).GroupBy(p => new ContractIdentifier(p.TenantId,
+            p.MerchantId,
+            p.BillingPeriod,
+            p.BillingPeriodType,
+            p.CommissionCalculationType))
+        .ToDictionaryAsync(p => p.Key, p => p.Select(q => new InstallmentDto(q.Amount,
+                q.CashAmount,
+                q.CreditAmount,
+                q.PrepaymentAmount,
+                q.Commission,
+                q.DueDate)).ToList(), cancellationToken);
+
+        var notNullDailyOriginDateInstallments = await notNullDailyOriginDateQuery.Select(p => new
+        {
+            p.Amount,
+            p.DueDate,
+            p.Commission,
+            p.CashAmount,
+            p.CreditAmount,
+            p.PrepaymentAmount,
             p.TenantMerchantContract.TenantId,
             p.TenantMerchantContract.MerchantId,
             p.TenantMerchantContract.BillingPeriod,
@@ -80,12 +96,20 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
             p.TenantMerchantContract.DailyBillingOriginDate,
             p.TenantMerchantContract.CommissionCalculationType
         }).GroupBy(p => new ContractIdentifier(p.TenantId,
-                p.MerchantId,
-                p.BillingPeriod,
-                p.BillingPeriodType,
-                p.DailyBillingOriginDate,
-                p.CommissionCalculationType))
-            .ToDictionaryAsync(p => p.Key, p => p.Select(q => q.Installemnt).ToList(), cancellationToken);
+            p.MerchantId,
+            p.BillingPeriod,
+            p.BillingPeriodType,
+            p.DailyBillingOriginDate,
+            p.CommissionCalculationType))
+            .ToDictionaryAsync(p => p.Key, p => p.Select(q => new InstallmentDto(q.Amount,
+                q.CashAmount,
+                q.CreditAmount,
+                q.PrepaymentAmount,
+                q.Commission,
+                q.DueDate)).ToList(), cancellationToken);
+
+
+        return notNullDailyOriginDateInstallments.Concat(nullDailyOriginDateInstallments).ToDictionary(p => p.Key, p => p.Value);
     }
 
     public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod)

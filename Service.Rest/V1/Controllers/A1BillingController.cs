@@ -1,11 +1,17 @@
-﻿using System.Text.Json;
-using Domain.Core.Enums;
-using Microsoft.AspNetCore.Mvc;
-using Application.Service.Helper;
+﻿using Application.Query.ViewModels.Categories;
 using Application.Service.Contracts;
-using Application.Query.ViewModels.Categories;
+using Application.Service.Helper;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Enums;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Infrastructure.Data.Repository.EfCore.Repositories;
+using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.Contracts;
+using System.Globalization;
+using System.Text.Json;
+using Domain.Core.UnitOfWorkContracts;
 
 namespace Service.Rest.V1.Controllers;
 
@@ -14,31 +20,58 @@ namespace Service.Rest.V1.Controllers;
 [ApiController]
 public class A1BillingController(
     ApplicationDbContext dbContext,
+    IFinancialDocumentRepository financialDocumentRepository,
+    ITenantMerchantContractRepository tenantMerchantContractRepository,
     IMerchantInstallmentRepository merchantInstallmentRepository,
+    IApplicationDbContextUnitOfWork unitOfWork,
     IMerchantBillingService merchantBillingService)
     : ControllerBase
 {
     [HttpPost("installment")]
-    public async Task<ActionResult<GetCategoryListVm>> SetMerchantInstallments(long tenantMerchantContractId)
+    public async Task<ActionResult<GetCategoryListVm>> SetMerchantInstallments(int tenantId, int merchantId, int financialDocumentId)
     {
         try
         {
+            var today = DateTime.Today;
 
-            //var contract = await _dbContext.TenantMerchantContracts.FirstOrDefaultAsync(p => p.Id == tenantMerchantContractId);
+            var pc = new PersianCalendar();
 
-            //var period = contract.BillingPeriod;
+            var year = pc.GetYear(today);
+            var month = pc.GetMonth(today);
+            var dayOfMonth = pc.GetDayOfMonth(today);
 
-            //var periodType = contract.BillingPeriodType;
+            var newDateTimePc = new DateTime(year, month, dayOfMonth, pc);
 
-            var dictionary = new Dictionary<BillingUniqueKey, int>
-            {
-                { new BillingUniqueKey(1, 1, 1, TimeInterval.Month, DateTime.Today), 1 },
-                { new BillingUniqueKey(1, 1, 2, TimeInterval.Month, DateTime.Today), 2 },
-                { new BillingUniqueKey(1, 1, 3, TimeInterval.Month, DateTime.Today), 3 },
-                { new BillingUniqueKey(1, 1, 4, TimeInterval.Month, DateTime.Today), 4 }
-            };
+            var pcToDateTime = pc.ToDateTime(year, month, dayOfMonth, 0, 0, 0, 0);
 
-            var key = dictionary.GetValueOrDefault(new BillingUniqueKey(1, 1, 1, TimeInterval.Month, DateTime.Today));
+            var shiftDay = pc.AddDays(new DateTime(year, month, dayOfMonth, pc), 1);
+            var shiftWeek = pc.AddWeeks(new DateTime(year, month, dayOfMonth, pc), 1);
+            var shiftMonth = pc.AddMonths(new DateTime(year, month, dayOfMonth, pc), 1);
+
+            var shiftDay1 = pc.AddDays(today, 1);
+            var shiftWeek1 = pc.AddWeeks(today, 1);
+            var shiftMonth1 = pc.AddMonths(today, 1);
+
+            var financialDocument = await financialDocumentRepository.GetByIdAsync(financialDocumentId);
+
+            var contract = await tenantMerchantContractRepository.GetAsync(financialDocument.TenantMerchantContractId!.Value);
+
+            var depositDate = DateTime.Now;
+
+            var installments = new List<MerchantInstallment>();
+
+            var installmentDates = DateHelper.CalculateInstallments(depositDate, 24,
+                TimeInterval.Day, 5, 4, TimeInterval.Month);
+
+            var serializeDates = JsonSerializer.Serialize(installmentDates);
+
+            //var contract = await tenantMerchantContractRepository.GetActiveContractAsync(contract.TenantId, contract.MerchantId);
+
+            var commission = await CreateMerchantInstallments(contract, financialDocument);
+
+            financialDocument.SetCommission(commission);
+
+            await unitOfWork.SaveChangesAsync();
 
             var wallets = new List<WalletDto>
             {
@@ -348,41 +381,9 @@ public class A1BillingController(
                 PaymentId = p.PaymentId
             }).ToDictionary(p => p.Key, p => p);
 
-            var wallet = groupWallet.GetValueOrDefault(new WalletKey()
-            { TenantId = 1, MerchantId = 2, AccountId = 3, PaymentId = 4 });
+            var wallet = groupWallet.GetValueOrDefault(new WalletKey() { TenantId = 1, MerchantId = 2, AccountId = 3, PaymentId = 4 });
 
-            const int amount = 100000;
-
-            const int part = 7;
-
-            var t = amount / part;
-
-            var t1 = amount % part;
-
-            var depositDate = DateTime.Now;
-
-            var ttt = DateTime.Today;
-
-            var installments = new List<MerchantInstallment>();
-
-            var installmentDates = DateHelper.CalculateInstallments(depositDate, 24,
-                TimeInterval.Day, 29, 4, TimeInterval.Month);
-
-            var t2 = JsonSerializer.Serialize(installmentDates);
-
-            foreach (var installmentDate in installmentDates)
-            {
-                var installment = new MerchantInstallment(tenantId: 2, financialDocumentId: 1,
-                    fromBusinessIdentityId: 2, toBusinessIdentityId: 3,
-                    tenantMerchantContractId: (int)tenantMerchantContractId, amount: 31, 0, 0, 0, number: 2, dueDate: installmentDate,
-                    type: InstallmentType.Installment);
-
-                installments.Add(installment);
-            }
-
-            await Task.CompletedTask;
-
-            return Ok(installmentDates);
+            return Ok("Installments Created");
         }
         catch (Exception ex)
         {
@@ -392,11 +393,207 @@ public class A1BillingController(
     }
 
     [HttpPost("billing")]
-    public async Task<IActionResult> SetMerchantBilling()
+    public async Task<IActionResult> ExecuteBillingJobManually(CancellationToken cancellationToken)
     {
-        await Task.CompletedTask;
+        try
+        {
+            await merchantBillingService.IssueOrOverdueBilling(cancellationToken);
 
-        return Ok();
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
+    {
+        List<MerchantInstallment> installments = [];
+
+        var installmentDates = DateHelper.CalculateInstallments(DateTime.Now, contract.InstallmentsCount,
+            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+
+        decimal financialDocumentTargetAmount = 0;
+
+        if (contract.CommissionReferenceTypes == null || !contract.CommissionReferenceTypes.Any())
+        {
+            financialDocumentTargetAmount = financialDocument.Amount;
+        }
+        else
+        {
+            foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
+            {
+                switch (contractCommissionReferenceType)
+                {
+                    case CommissionReferenceType.CashAmount:
+                        financialDocumentTargetAmount += financialDocument.CashAmount;
+
+                        break;
+
+                    case CommissionReferenceType.CreditAmount:
+                        financialDocumentTargetAmount += financialDocument.CreditAmount;
+                        break;
+
+                    case CommissionReferenceType.PrepaymentAmount:
+                        financialDocumentTargetAmount += financialDocument.PrepaymentAmount;
+                        break;
+
+                    case CommissionReferenceType.InterestAmount:
+                        break;
+
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
+
+        decimal financialDocumentCommission = 0;
+
+        switch (contract.CommissionCalculationType)
+        {
+            case CommissionCalculationType.UniformTiered:
+                break;
+
+            case CommissionCalculationType.CumulativeTiered:
+
+                var startOfPeriod = tenantMerchantContractRepository.GetActiveContractStartOfPeriod(contract);
+
+                var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTransactionsOfCurrentPeriod(contract, startOfPeriod);
+
+                var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
+                    p.FromAmount < sumOfTransactionsOfCurrentPeriod && sumOfTransactionsOfCurrentPeriod <= p.ToAmount);
+
+                if (tieredCommission == null)
+                {
+                    var minTieredCommission = contract.TieredCommissions.MinBy(p => p.ToAmount);
+
+                    var maxTieredCommission = contract.TieredCommissions.MaxBy(p => p.ToAmount);
+
+                    if (sumOfTransactionsOfCurrentPeriod <= minTieredCommission.FromAmount)
+                    {
+                        tieredCommission = minTieredCommission;
+                    }
+
+                    else if (sumOfTransactionsOfCurrentPeriod > maxTieredCommission.ToAmount)
+                    {
+                        tieredCommission = maxTieredCommission;
+                    }
+
+                    if (tieredCommission == null) break;
+
+                    financialDocumentCommission = financialDocumentTargetAmount * (tieredCommission.Percentage / 100);
+
+                    if (financialDocumentCommission > tieredCommission.MaxAmount)
+                    {
+                        financialDocumentCommission = tieredCommission.MaxAmount.Value;
+                    }
+
+                    if (financialDocumentCommission < tieredCommission.MinAmount)
+                    {
+                        financialDocumentCommission = tieredCommission.MinAmount.Value;
+                    }
+                }
+
+                break;
+
+            case CommissionCalculationType.FixedPercentage:
+
+                if (!contract.FixedPercentageCommission.HasValue) break;
+
+                financialDocumentCommission = financialDocumentTargetAmount * (contract.FixedPercentageCommission.Value / 100);
+
+                if (financialDocumentCommission > contract.TransactionMaxCommissionAmount)
+                {
+                    financialDocumentCommission = contract.TransactionMaxCommissionAmount.Value;
+                }
+
+                if (financialDocumentCommission < contract.TransactionMinCommissionAmount)
+                {
+                    financialDocumentCommission = contract.TransactionMinCommissionAmount.Value;
+                }
+
+                break;
+
+            case CommissionCalculationType.FixedAmount:
+
+                financialDocumentCommission = contract.FixedAmountCommission ?? 0;
+
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+
+        var installmentCount = contract.InstallmentsCount ?? 1;
+
+        var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
+        var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
+
+        var installmentCashAmount = RoundHelper.RoundAmount(financialDocument.CashAmount / installmentCount);
+        var lastInstallmentCashAmount = financialDocument.CashAmount - (installmentCashAmount * (installmentCount - 1));
+
+        var installmentCreditAmount = RoundHelper.RoundAmount(financialDocument.CreditAmount / installmentCount);
+        var lastInstallmentCreditAmount = financialDocument.CreditAmount - (installmentCreditAmount * (installmentCount - 1));
+
+        var installmentPrepaymentAmount = RoundHelper.RoundAmount(financialDocument.PrepaymentAmount / installmentCount);
+        var lastInstallmentPrepaymentAmount = financialDocument.PrepaymentAmount - (installmentPrepaymentAmount * (installmentCount - 1));
+
+        var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
+        var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
+
+        for (var i = 0; i < installmentDates.Count; i++)
+        {
+            decimal amount;
+            decimal cashAmount;
+            decimal creditAmount;
+            decimal prePaymentAmount;
+            decimal commission;
+
+            if (i == installmentDates.Count - 1)
+            {
+                amount = lastInstallmentAmount;
+                cashAmount = lastInstallmentCashAmount;
+                creditAmount = lastInstallmentCreditAmount;
+                prePaymentAmount = lastInstallmentPrepaymentAmount;
+                commission = lastInstallmentCommission;
+            }
+            else
+            {
+                amount = installmentAmount;
+                cashAmount = installmentCashAmount;
+                creditAmount = installmentCreditAmount;
+                prePaymentAmount = installmentPrepaymentAmount;
+                commission = installmentCommission;
+            }
+
+            var installmentDate = installmentDates[i];
+
+            var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
+                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contract.Id, amount, cashAmount,
+                creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Installment);
+
+            installments.Add(installment);
+
+            switch (contract.CommissionDeductionMethodType)
+            {
+                case null:
+                case CommissionDeductionMethodType.DeductEquallyFromInstallments:
+                    installment.SetCommission(commission);
+                    break;
+
+                case CommissionDeductionMethodType.DeductFromFirstInstallment:
+                    installments[0].SetCommission(financialDocumentCommission);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        await merchantInstallmentRepository.AddRangeAsync(installments);
+
+        return financialDocumentCommission;
     }
 }
 

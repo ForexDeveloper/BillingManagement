@@ -82,35 +82,44 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
 
     public async Task<List<ContractGroup>> GetAllGroupContractAsync(CancellationToken cancellationToken)
     {
-        return await applicationDbContext.TenantMerchantContracts.GroupBy(p => new ContractIdentifier()
+        var contracts = await applicationDbContext.TenantMerchantContracts.AsNoTracking().ToListAsync(cancellationToken);
+
+        return contracts.GroupBy(p => new ContractIdentifier()
         {
             TenantId = p.TenantId,
             MerchantId = p.MerchantId,
             BillingPeriod = p.BillingPeriod,
             BillingPeriodType = p.BillingPeriodType,
-            BillingDailyOriginDate = p.DailyBillingOriginDate,
-            CommissionCalculationType = p.CommissionCalculationType
+            CommissionCalculationType = p.CommissionCalculationType,
+            BillingDailyOriginDate = p.DailyBillingOriginDate?.Date
         })
-        .Select(p => new ContractGroup()
-        {
-            TenantId = p.Key.TenantId,
-            MerchantId = p.Key.MerchantId,
-            BillingPeriod = p.Key.BillingPeriod,
-            BillingPeriodType = p.Key.BillingPeriodType,
-            BillingDailyOriginDate = p.Key.BillingDailyOriginDate,
-            CommissionCalculationType = p.Key.CommissionCalculationType,
-            ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id),
-            CreatedDateTime = p.OrderBy(q => q.CreatedDateTime).FirstOrDefault().CreatedDateTime,
-            EndorsementDate = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().EditDateTime,
-            Status = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault(q => q.Status).Status,
-            HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any(),
-            TieredCommissions = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().TieredCommissions,
-            PeriodMinCommissionAmount = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().PeriodMinCommissionAmount,
-            PeriodMaxCommissionAmount = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().PeriodMaxCommissionAmount
-        })
-        .AsNoTracking()
-        .OrderBy(p => p.Status)
-        .ToListAsync(cancellationToken);
+         .Select(p => new ContractGroup()
+         {
+             TenantId = p.Key.TenantId,
+             MerchantId = p.Key.MerchantId,
+             BillingPeriod = p.Key.BillingPeriod,
+             BillingPeriodType = p.Key.BillingPeriodType,
+             BillingDailyOriginDate = p.Key.BillingDailyOriginDate,
+             CommissionCalculationType = p.Key.CommissionCalculationType,
+             Status = p.OrderByDescending(q => q.CreatedDateTime).First().Status,
+             CreatedDateTime = p.OrderBy(q => q.CreatedDateTime).First().CreatedDateTime,
+             EndorsementDate = p.OrderByDescending(q => q.CreatedDateTime).First().EditDateTime,
+             ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id).ToList(),
+
+             TieredCommissions = p.Any(q => q.Status) 
+                 ? p.First(q => q.Status).TieredCommissions
+                 : p.OrderByDescending(q => q.CreatedDateTime).First().TieredCommissions,
+
+             PeriodMinCommissionAmount = p.Any(q => q.Status) 
+                 ? p.First(q => q.Status).PeriodMinCommissionAmount
+                 : p.OrderByDescending(q => q.CreatedDateTime).First().PeriodMinCommissionAmount,
+
+             PeriodMaxCommissionAmount = p.Any(q => q.Status) 
+                 ? p.First(q => q.Status).PeriodMaxCommissionAmount 
+                 : p.OrderByDescending(q => q.CreatedDateTime).First().PeriodMaxCommissionAmount
+         })
+         .OrderBy(p => p.Status)
+         .ToList();
     }
 
     public async Task<List<ContractGroup>> GetCurrentGroupContractsAsync(CancellationToken cancellationToken)
@@ -178,11 +187,10 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
             BillingPeriodType = p.Key.BillingPeriodType,
             BillingDailyOriginDate = p.Key.BillingDailyOriginDate,
             CommissionCalculationType = p.Key.CommissionCalculationType,
-            ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id),
+            ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id).ToList(),
             CreatedDateTime = p.OrderBy(q => q.CreatedDateTime).FirstOrDefault().CreatedDateTime,
             EndorsementDate = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().EditDateTime,
             Status = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault(q => q.Status).Status,
-            HasEndorsement = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().Children.Any(),
             TieredCommissions = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().TieredCommissions,
             PeriodMinCommissionAmount = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().PeriodMinCommissionAmount,
             PeriodMaxCommissionAmount = p.OrderByDescending(q => q.CreatedDateTime).FirstOrDefault().PeriodMaxCommissionAmount
@@ -198,13 +206,13 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
         DateTime startOfPeriod;
 
         var today = DateTime.Today;
+
         var pc = new PersianCalendar();
 
         var year = pc.GetYear(today);
         var month = pc.GetMonth(today);
         var dayOfWeek = pc.GetDayOfWeek(today);
         var dayOfMonth = pc.GetDayOfMonth(today);
-        var daysInMonth = pc.GetDaysInMonth(year, month);
 
         var billingPeriod = contract.BillingPeriod;
 
@@ -247,7 +255,7 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
 
             case TimeInterval.Month:
 
-                billingPeriod = DateHelper.RegulateBillingPeriod(daysInMonth, billingPeriod);
+                billingPeriod = DateHelper.RegulateBillingPeriod(pc, year, month, billingPeriod);
 
                 if (billingPeriod >= dayOfMonth)
                 {
