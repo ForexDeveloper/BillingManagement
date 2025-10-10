@@ -124,41 +124,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetRefundedTransactionsCommissionViewModel> GetRefundedPurchasesCommissionAsync(GetRefundedTransactionsCommissionQuery query)
-    {
-        var contractQuery = dbContext.TenantMerchantContracts.OrderByDescending(q => q.CreatedDateTime);
-
-        var contractId = await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => p.ContractIds.Last())
-            .FirstOrDefaultAsync();
-
-        var contract = await dbContext.TenantMerchantContracts.FirstOrDefaultAsync(p => p.Id == contractId);
-
-        return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetRefundedTransactionsCommissionViewModel
-            {
-                Id = p.Id,
-                Amount = p.RefundedTransactionsCommission,
-                Contract = new GetMerchantBillingContractViewModel()
-                {
-                    Id = contract.Id,
-                    EndDate = contract.EndDate,
-                    StartDate = contract.StartDate,
-                    FixedAmountCommission = contract.FixedAmountCommission,
-                    FixedPercentageCommission = contract.FixedPercentageCommission,
-                    PeriodMaxCommissionAmount = contract.PeriodMaxCommissionAmount,
-                    PeriodMinCommissionAmount = contract.PeriodMinCommissionAmount,
-                    TransactionMaxCommissionAmount = contract.TransactionMaxCommissionAmount,
-                    TransactionMinCommissionAmount = contract.TransactionMinCommissionAmount,
-                    CommissionCalculationType = contract.CommissionCalculationType,
-                    CommissionCalculationTypeTitle = contract.CommissionCalculationType.GetEnumDescription(),
-                }
-            }).FirstOrDefaultAsync();
-    }
-
-    public async Task<GetRefundedTransactionsViewModel> GetPreviousPeriodRefundedPurchasesAsync(GetRefundedTransactionsQuery query)
+    public async Task<GetRefundedTransactionsViewModel> GetRefundedTransactionsAsync(GetRefundedTransactionsQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
@@ -204,6 +170,40 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                             Percentage = r.Percentage
                         })
                     })
+            }).FirstOrDefaultAsync();
+    }
+
+    public async Task<GetRefundedTransactionsCommissionViewModel> GetRefundedTransactionsCommissionAsync(GetRefundedTransactionsCommissionQuery query)
+    {
+        var contractQuery = dbContext.TenantMerchantContracts.OrderByDescending(q => q.CreatedDateTime);
+
+        var contractId = await dbContext.MerchantBillings
+            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Select(p => p.ContractIds.Last())
+            .FirstOrDefaultAsync();
+
+        var contract = await dbContext.TenantMerchantContracts.FirstOrDefaultAsync(p => p.Id == contractId);
+
+        return await dbContext.MerchantBillings
+            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Select(p => new GetRefundedTransactionsCommissionViewModel
+            {
+                Id = p.Id,
+                Amount = p.RefundedTransactionsCommission,
+                Contract = new GetMerchantBillingContractViewModel()
+                {
+                    Id = contract.Id,
+                    EndDate = contract.EndDate,
+                    StartDate = contract.StartDate,
+                    FixedAmountCommission = contract.FixedAmountCommission,
+                    FixedPercentageCommission = contract.FixedPercentageCommission,
+                    PeriodMaxCommissionAmount = contract.PeriodMaxCommissionAmount,
+                    PeriodMinCommissionAmount = contract.PeriodMinCommissionAmount,
+                    TransactionMaxCommissionAmount = contract.TransactionMaxCommissionAmount,
+                    TransactionMinCommissionAmount = contract.TransactionMinCommissionAmount,
+                    CommissionCalculationType = contract.CommissionCalculationType,
+                    CommissionCalculationTypeTitle = contract.CommissionCalculationType.GetEnumDescription(),
+                }
             }).FirstOrDefaultAsync();
     }
 }

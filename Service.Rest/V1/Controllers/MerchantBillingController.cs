@@ -86,9 +86,9 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing refunded transactions returned", typeof(GetRefundedTransactionsViewModel))]
     public async Task<ActionResult> GetRefundedTransactions(long id)
     {
-        var refundedPurchases = await mediator.Send(new GetRefundedTransactionsQuery(currentUserService.TenantId, id));
+        var refundedTransactions = await mediator.Send(new GetRefundedTransactionsQuery(currentUserService.TenantId, id));
 
-        return Ok(refundedPurchases);
+        return Ok(refundedTransactions);
     }
 
     [HttpGet("{id}/purchase-transactions-commission")]

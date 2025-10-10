@@ -66,14 +66,14 @@ public sealed class AdminMerchantBillingController(IMediator mediator, ICurrentU
         return Ok(commission);
     }
 
-    [HttpGet("{id}/merchants/billings/{billingId}/previous-period-refunded-transactions")]
-    [SwaggerOperation("Get merchant billing previous period refunded transactions")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing previous period refunded transactions returned", typeof(GetRefundedTransactionsViewModel))]
-    public async Task<ActionResult> GetPreviousPeriodRefundedTransactions([FromRoute] int id, [FromRoute] long billingId)
+    [HttpGet("{id}/merchants/billings/{billingId}/refunded-transactions")]
+    [SwaggerOperation("Get merchant billing refunded transactions")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing refunded transactions returned", typeof(GetRefundedTransactionsViewModel))]
+    public async Task<ActionResult> GetRefundedTransactions([FromRoute] int id, [FromRoute] long billingId)
     {
-        var refundedPurchases = await mediator.Send(new GetRefundedTransactionsQuery(id, billingId));
+        var transactions = await mediator.Send(new GetRefundedTransactionsQuery(id, billingId));
 
-        return Ok(refundedPurchases);
+        return Ok(transactions);
     }
 
     [HttpGet("{id}/merchants/billings/{billingId}/purchase-transactions-commission")]
@@ -91,8 +91,8 @@ public sealed class AdminMerchantBillingController(IMediator mediator, ICurrentU
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing current period purchase transactions returned", typeof(GetCurrentPeriodPurchaseTransactionsViewModel))]
     public async Task<ActionResult> GetCurrentPeriodPurchaseTransactions([FromRoute] int id, [FromRoute] long billingId)
     {
-        var currentPeriodTransactions = await mediator.Send(new GetPurchaseTransactionsCommissionQuery(id, billingId));
+        var transactions = await mediator.Send(new GetPurchaseTransactionsCommissionQuery(id, billingId));
 
-        return Ok(currentPeriodTransactions);
+        return Ok(transactions);
     }
 }

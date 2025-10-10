@@ -17,9 +17,9 @@ public interface IMerchantBillingReadOnlyRepository
 
     Task<GetDeductionsViewModel> GetDeductionsAsync(GetDeductionsQuery query);
 
-    Task<GetRefundedTransactionsCommissionViewModel> GetRefundedPurchasesCommissionAsync(GetRefundedTransactionsCommissionQuery query);
-
-    Task<GetRefundedTransactionsViewModel> GetPreviousPeriodRefundedPurchasesAsync(GetRefundedTransactionsQuery query);
+    Task<GetRefundedTransactionsViewModel> GetRefundedTransactionsAsync(GetRefundedTransactionsQuery query);
 
     Task<GetPurchaseTransactionsCommissionViewModel> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query);
+
+    Task<GetRefundedTransactionsCommissionViewModel> GetRefundedTransactionsCommissionAsync(GetRefundedTransactionsCommissionQuery query);
 }

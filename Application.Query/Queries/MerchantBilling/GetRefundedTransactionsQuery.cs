@@ -18,6 +18,6 @@ public sealed class GetRefundedTransactionsQueryHandler(IMerchantBillingReadOnly
 {
     public async Task<GetRefundedTransactionsViewModel> Handle(GetRefundedTransactionsQuery query, CancellationToken cancellationToken)
     {
-        return await repository.GetPreviousPeriodRefundedPurchasesAsync(query);
+        return await repository.GetRefundedTransactionsAsync(query);
     }
 }

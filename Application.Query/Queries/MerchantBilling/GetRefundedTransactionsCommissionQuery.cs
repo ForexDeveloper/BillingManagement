@@ -19,6 +19,6 @@ public sealed class GetRefundedTransactionsCommissionQueryHandler(IMerchantBilli
     public async Task<GetRefundedTransactionsCommissionViewModel> Handle(GetRefundedTransactionsCommissionQuery query,
         CancellationToken cancellationToken)
     {
-        return await repository.GetRefundedPurchasesCommissionAsync(query);
+        return await repository.GetRefundedTransactionsCommissionAsync(query);
     }
 }
