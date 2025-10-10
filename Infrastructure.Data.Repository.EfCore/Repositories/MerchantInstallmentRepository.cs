@@ -117,7 +117,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Installment &&
+            .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
                         p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
                         p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
@@ -139,7 +139,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         DateTime startOfPeriod)
     {
         var query = applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Installment &&
+            .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate <= DateTime.Today &&
                         p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
                         p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
@@ -198,7 +198,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         var query = applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Installment &&
+            .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
                         p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
                         p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
@@ -257,7 +257,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Installment &&
+            .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
                         p.TenantMerchantContract.TenantId == contract.TenantId &&
                         p.TenantMerchantContract.MerchantId == contract.MerchantId &&
@@ -271,7 +271,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Installment &&
+            .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
                         p.TenantMerchantContract.TenantId == contract.TenantId &&
                         p.TenantMerchantContract.MerchantId == contract.MerchantId &&

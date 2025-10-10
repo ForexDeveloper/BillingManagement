@@ -66,15 +66,13 @@ public sealed class MerchantBillingService(
                 switch (contract.Status)
                 {
                     case true:
-
-                        await ScanPeriodsForActiveContract(contract, lastBillingDueDate, financialDataRange, financialQuery, billingDtos, cancellationToken);
-
+                        await ScanPeriodsForActiveContract(contract, lastBillingDueDate, financialDataRange,
+                           financialQuery, billingDtos, cancellationToken);
                         break;
 
                     case false:
-
-                        ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, financialDataRange, financialQuery, billingDtos);
-
+                        ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, financialDataRange, financialQuery,
+                            billingDtos);
                         break;
                 }
 

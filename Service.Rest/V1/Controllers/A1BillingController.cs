@@ -571,7 +571,7 @@ public class A1BillingController(
 
             var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
                 financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contract.Id, amount, cashAmount,
-                creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Installment);
+                creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Purchase);
 
             installments.Add(installment);
 

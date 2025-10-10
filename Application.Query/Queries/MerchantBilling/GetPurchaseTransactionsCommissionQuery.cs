@@ -7,20 +7,20 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetCurrentPeriodFinalCommissionQuery(int TenantId, long Id) : IRequest<GetCurrentPeriodFinalCommissionViewModel>
+public sealed record GetPurchaseTransactionsCommissionQuery(int TenantId, long Id) : IRequest<GetPurchaseTransactionsCommissionViewModel>
 {
     public long Id { get; set; } = Id;
 
     public int TenantId { get; set; } = TenantId;
 }
 
-public sealed class GetCurrentPeriodFinalCommissionQueryHandler(IMerchantBillingReadOnlyRepository repository)
-    : IRequestHandler<GetCurrentPeriodFinalCommissionQuery, GetCurrentPeriodFinalCommissionViewModel>
+public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBillingReadOnlyRepository repository)
+    : IRequestHandler<GetPurchaseTransactionsCommissionQuery, GetPurchaseTransactionsCommissionViewModel>
 {
-    public async Task<GetCurrentPeriodFinalCommissionViewModel> Handle(GetCurrentPeriodFinalCommissionQuery query,
+    public async Task<GetPurchaseTransactionsCommissionViewModel> Handle(GetPurchaseTransactionsCommissionQuery query,
         CancellationToken cancellationToken)
     {
-        var commission = await repository.GetCurrentPeriodFinalCommissionAsync(query);
+        var commission = await repository.GetPurchaseTransactionsCommissionAsync(query);
 
         var activeContract = commission.Contracts.FirstOrDefault();
 

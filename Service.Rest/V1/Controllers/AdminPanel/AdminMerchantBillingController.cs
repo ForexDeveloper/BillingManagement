@@ -61,27 +61,27 @@ public sealed class AdminMerchantBillingController(IMediator mediator, ICurrentU
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing refunded transactions commission returned", typeof(GetRefundedTransactionsCommissionViewModel))]
     public async Task<ActionResult> GetRefundedTransactionsCommission([FromRoute] int id, [FromRoute] long billingId)
     {
-        var commission = await mediator.Send(new GetRefundedPurchasesCommissionQuery(id, billingId));
+        var commission = await mediator.Send(new GetRefundedTransactionsCommissionQuery(id, billingId));
 
         return Ok(commission);
     }
 
     [HttpGet("{id}/merchants/billings/{billingId}/previous-period-refunded-transactions")]
     [SwaggerOperation("Get merchant billing previous period refunded transactions")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing previous period refunded transactions returned", typeof(GetPreviousPeriodRefundedTransactionsViewModel))]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing previous period refunded transactions returned", typeof(GetRefundedTransactionsViewModel))]
     public async Task<ActionResult> GetPreviousPeriodRefundedTransactions([FromRoute] int id, [FromRoute] long billingId)
     {
-        var refundedPurchases = await mediator.Send(new GetPreviousPeriodRefundedTransactionsQuery(id, billingId));
+        var refundedPurchases = await mediator.Send(new GetRefundedTransactionsQuery(id, billingId));
 
         return Ok(refundedPurchases);
     }
 
-    [HttpGet("{id}/merchants/billings/{billingId}/current-period-final-commission")]
-    [SwaggerOperation("Get merchant billing current period final commission")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing current period final commission returned", typeof(GetCurrentPeriodFinalCommissionViewModel))]
-    public async Task<ActionResult> GetCurrentPeriodFinalCommission([FromRoute] int id, [FromRoute] long billingId)
+    [HttpGet("{id}/merchants/billings/{billingId}/purchase-transactions-commission")]
+    [SwaggerOperation("Get merchant billing purchase transactions commission")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing purchase transactions commission returned", typeof(GetPurchaseTransactionsCommissionViewModel))]
+    public async Task<ActionResult> GetPurchaseTransactionsCommission([FromRoute] int id, [FromRoute] long billingId)
     {
-        var commission = await mediator.Send(new GetCurrentPeriodFinalCommissionQuery(id, billingId));
+        var commission = await mediator.Send(new GetPurchaseTransactionsCommissionQuery(id, billingId));
 
         return Ok(commission);
     }
@@ -91,7 +91,7 @@ public sealed class AdminMerchantBillingController(IMediator mediator, ICurrentU
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing current period purchase transactions returned", typeof(GetCurrentPeriodPurchaseTransactionsViewModel))]
     public async Task<ActionResult> GetCurrentPeriodPurchaseTransactions([FromRoute] int id, [FromRoute] long billingId)
     {
-        var currentPeriodTransactions = await mediator.Send(new GetCurrentPeriodFinalCommissionQuery(id, billingId));
+        var currentPeriodTransactions = await mediator.Send(new GetPurchaseTransactionsCommissionQuery(id, billingId));
 
         return Ok(currentPeriodTransactions);
     }

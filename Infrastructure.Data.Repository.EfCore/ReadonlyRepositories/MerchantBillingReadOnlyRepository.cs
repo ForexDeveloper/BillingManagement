@@ -124,7 +124,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetRefundedTransactionsCommissionViewModel> GetRefundedPurchasesCommissionAsync(GetRefundedPurchasesCommissionQuery query)
+    public async Task<GetRefundedTransactionsCommissionViewModel> GetRefundedPurchasesCommissionAsync(GetRefundedTransactionsCommissionQuery query)
     {
         var contractQuery = dbContext.TenantMerchantContracts.OrderByDescending(q => q.CreatedDateTime);
 
@@ -158,32 +158,33 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetPreviousPeriodRefundedTransactionsViewModel> GetPreviousPeriodRefundedPurchasesAsync(GetPreviousPeriodRefundedTransactionsQuery query)
+    public async Task<GetRefundedTransactionsViewModel> GetPreviousPeriodRefundedPurchasesAsync(GetRefundedTransactionsQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetPreviousPeriodRefundedTransactionsViewModel
+            .Select(p => new GetRefundedTransactionsViewModel
             {
                 Id = p.Id,
                 Amount = p.Amount
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetCurrentPeriodFinalCommissionViewModel> GetCurrentPeriodFinalCommissionAsync(GetCurrentPeriodFinalCommissionQuery query)
+    public async Task<GetPurchaseTransactionsCommissionViewModel> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetCurrentPeriodFinalCommissionViewModel
+            .Select(p => new GetPurchaseTransactionsCommissionViewModel
             {
                 Id = p.Id,
-                Amount = 11000,
+                Amount = p.Amount,
                 TransactionCount = 8058,
-                CalculatedCommission = 12000,
-                CurrentPeriodPurchaseTransactions = p.PurchaseTransactionsAmount,
+                PurchaseTransactionsCommission = p.PurchaseTransactionsAmount,
+                CalculatedCommission = p.PurchaseTransactionsCalculatedCommission,
                 Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.CreatedDateTime)
                     .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractViewModel()
                     {
                         Id = q.Id,
+                        Status = q.Status,
                         EndDate = q.EndDate,
                         StartDate = q.StartDate,
                         FixedAmountCommission = q.FixedAmountCommission,

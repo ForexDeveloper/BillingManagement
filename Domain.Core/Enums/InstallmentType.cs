@@ -4,8 +4,8 @@ namespace Domain.Core.Enums;
 
 public enum InstallmentType : byte
 {
-    [Description("قسط")]
-    Installment = 1,
+    [Description("خرید")]
+    Purchase = 1,
 
     [Description("ریفاند")]
     Refund = 2,

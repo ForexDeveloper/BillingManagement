@@ -315,7 +315,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
             var installment = new MerchantInstallment(financialDocument, contract.TenantId, 
                 contract.TenantId, contract.MerchantId, contract.Id, amount, cashAmount,
-                creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Installment);
+                creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Purchase);
 
             installments.Add(installment);
 
