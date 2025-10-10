@@ -3,6 +3,7 @@ using System.Net;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Authorization;
+using Application.Command.BillingCommands;
 using Application.Query.ViewModels.Billings;
 using Service.Rest.V1.RequestModels.Billings;
 using Shared.IdentityServerProvider.Contracts;
@@ -30,6 +31,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
         return Ok(billings);
     }
 
+
     [HttpGet("{id}")]
     [SwaggerOperation("Get merchant billing")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "merchant billing not found")]
@@ -41,15 +43,6 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
         return Ok(billing);
     }
 
-    [HttpGet("{id}/previous-debit")]
-    [SwaggerOperation("Get merchant billing previous debit")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing previous debit returned", typeof(GetPreviousDebitViewModel))]
-    public async Task<ActionResult> GetPreviousDebit(long id)
-    {
-        var previousDebit = await mediator.Send(new GetPreviousDebitQuery(currentUserService.TenantId, id));
-
-        return Ok(previousDebit);
-    }
 
     [HttpGet("{id}/additions")]
     [SwaggerOperation("Get merchant billing additions")]
@@ -61,6 +54,18 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
         return Ok(additions);
     }
 
+
+    [HttpPut("{id}/additions")]
+    [SwaggerOperation("Update merchant billing additions")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing additions updated", typeof(long))]
+    public async Task<ActionResult> UpdateAdditions([FromRoute] long id, UpdateBillingAdditionsRequest request)
+    {
+        var additions = await mediator.Send(new UpdateBillingAdditionsCommand(currentUserService.TenantId, id, request.Amount, request.Description));
+
+        return Ok(additions);
+    }
+
+
     [HttpGet("{id}/deductions")]
     [SwaggerOperation("Get merchant billing deductions")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing deductions returned", typeof(GetDeductionsViewModel))]
@@ -71,25 +76,61 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
         return Ok(additions);
     }
 
-    [HttpGet("{id}/refunded-transactions-commission")]
-    [SwaggerOperation("Get merchant billing refunded transactions commission")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing refunded transactions commission returned", typeof(GetRefundedTransactionsCommissionViewModel))]
-    public async Task<ActionResult> GetRefundedTransactionsCommission(long id)
-    {
-        var commission = await mediator.Send(new GetRefundedTransactionsCommissionQuery(currentUserService.TenantId, id));
 
-        return Ok(commission);
+    [HttpPut("{id}/deductions")]
+    [SwaggerOperation("Update merchant billing deductions")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing deductions updated", typeof(long))]
+    public async Task<ActionResult> UpdateDeductions([FromRoute] long id, UpdateBillingDeductionsRequest request)
+    {
+        var additions = await mediator.Send(new UpdateBillingDeductionsCommand(currentUserService.TenantId, id, request.Amount, request.Description));
+
+        return Ok(additions);
     }
+
+
+    [HttpGet("{id}/previous-debit")]
+    [SwaggerOperation("Get merchant billing previous debit")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing previous debit returned", typeof(GetPreviousDebitViewModel))]
+    public async Task<ActionResult> GetPreviousDebit(long id)
+    {
+        var previousDebit = await mediator.Send(new GetPreviousDebitQuery(currentUserService.TenantId, id));
+
+        return Ok(previousDebit);
+    }
+
+
+    [HttpGet("{id}/previous-credit")]
+    [SwaggerOperation("Get merchant billing previous credit")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing previous credit returned", typeof(GetPreviousCreditViewModel))]
+    public async Task<ActionResult> GetPreviousCredit(long id)
+    {
+        var previousCredit = await mediator.Send(new GetPreviousCreditQuery(currentUserService.TenantId, id));
+
+        return Ok(previousCredit);
+    }
+
+
+    [HttpGet("{id}/purchase-transactions")]
+    [SwaggerOperation("Get merchant billing purchase transactions")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing purchase transactions returned", typeof(GetPurchaseTransactionsViewModel))]
+    public async Task<ActionResult> GetPurchaseTransactions([FromRoute] long id)
+    {
+        var transactions = await mediator.Send(new GetPurchaseTransactionsQuery(currentUserService.TenantId, id));
+
+        return Ok(transactions);
+    }
+
 
     [HttpGet("{id}/refunded-transactions")]
     [SwaggerOperation("Get merchant billing refunded transactions")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing refunded transactions returned", typeof(GetRefundedTransactionsViewModel))]
     public async Task<ActionResult> GetRefundedTransactions(long id)
     {
-        var refundedTransactions = await mediator.Send(new GetRefundedTransactionsQuery(currentUserService.TenantId, id));
+        var transactions = await mediator.Send(new GetRefundedTransactionsQuery(currentUserService.TenantId, id));
 
-        return Ok(refundedTransactions);
+        return Ok(transactions);
     }
+
 
     [HttpGet("{id}/purchase-transactions-commission")]
     [SwaggerOperation("Get merchant billing purchase transactions commission")]
@@ -101,13 +142,14 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
         return Ok(commission);
     }
 
-    [HttpGet("{id}/current-period-purchase-transactions")]
-    [SwaggerOperation("Get merchant billing current period purchase transactions")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing current period purchase transactions returned", typeof(GetCurrentPeriodPurchaseTransactionsViewModel))]
-    public async Task<ActionResult> GetCurrentPeriodPurchaseTransactions([FromRoute] long id)
-    {
-        var currentPeriodTransactions = await mediator.Send(new GetPurchaseTransactionsCommissionQuery(currentUserService.TenantId, id));
 
-        return Ok(currentPeriodTransactions);
+    [HttpGet("{id}/refunded-transactions-commission")]
+    [SwaggerOperation("Get merchant billing refunded transactions commission")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing refunded transactions commission returned", typeof(GetRefundedTransactionsCommissionViewModel))]
+    public async Task<ActionResult> GetRefundedTransactionsCommission(long id)
+    {
+        var commission = await mediator.Send(new GetRefundedTransactionsCommissionQuery(currentUserService.TenantId, id));
+
+        return Ok(commission);
     }
 }

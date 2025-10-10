@@ -13,24 +13,22 @@ using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
-public sealed class MerchantInstallmentRepository(ApplicationDbContext applicationDbContext) : IMerchantInstallmentRepository
+public sealed class MerchantInstallmentRepository(ApplicationDbContext applicationDbContext)
+    : Repository<MerchantInstallment, long>(applicationDbContext), IMerchantInstallmentRepository
 {
-    public async Task AddRangeAsync(List<MerchantInstallment> installments)
-    {
-        await applicationDbContext.MerchantInstallments.AddRangeAsync(installments);
-    }
+    private readonly ApplicationDbContext _applicationDbContext = applicationDbContext;
 
     public IQueryable<MerchantInstallment> CreateJobInstallmentQuery(DateTime startOfPeriod,
         DateTime endOfPeriod, IEnumerable<int> contractIds)
     {
-        return applicationDbContext.MerchantInstallments
+        return _applicationDbContext.MerchantInstallments
             .Where(p => contractIds.Contains(p.TenantMerchantContractId))
             .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod);
     }
 
     public async Task<InstallmentRange?> GetInstallmentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken)
     {
-        var query = applicationDbContext.MerchantInstallments.AsNoTracking()
+        var query = _applicationDbContext.MerchantInstallments.AsNoTracking()
             .Where(p => contractIds.Contains(p.TenantMerchantContractId));
 
         query = lastBillingDueDate.HasValue ?
@@ -116,7 +114,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
     public async Task<IEnumerable<InstallmentDto>> GetInstallmentsInSpecificPeriod(ContractGroup contract,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
-        return await applicationDbContext.MerchantInstallments
+        return await _applicationDbContext.MerchantInstallments
             .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
                         p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
@@ -138,7 +136,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
     public async Task<decimal> GetSumOfTieredTransactionsFromStartOfPeriod(TenantMerchantContract contract,
         DateTime startOfPeriod)
     {
-        var query = applicationDbContext.MerchantInstallments
+        var query = _applicationDbContext.MerchantInstallments
             .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate <= DateTime.Today &&
                         p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
@@ -188,7 +186,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
                 }
             }
         }
-        
+
         amountsQuery ??= query.Select(p => p.Amount);
 
         return await amountsQuery.SumAsync(p => p);
@@ -197,7 +195,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
     public async Task<decimal> GetSumOfTieredTransactionsInSpecificPeriod(ContractGroup contract,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
-        var query = applicationDbContext.MerchantInstallments
+        var query = _applicationDbContext.MerchantInstallments
             .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
                         p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
@@ -256,7 +254,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
     public async Task<decimal> GetSumOfTransactionsInSpecificPeriod(ContractGroup contract,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
-        return await applicationDbContext.MerchantInstallments
+        return await _applicationDbContext.MerchantInstallments
             .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
                         p.TenantMerchantContract.TenantId == contract.TenantId &&
@@ -270,7 +268,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
     public async Task<decimal> GetSumOfCommissionsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken)
     {
-        return await applicationDbContext.MerchantInstallments
+        return await _applicationDbContext.MerchantInstallments
             .Where(p => p.Type == InstallmentType.Purchase &&
                         startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
                         p.TenantMerchantContract.TenantId == contract.TenantId &&

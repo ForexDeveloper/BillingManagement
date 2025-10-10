@@ -7,7 +7,7 @@ using Domain.Core.Entities.BillingAggregate.Dtos;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 
-public interface IMerchantBillingRepository
+public interface IMerchantBillingRepository : IRepository<MerchantBilling, long>
 {
     Task AddRangeAsync(IEnumerable<MerchantBilling> billings, CancellationToken cancellationToken);
 

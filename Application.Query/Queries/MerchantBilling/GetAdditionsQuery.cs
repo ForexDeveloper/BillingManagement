@@ -13,7 +13,7 @@ public sealed record GetAdditionsQuery(int TenantId, long Id) : IRequest<GetAddi
     public int TenantId { get; set; } = TenantId;
 }
 
-public sealed class GetMerchantBillingAdditionsQueryHandler(IMerchantBillingReadOnlyRepository repository)
+public sealed class GetAdditionsQueryHandler(IMerchantBillingReadOnlyRepository repository)
     : IRequestHandler<GetAdditionsQuery, GetAdditionsViewModel>
 {
     public async Task<GetAdditionsViewModel> Handle(GetAdditionsQuery query, CancellationToken cancellationToken)

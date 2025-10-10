@@ -9,10 +9,8 @@ using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.MerchantInstallmentAggregate;
 
-public interface IMerchantInstallmentRepository
+public interface IMerchantInstallmentRepository : IRepository<MerchantInstallment, long>
 {
-    Task AddRangeAsync(List<MerchantInstallment> installments);
-
     IQueryable<MerchantInstallment> CreateJobInstallmentQuery(DateTime startOfPeriod,
         DateTime endOfPeriod, IEnumerable<int> contractIds);
 

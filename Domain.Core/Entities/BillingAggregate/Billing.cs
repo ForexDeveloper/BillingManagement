@@ -214,4 +214,6 @@ public abstract class Billing : BaseEntity<long>
     protected abstract void SetCheckSum();
 
     protected abstract void ValidateCheckSum();
+
+    protected abstract string GenerateCheckSum();
 }

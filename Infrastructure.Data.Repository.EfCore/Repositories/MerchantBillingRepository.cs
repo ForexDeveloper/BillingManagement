@@ -11,23 +11,26 @@ using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
-public sealed class MerchantBillingRepository(ApplicationDbContext applicationDbContext) : IMerchantBillingRepository
+public sealed class MerchantBillingRepository(ApplicationDbContext applicationDbContext)
+    : Repository<MerchantBilling, long>(applicationDbContext), IMerchantBillingRepository
 {
+    private readonly ApplicationDbContext _applicationDbContext = applicationDbContext;
+
     public async Task AddRangeAsync(IEnumerable<MerchantBilling> billings, CancellationToken cancellationToken)
     {
-        await applicationDbContext.MerchantBillings.AddRangeAsync(billings, cancellationToken);
+        await _applicationDbContext.MerchantBillings.AddRangeAsync(billings, cancellationToken);
     }
 
     public async Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken)
     {
-        var billings = await applicationDbContext.MerchantBillings
+        var billings = await _applicationDbContext.MerchantBillings
             .Where(p => (p.Status == BillingStatus.Overdue && p.HasAttachment == false) ||
                         ((p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid) && p.DueDate.AddDays(1) < DateTime.Today))
             .Select(p => new NotSettledBilling
             {
                 Billing = p,
                 PaidAmount = p.Payments.Sum(q => q.Amount),
-                ActiveContractId = applicationDbContext.TenantMerchantContracts.Where(q =>
+                ActiveContractId = _applicationDbContext.TenantMerchantContracts.Where(q =>
                     q.Status &&
                     q.TenantId == p.FromBusinessIdentityId &&
                     q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
@@ -40,12 +43,12 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
 
     public async Task<List<NegativeSettledBilling>> GetNegativeSettledBillings(CancellationToken cancellationToken)
     {
-        return await applicationDbContext.MerchantBillings
+        return await _applicationDbContext.MerchantBillings
             .Where(p => p.Status == BillingStatus.Settled && p.Amount < 0 && p.HasAttachment == false)
             .Select(p => new NegativeSettledBilling
             {
                 Billing = p,
-                ActiveContractId = applicationDbContext.TenantMerchantContracts.Where(q =>
+                ActiveContractId = _applicationDbContext.TenantMerchantContracts.Where(q =>
                     q.Status &&
                     q.TenantId == p.FromBusinessIdentityId &&
                     q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
@@ -63,7 +66,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
 
         // resharper suggestion should not be applied !!!
 
-        var lastBillingDueDate = await applicationDbContext.MerchantBillings.AsNoTracking()
+        var lastBillingDueDate = await _applicationDbContext.MerchantBillings.AsNoTracking()
             .OrderByDescending(p => p.DueDate)
             .Where(p => p.ContractIds.Any(q => contractIds.Contains(q)))
             .Select(p => p.DueDate)
@@ -74,7 +77,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
 
     public async Task<bool> FindAnotherBillingOnEndOfPeriod(DateTime endOfPeriod, CancellationToken cancellationToken)
     {
-        return await applicationDbContext.MerchantBillings
+        return await _applicationDbContext.MerchantBillings
             .Where(p => p.DueDate == endOfPeriod)
             .AnyAsync(cancellationToken);
     }

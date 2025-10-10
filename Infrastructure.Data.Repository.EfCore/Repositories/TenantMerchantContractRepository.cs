@@ -157,7 +157,7 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
 
                 difference = billingPeriod - (totalDays % billingPeriod);
 
-                endOfPeriod = pc.AddDays(new DateTime(year, month, dayOfMonth, pc), difference);
+                endOfPeriod = pc.AddDays(today, difference);
 
                 startOfPeriod = pc.AddDays(endOfPeriod, -billingPeriod);
 

@@ -35,10 +35,10 @@ public sealed class MerchantBillingService(
 
         var groupContracts = await tenantMerchantContractRepository.GetAllGroupContractAsync(cancellationToken);
 
-        await CreateMerchantBillings(groupContracts, overdueBillings, negativeBillings, cancellationToken);
+        await CreateMerchantBillingsForAllPeriods(groupContracts, overdueBillings, negativeBillings, cancellationToken);
     }
 
-    private async Task CreateMerchantBillings(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
+    private async Task CreateMerchantBillingsForAllPeriods(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
         List<NegativeSettledBilling> negativeBillings, CancellationToken cancellationToken)
     {
         var activeContracts = contracts.Where(p => p.Status).ToList();
@@ -168,10 +168,10 @@ public sealed class MerchantBillingService(
 
                     MerchantBilling creditorBilling = null;
 
-                    if (i != 0)
-                    {
-                        var replicateBilling = replicateBillings.Last();
+                    var replicateBilling = replicateBillings.LastOrDefault();
 
+                    if (replicateBilling != null)
+                    {
                         var previousContract = billingDtos[i - 1].ContractGroup;
 
                         var previousContractIdentifier = new ContractIdentifier(previousContract.TenantId,
@@ -200,21 +200,10 @@ public sealed class MerchantBillingService(
                         else
                         {
                             replicateBillings.Clear();
-
-                            debtorBillings.ForEach(p => p.SetAttachment());
-
-                            creditorBillings.ForEach(p => p.SetAttachment());
-
-                            debtorBilling = debtorBillings.FirstOrDefault();
-
-                            creditorBilling = creditorBillings.FirstOrDefault();
-
-                            previousDebitAmount = debtorBillings.Sum(p => p.GetPayableAmount());
-
-                            previousCreditAmount = creditorBillings.Sum(p => p.GetPayableAmount());
                         }
                     }
-                    else
+
+                    if (replicateBillings.Count == 0)
                     {
                         debtorBillings.ForEach(p => p.SetAttachment());
 
@@ -277,7 +266,7 @@ public sealed class MerchantBillingService(
         }
     }
 
-    private async Task CreateMerchantBillingsNormal(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
+    private async Task CreateMerchantBillingsForEachPeriod(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
         List<NegativeSettledBilling> negativeBillings, CancellationToken cancellationToken)
     {
         var activeContracts = contracts.Where(p => p.Status).ToList();
@@ -336,9 +325,6 @@ public sealed class MerchantBillingService(
                     decimal purchaseTransactionsCalculatedCommission = 0;
 
                     var billingDto = billingDtos[i];
-
-                    var contractIdentifier = new ContractIdentifier(contract.TenantId, contract.MerchantId, contract.BillingPeriod,
-                        contract.BillingPeriodType, contract.DailyBillingOriginDate, contract.CommissionCalculationType);
 
                     var installments = await merchantInstallmentRepository.GetInstallmentsInSpecificPeriod(contract,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
@@ -403,15 +389,15 @@ public sealed class MerchantBillingService(
 
                     MerchantBilling creditorBilling = null;
 
-                    if (i != 0)
+                    if (i > 0)
                     {
                         var replicateBilling = replicateBillings.Last();
 
                         var previousContract = billingDtos[i - 1].ContractGroup;
 
-                        var previousContractIdentifier = new ContractIdentifier(previousContract.TenantId,
-                            previousContract.MerchantId, previousContract.BillingPeriod, previousContract.BillingPeriodType,
-                            previousContract.DailyBillingOriginDate, previousContract.CommissionCalculationType);
+                        var contractIdentifier = contract.CreateIdentifier();
+
+                        var previousContractIdentifier = previousContract.CreateIdentifier();
 
                         if (contractIdentifier == previousContractIdentifier)
                         {
@@ -435,21 +421,10 @@ public sealed class MerchantBillingService(
                         else
                         {
                             replicateBillings.Clear();
-
-                            debtorBillings.ForEach(p => p.SetAttachment());
-
-                            creditorBillings.ForEach(p => p.SetAttachment());
-
-                            debtorBilling = debtorBillings.FirstOrDefault();
-
-                            creditorBilling = creditorBillings.FirstOrDefault();
-
-                            previousDebitAmount = debtorBillings.Sum(p => p.GetPayableAmount());
-
-                            previousCreditAmount = creditorBillings.Sum(p => p.GetPayableAmount());
                         }
                     }
-                    else
+
+                    if (replicateBillings.Count == 0)
                     {
                         debtorBillings.ForEach(p => p.SetAttachment());
 
@@ -512,7 +487,7 @@ public sealed class MerchantBillingService(
         }
     }
 
-    private async Task CreateMerchantBillingsDeep(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
+    private async Task CreateMerchantBillingsForEachTransaction(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
     List<NegativeSettledBilling> negativeBillings, CancellationToken cancellationToken)
     {
         var activeContracts = contracts.Where(p => p.Status).ToList();
@@ -569,9 +544,6 @@ public sealed class MerchantBillingService(
 
                     var billingDto = billingDtos[i];
 
-                    var contractIdentifier = new ContractIdentifier(contract.TenantId, contract.MerchantId, contract.BillingPeriod,
-                        contract.BillingPeriodType, contract.DailyBillingOriginDate, contract.CommissionCalculationType);
-
                     purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(contract,
                             billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
@@ -598,15 +570,15 @@ public sealed class MerchantBillingService(
 
                     MerchantBilling creditorBilling = null;
 
-                    if (i != 0)
-                    {
-                        var replicateBilling = replicateBillings.Last();
+                    var replicateBilling = replicateBillings.LastOrDefault();
 
+                    if (replicateBilling != null)
+                    {
                         var previousContract = billingDtos[i - 1].ContractGroup;
 
-                        var previousContractIdentifier = new ContractIdentifier(previousContract.TenantId,
-                            previousContract.MerchantId, previousContract.BillingPeriod, previousContract.BillingPeriodType,
-                            previousContract.DailyBillingOriginDate, previousContract.CommissionCalculationType);
+                        var contractIdentifier = contract.CreateIdentifier();
+
+                        var previousContractIdentifier = previousContract.CreateIdentifier();
 
                         if (contractIdentifier == previousContractIdentifier)
                         {
@@ -630,21 +602,10 @@ public sealed class MerchantBillingService(
                         else
                         {
                             replicateBillings.Clear();
-
-                            debtorBillings.ForEach(p => p.SetAttachment());
-
-                            creditorBillings.ForEach(p => p.SetAttachment());
-
-                            debtorBilling = debtorBillings.FirstOrDefault();
-
-                            creditorBilling = creditorBillings.FirstOrDefault();
-
-                            previousDebitAmount = debtorBillings.Sum(p => p.GetPayableAmount());
-
-                            previousCreditAmount = creditorBillings.Sum(p => p.GetPayableAmount());
                         }
                     }
-                    else
+
+                    if (replicateBillings.Count == 0)
                     {
                         debtorBillings.ForEach(p => p.SetAttachment());
 
