@@ -64,10 +64,13 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 Code = p.Code,
                 Status = p.Status,
                 EndDate = p.EndDate,
+                DueDate = p.DueDate,
                 StartDate = p.StartDate,
+                IsPayable = p.Amount > 0,
                 PeriodType = p.PeriodType,
                 Additions = p.AdditionsAmount,
                 Deductions = p.DeductionsAmount,
+                MerchantId = p.ToBusinessIdentityId,
                 PaidAmount = p.Payments.Sum(q => q.Amount),
                 StatusTitle = p.Status.GetEnumDescription(),
                 PreviousDebitAmount = p.PreviousDebitAmount,
@@ -75,10 +78,10 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 PreviousPenaltyAmount = p.PreviousPenaltyAmount,
                 PeriodTypeTitle = p.PeriodType.GetEnumDescription(),
                 PayableAmount = p.Amount - p.Payments.Sum(q => q.Amount),
-                RefundedPurchasesCommission = p.RefundedTransactionsCommission,
-                CurrentPeriodFinalCommission = p.PurchaseTransactionsCommission,
-                PreviousPeriodRefundedPurchases = p.RefundedTransactionsAmount,
-                CurrentPeriodPurchaseTransactions = p.PurchaseTransactionsAmount,
+                PurchaseTransactionsAmount = p.PurchaseTransactionsAmount,
+                RefundedTransactionsAmount = p.RefundedTransactionsAmount,
+                PurchaseTransactionsCommission = p.PurchaseTransactionsCommission,
+                RefundedTransactionsCommission = p.RefundedTransactionsCommission,
                 TotalDebitAmount = p.PreviousDebitAmount + p.PurchaseTransactionsAmount + p.RefundedTransactionsCommission + p.AdditionsAmount,
                 TotalCreditAmount = p.PreviousCreditAmount + p.PurchaseTransactionsCommission + p.RefundedTransactionsAmount + p.DeductionsAmount,
                 Title = $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}",
@@ -96,7 +99,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             .Select(p => new GetPreviousDebitViewModel
             {
                 Id = p.Debtor.Id,
-                EndDate = p.Debtor.EndDate,
+                EndDate = p.Debtor.DueDate,
                 StartDate = p.Debtor.StartDate,
                 Amount = p.Debtor.Amount - p.Debtor.Payments.Sum(q => q.Amount)
             }).FirstOrDefaultAsync();
@@ -109,7 +112,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             .Select(p => new GetPreviousCreditViewModel
             {
                 Id = p.Creditor.Id,
-                EndDate = p.Creditor.EndDate,
+                EndDate = p.Creditor.DueDate,
                 StartDate = p.Creditor.StartDate,
                 Amount = p.Creditor.Amount - p.Creditor.Payments.Sum(q => q.Amount)
             }).FirstOrDefaultAsync();

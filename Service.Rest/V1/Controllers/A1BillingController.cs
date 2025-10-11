@@ -23,6 +23,7 @@ public class A1BillingController(
     IFinancialDocumentRepository financialDocumentRepository,
     ITenantMerchantContractRepository tenantMerchantContractRepository,
     IMerchantInstallmentRepository merchantInstallmentRepository,
+    IBackgroundJobService backgroundJobService,
     IApplicationDbContextUnitOfWork unitOfWork,
     IMerchantBillingService merchantBillingService)
     : ControllerBase
@@ -397,9 +398,11 @@ public class A1BillingController(
     {
         try
         {
-            await merchantBillingService.IssueOrOverdueBilling(cancellationToken);
+            var jobCreatedDateTime = await backgroundJobService.CreateMerchantBillingJobAsync(cancellationToken);
 
-            return Ok();
+            await merchantBillingService.IssueOrOverdueBilling(jobCreatedDateTime, cancellationToken);
+
+            return Ok("Billings Created");
         }
         catch (Exception ex)
         {
@@ -409,26 +412,20 @@ public class A1BillingController(
 
     private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
     {
-        List<MerchantInstallment> installments = [];
+        var today = DateTime.Today.AddDays(-1);
 
-        var installmentDates = DateHelper.CalculateInstallments(DateTime.Now, contract.InstallmentsCount,
-            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+        var financialDocumentTargetAmount = financialDocument.Amount;
 
-        decimal financialDocumentTargetAmount = 0;
-
-        if (contract.CommissionReferenceTypes == null || !contract.CommissionReferenceTypes.Any())
+        if (contract.CommissionReferenceTypes != null && contract.CommissionReferenceTypes.Any())
         {
-            financialDocumentTargetAmount = financialDocument.Amount;
-        }
-        else
-        {
+            financialDocumentTargetAmount = 0;
+
             foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
             {
                 switch (contractCommissionReferenceType)
                 {
                     case CommissionReferenceType.CashAmount:
                         financialDocumentTargetAmount += financialDocument.CashAmount;
-
                         break;
 
                     case CommissionReferenceType.CreditAmount:
@@ -457,12 +454,16 @@ public class A1BillingController(
 
             case CommissionCalculationType.CumulativeTiered:
 
-                var startOfPeriod = tenantMerchantContractRepository.GetActiveContractStartOfPeriod(contract);
+                var (startOfPeriod, _) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
+                    contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
 
-                var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTieredTransactionsFromStartOfPeriod(contract, startOfPeriod);
+                var sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
+                    startOfPeriod, today);
+
+                if (contract.TieredCommissions == null) break;
 
                 var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
-                    p.FromAmount < sumOfTransactionsOfCurrentPeriod && sumOfTransactionsOfCurrentPeriod <= p.ToAmount);
+                    p.FromAmount < sumOfTieredTransactions && sumOfTieredTransactions <= p.ToAmount);
 
                 if (tieredCommission == null)
                 {
@@ -470,12 +471,12 @@ public class A1BillingController(
 
                     var maxTieredCommission = contract.TieredCommissions.MaxBy(p => p.ToAmount);
 
-                    if (sumOfTransactionsOfCurrentPeriod <= minTieredCommission.FromAmount)
+                    if (sumOfTieredTransactions <= minTieredCommission.FromAmount)
                     {
                         tieredCommission = minTieredCommission;
                     }
 
-                    else if (sumOfTransactionsOfCurrentPeriod > maxTieredCommission.ToAmount)
+                    else if (sumOfTieredTransactions > maxTieredCommission.ToAmount)
                     {
                         tieredCommission = maxTieredCommission;
                     }
@@ -527,6 +528,9 @@ public class A1BillingController(
 
         var installmentCount = contract.InstallmentsCount ?? 1;
 
+        var installmentDates = DateHelper.CalculateInstallments(today, contract.InstallmentsCount,
+            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+
         var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
         var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
 
@@ -541,6 +545,8 @@ public class A1BillingController(
 
         var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
         var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
+
+        List<MerchantInstallment> installments = [];
 
         for (var i = 0; i < installmentDates.Count; i++)
         {

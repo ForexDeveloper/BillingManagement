@@ -7,13 +7,12 @@ using Microsoft.Extensions.Hosting;
 using Application.Service.Contracts;
 using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Serilog.Extensions;
-using Microsoft.Extensions.Configuration;
 using Shared.Logging.Abstraction.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Service.Worker.Workers;
 
-public class MerchantBillingServiceWorker(IServiceProvider services, IConfiguration configuration) : BackgroundService
+public class MerchantBillingServiceWorker(IServiceProvider services) : BackgroundService
 {
     private readonly Stopwatch _stopwatch = new();
 
@@ -25,14 +24,17 @@ public class MerchantBillingServiceWorker(IServiceProvider services, IConfigurat
         {
             _stopwatch.Start();
 
-            var billingService = scope.ServiceProvider.GetRequiredService<IMerchantBillingService>();
+            var backgroundJobService = scope.ServiceProvider.GetRequiredService<IBackgroundJobService>();
+            var merchantBillingService = scope.ServiceProvider.GetRequiredService<IMerchantBillingService>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<MerchantBillingServiceWorker>>();
 
             logger.AddTraceId(Guid.NewGuid().ToString());
 
             try
-            { 
-                await billingService.IssueOrOverdueBilling(stoppingToken);
+            {
+                var jobCreatedDateTime = await backgroundJobService.CreateMerchantBillingJobAsync(stoppingToken);
+
+                await merchantBillingService.IssueOrOverdueBilling(jobCreatedDateTime, stoppingToken);
             }
             catch (Exception exception)
             {

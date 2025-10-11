@@ -7,49 +7,82 @@ using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.MerchantInstallmentAggregate;
 
 namespace Domain.Core.Entities.TenantMerchantContractAggregate;
 
 public class TenantMerchantContract : BaseEntity<int>
 {
     public int TenantId { get; private set; }
+
     public Tenant Tenant { get; private set; }
+
     public int MerchantId { get; private set; }
+
     public Merchant Merchant { get; private set; }
+
     public string EnamadLink { get; private set; }
+
     public string InternetBusinessLicenseLink { get; private set; }
+
     public string ContractNumber { get; private set; }
+
     public DateTime StartDate { get; private set; }
+
     public DateTime EndDate { get; private set; }
+
     public bool Status { get; private set; }
+
     public SettlementType SettlementType { get; private set; }
+
     public bool IsCommissionExchanged { get; private set; }
+
     public int? InstallmentsCount { get; private set; }
+
     public CommissionDeductionMethodType? CommissionDeductionMethodType { get; private set; }
+
     public decimal? InterestPercentage { get; private set; }
+
     public List<InterestReferenceType> InterestReferenceTypes { get; private set; }
+
     public TimeInterval BillingPeriodType { get; private set; }
+
     public int BillingPeriod { get; private set; }
+
     public DateTime? DailyBillingOriginDate { get; private set; }
+
     public int? BillingBreak { get; private set; }
+
     public PaymentMethodType PaymentMethodType { get; private set; }
+
     public GuaranteeType? GuaranteeType { get; private set; }
+
     public string GuaranteeDescription { get; private set; }
+
     public CommissionCalculationType CommissionCalculationType { get; private set; }
+
     public List<TieredCommission> TieredCommissions { get; private set; }
+
     public decimal? FixedAmountCommission { get; private set; }
+
     public decimal? FixedPercentageCommission { get; private set; }
+
     public List<CommissionReferenceType> CommissionReferenceTypes { get; private set; }
+
     public decimal? TransactionMinCommissionAmount { get; private set; }
+
     public decimal? TransactionMaxCommissionAmount { get; private set; }
+
     public decimal? PeriodMinCommissionAmount { get; private set; }
+
     public decimal? PeriodMaxCommissionAmount { get; private set; }
+
     public int? ParentId { get; private set; }
+
     public TenantMerchantContract? Parent { get; private set; }
+
     public ICollection<TenantMerchantContract>? Children { get; private set; }
+
     public ICollection<FinancialDocument> FinancialDocuments { get; private set; }
 
     private TenantMerchantContract()
@@ -99,7 +132,6 @@ public class TenantMerchantContract : BaseEntity<int>
         PeriodMaxCommissionAmount = periodMaxCommissionAmount;
         Status = true;
     }
-
 
     public void Update(int tenantId, int merchantId,
         string contractNumber, DateTime startDate, DateTime endDate,

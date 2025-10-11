@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
@@ -27,6 +26,4 @@ public interface ITenantMerchantContractRepository
     Task<List<int>> GetContractIdsHasEndorsement(List<int> contractIds);
 
     Task<List<ContractGroup>> GetAllGroupContractAsync(CancellationToken cancellationToken);
-
-    DateTime GetActiveContractStartOfPeriod(TenantMerchantContract contract);
 }

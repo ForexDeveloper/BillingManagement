@@ -11,26 +11,24 @@ namespace Domain.Core.Entities.MerchantInstallmentAggregate;
 
 public interface IMerchantInstallmentRepository : IRepository<MerchantInstallment, long>
 {
-    IQueryable<MerchantInstallment> CreateJobInstallmentQuery(DateTime startOfPeriod,
-        DateTime endOfPeriod, IEnumerable<int> contractIds);
-
     Task<InstallmentRange?> GetInstallmentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate,
         CancellationToken cancellationToken);
 
     Task<Dictionary<ContractIdentifier, List<InstallmentDto>>> GetGroupContractInstallments(
         IQueryable<MerchantInstallment> query, CancellationToken cancellationToken);
 
-    Task<IEnumerable<InstallmentDto>> GetInstallmentsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
-        DateTime endOfPeriod, CancellationToken cancellationToken);
+    Task<IEnumerable<InstallmentDto>> GetInstallmentsInSpecificPeriod(IEnumerable<int> contractIds,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
 
-    Task<decimal> GetSumOfTieredTransactionsFromStartOfPeriod(TenantMerchantContract contract, DateTime startOfPeriod);
+    Task<decimal> GetSumOfTieredTransactionsInSpecificPeriod(TenantMerchantContract contract,
+        DateTime startOfPeriod, DateTime endOfPeriod);
 
     Task<decimal> GetSumOfTieredTransactionsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken);
 
-    Task<decimal> GetSumOfTransactionsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
+    Task<decimal> GetSumOfTransactionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken);
 
-    Task<decimal> GetSumOfCommissionsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
+    Task<decimal> GetSumOfCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken);
 }

@@ -4,7 +4,7 @@ using Domain.Core.Enums;
 namespace Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 /// <summary>
-/// به هیچ وجه از رکورد به کلاس تبدیل نشود. جاب صورتسحاب منفجر می شود
+/// به هیچ وجه از رکورد به کلاس تبدیل نشود. فرآیند معوق شدن صورتسحاب به مشکل می شود
 /// </summary>
 public sealed record ContractIdentifier
 {
@@ -48,8 +48,9 @@ public sealed record ContractIdentifier
 }
 
 /// <summary>
-/// به هیچ وجه از رکورد به کلاس تبدیل نشود. جاب صورتسحاب منفجر می شود
+/// به هیچ وجه از رکورد به کلاس تبدیل نشود. جاب صورتسحاب به مشکل می شود
 /// </summary>
+
 public sealed record TenantMerchantIdentifier(int TenantId, int MerchantId)
 {
     public int TenantId { get; set; } = TenantId;

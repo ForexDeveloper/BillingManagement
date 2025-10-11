@@ -16,4 +16,6 @@ public interface IRepository<TEntity, in TKey> where TEntity : BaseEntity<TKey>
     void UpdatePartial(TEntity entity, IEnumerable<string> properties);
 
     Task<TEntity> GetAsync(TKey id, CancellationToken? cancellationToken = null);
+
+    Task<bool> AnyAsync(TKey id, CancellationToken? cancellationToken = null);
 }

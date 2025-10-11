@@ -19,9 +19,7 @@ public sealed record ContractGroup
 
     public required bool Status { get; set; }
 
-    public DateTime CreatedDateTime { get; set; }
-
-    public DateTime EndorsementDate { get; set; }
+    public required int MainContractId { get; set; }
 
     public List<int> ContractIds { get; set; }
 

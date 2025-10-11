@@ -51,14 +51,13 @@ try
 
             services.RegisterEventBus(hostContext.Configuration);
             services.RegisterOutBoxServices(hostContext.Configuration);
-            services.RegisteRedisServices(configuration);
+            services.RegisterRedisServices(configuration);
             services.RegisterRepositories();
             services.RegisterServices();
 
 
             services.AddHostedService<OutboxPublisherServiceWorker>();
-            //services.AddHostedService<MerchantBillingServiceWorker>();
-
+            services.AddHostedService<MerchantBillingServiceWorker>();
             //services.AddHostedService<CustomerWalletServiceWorker>();
             services.AddHealthChecks().AddCheck<DatabaseConnectionHealthCheck>("worker_database_health_check");
         })

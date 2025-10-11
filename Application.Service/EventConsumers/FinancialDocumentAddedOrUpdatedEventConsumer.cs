@@ -153,26 +153,20 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
     private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
     {
-        List<MerchantInstallment> installments = [];
+        var today = DateTime.Today;
 
-        var installmentDates = DateHelper.CalculateInstallments(DateTime.Now, contract.InstallmentsCount,
-            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+        var financialDocumentTargetAmount = financialDocument.Amount;
 
-        decimal financialDocumentTargetAmount = 0;
-
-        if (contract.CommissionReferenceTypes == null || !contract.CommissionReferenceTypes.Any())
+        if (contract.CommissionReferenceTypes != null && contract.CommissionReferenceTypes.Any())
         {
-            financialDocumentTargetAmount = financialDocument.Amount;
-        }
-        else
-        {
+            financialDocumentTargetAmount = 0;
+
             foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
             {
                 switch (contractCommissionReferenceType)
                 {
                     case CommissionReferenceType.CashAmount:
                         financialDocumentTargetAmount += financialDocument.CashAmount;
-
                         break;
 
                     case CommissionReferenceType.CreditAmount:
@@ -201,12 +195,16 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
             case CommissionCalculationType.CumulativeTiered:
 
-                var startOfPeriod = tenantMerchantContractRepository.GetActiveContractStartOfPeriod(contract);
+                var (startOfPeriod, _) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
+                    contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
 
-                var sumOfTransactionsOfCurrentPeriod = await merchantInstallmentRepository.GetSumOfTieredTransactionsFromStartOfPeriod(contract, startOfPeriod);
+                var sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
+                        startOfPeriod, today);
+
+                if (contract.TieredCommissions == null) break;
 
                 var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
-                    p.FromAmount < sumOfTransactionsOfCurrentPeriod && sumOfTransactionsOfCurrentPeriod <= p.ToAmount);
+                    p.FromAmount < sumOfTieredTransactions && sumOfTieredTransactions <= p.ToAmount);
 
                 if (tieredCommission == null)
                 {
@@ -214,12 +212,12 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                     var maxTieredCommission = contract.TieredCommissions.MaxBy(p => p.ToAmount);
 
-                    if (sumOfTransactionsOfCurrentPeriod <= minTieredCommission.FromAmount)
+                    if (sumOfTieredTransactions <= minTieredCommission.FromAmount)
                     {
                         tieredCommission = minTieredCommission;
                     }
 
-                    else if (sumOfTransactionsOfCurrentPeriod > maxTieredCommission.ToAmount)
+                    else if (sumOfTieredTransactions > maxTieredCommission.ToAmount)
                     {
                         tieredCommission = maxTieredCommission;
                     }
@@ -286,6 +284,11 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
         var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
         var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
 
+        var installmentDates = DateHelper.CalculateInstallments(today, contract.InstallmentsCount,
+            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+
+        List<MerchantInstallment> installments = [];
+
         for (var i = 0; i < installmentDates.Count; i++)
         {
             decimal amount;
@@ -313,7 +316,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
             var installmentDate = installmentDates[i];
 
-            var installment = new MerchantInstallment(financialDocument, contract.TenantId, 
+            var installment = new MerchantInstallment(financialDocument, contract.TenantId,
                 contract.TenantId, contract.MerchantId, contract.Id, amount, cashAmount,
                 creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Purchase);
 

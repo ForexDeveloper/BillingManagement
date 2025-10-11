@@ -41,16 +41,23 @@ public sealed class MerchantInstallment : Installment
 
     protected override void SetCheckSum()
     {
-        CheckSum = $"{FromBusinessIdentityId}{ToBusinessIdentityId}{Amount:F10}{Status}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}".Hash();
+        CheckSum = GenerateCheckSum().Hash();
     }
 
     protected override void ValidateCheckSum()
     {
-        var comperedTo = $"{FromBusinessIdentityId}{ToBusinessIdentityId}{Amount:F10}{Status}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
+        var comperedTo = GenerateCheckSum();
 
         if (!comperedTo.Validate(CheckSum))
         {
             throw new ArgumentValidationException("InconsistentData", "اطلاعات موجود در دیتابیس صحیح نمی باشد.");
         }
+    }
+
+    protected override string GenerateCheckSum()
+    {
+        return $"{FromBusinessIdentityId}{ToBusinessIdentityId}{TenantId}{FinancialDocumentId}" +
+               $"{Amount:F10}{CashAmount:F10}{CreditAmount:F10}{PrepaymentAmount:F10}{Commission:F10}" +
+               $"{Status}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
     }
 }

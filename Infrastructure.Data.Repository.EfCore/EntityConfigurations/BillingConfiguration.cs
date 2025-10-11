@@ -24,7 +24,7 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.FromBusinessIdentityId).IsRequired();
         builder.Property(p => p.Code).HasMaxLength(100).IsRequired();
         builder.Property(p => p.ContractIds).HasMaxLength(256).IsRequired();
-        builder.Property(p => p.HasAttachment).HasDefaultValue(false).IsRequired();
+        builder.Property(p => p.Transferred).HasDefaultValue(false).IsRequired();
         builder.Property(p => p.Status).HasDefaultValue(BillingStatus.Issued).IsRequired();
         builder.Property(p => p.AdditionsDescription).HasMaxLength(1000).IsRequired(false);
         builder.Property(p => p.DeductionsDescription).HasMaxLength(1000).IsRequired(false);

@@ -82,15 +82,8 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
         return result;
     }
 
-    public IQueryable<FinancialDocument> CreateJobFinancialDocumentQuery(DateTime startOfPeriod, DateTime endOfPeriod, IEnumerable<int> contractIds)
-    {
-        return applicationDbContext.FinancialDocuments
-            .Where(p => p.Type == FinancialDocumentType.Refund)
-            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
-            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod);
-    }
-
-    public async Task<FinancialDocumentRange> GetFinancialDocumentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken)
+    public async Task<FinancialDocumentRange> GetFinancialDocumentRange(IEnumerable<int> contractIds,
+        DateTime? lastBillingDueDate, DateTime jobCreatedDateTime, CancellationToken cancellationToken)
     {
         var query = applicationDbContext.FinancialDocuments.AsNoTracking()
             .Where(p => p.Type == FinancialDocumentType.Refund)
@@ -98,7 +91,7 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
 
         query = lastBillingDueDate.HasValue ?
             query.Where(p => lastBillingDueDate <= p.CreatedDateTime && p.CreatedDateTime < DateTime.Today) :
-            query.Where(p => p.CreatedDateTime < DateTime.Today);
+            query.Where(p => jobCreatedDateTime <= p.CreatedDateTime && p.CreatedDateTime < DateTime.Today);
 
         var found = await query.AnyAsync(cancellationToken);
 
@@ -145,17 +138,13 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
         }).ToList(), cancellationToken);
     }
 
-    public async Task<IEnumerable<FinancialDocumentDto>> GetFinancialDocumentsInSpecificPeriod(ContractGroup contract,
+    public async Task<IEnumerable<FinancialDocumentDto>> GetFinancialDocumentsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await applicationDbContext.FinancialDocuments
-            .Where(p => p.Type == FinancialDocumentType.Refund &&
-                        startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod &&
-                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
-                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
-                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
             .Select(p => new FinancialDocumentDto()
             {
                 Amount = p.Amount,
@@ -165,31 +154,23 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(ContractGroup contract,
+    public async Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await applicationDbContext.FinancialDocuments
-            .Where(p => p.Type == FinancialDocumentType.Refund &&
-                        startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod &&
-                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
-                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
-                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
             .SumAsync(p => p.Amount, cancellationToken);
     }
 
-    public async Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(ContractGroup contract,
+    public async Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await applicationDbContext.FinancialDocuments
-            .Where(p => p.Type == FinancialDocumentType.Refund &&
-                        startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod &&
-                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
-                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
-                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
             .SumAsync(p => p.Parent.Commission, cancellationToken) ?? 0;
     }
 }

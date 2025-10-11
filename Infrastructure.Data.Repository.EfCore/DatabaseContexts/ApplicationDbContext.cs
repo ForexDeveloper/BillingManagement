@@ -11,6 +11,7 @@ using Domain.Core.Entities.GuarantorAggregate;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.OrganizationAggregate;
+using Domain.Core.Entities.BackgroundJobAggregate;
 using Domain.Core.Entities.WalletContractAggregate;
 using Domain.Core.Entities.BillingPaymentAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate;
@@ -34,6 +35,7 @@ public class ApplicationDbContext : DbContext
     {
 
     }
+
     public DbSet<MerchantBranch> MerchantBranches { get; set; }
 
     public DbSet<Merchant> Merchants { get; set; }
@@ -78,6 +80,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<MerchantInstallment> MerchantInstallments { get; set; }
 
+    public DbSet<BackgroundJob> BackgroundJobs { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("Bill");
@@ -118,5 +122,6 @@ public class ApplicationDbContext : DbContext
         modelBuilder.ApplyConfiguration(new InstallmentConfiguration());
         modelBuilder.ApplyConfiguration(new MerchantBillingConfiguration());
         modelBuilder.ApplyConfiguration(new MerchantInstallmentConfiguration());
+        modelBuilder.ApplyConfiguration(new BackgroundJobConfiguration());
     }
 }

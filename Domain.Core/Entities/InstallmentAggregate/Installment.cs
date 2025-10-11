@@ -3,7 +3,6 @@ using Domain.Base;
 using Domain.Core.Enums;
 using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 
@@ -14,8 +13,6 @@ public abstract class Installment : BaseEntity<long>
     public int TenantId { get; protected set; }
 
     public long FinancialDocumentId { get; protected set; }
-
-    public long? BillingId { get; protected set; }
 
     public int FromBusinessIdentityId { get; protected set; }
 
@@ -44,8 +41,6 @@ public abstract class Installment : BaseEntity<long>
     public byte[] RowVersion { get; protected set; }
 
     public Tenant Tenant { get; protected set; }
-
-    public Billing Billing { get; protected set; }
 
     public FinancialDocument FinancialDocument { get; protected set; }
 
@@ -129,4 +124,6 @@ public abstract class Installment : BaseEntity<long>
     protected abstract void SetCheckSum();
 
     protected abstract void ValidateCheckSum();
+
+    protected abstract string GenerateCheckSum();
 }
