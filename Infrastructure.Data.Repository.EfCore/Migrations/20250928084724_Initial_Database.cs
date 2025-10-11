@@ -176,6 +176,78 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Billing",
+                schema: "Bill",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TenantId = table.Column<int>(type: "int", nullable: false),
+                    ParentId = table.Column<long>(type: "bigint", nullable: true),
+                    FromBusinessIdentityId = table.Column<int>(type: "int", nullable: false),
+                    ToBusinessIdentityId = table.Column<int>(type: "int", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Status = table.Column<byte>(type: "tinyint", nullable: false, defaultValue: (byte)1),
+                    Type = table.Column<byte>(type: "tinyint", nullable: false),
+                    PeriodType = table.Column<byte>(type: "tinyint", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    PreviousDebitAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    PreviousCreditAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    PreviousPenaltyAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    GracePeriod = table.Column<int>(type: "int", nullable: false),
+                    ContractIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
+                    CheckSum = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    BillingId = table.Column<long>(type: "bigint", nullable: true),
+                    CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Billing", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Billing_Billing_BillingId",
+                        column: x => x.BillingId,
+                        principalSchema: "Bill",
+                        principalTable: "Billing",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Billing_Billing_ParentId",
+                        column: x => x.ParentId,
+                        principalSchema: "Bill",
+                        principalTable: "Billing",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Billing_BusinessIdentity_FromBusinessIdentityId",
+                        column: x => x.FromBusinessIdentityId,
+                        principalSchema: "Bill",
+                        principalTable: "BusinessIdentity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Billing_BusinessIdentity_ToBusinessIdentityId",
+                        column: x => x.ToBusinessIdentityId,
+                        principalSchema: "Bill",
+                        principalTable: "BusinessIdentity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Billing_Tenant_TenantId",
+                        column: x => x.TenantId,
+                        principalSchema: "Bill",
+                        principalTable: "Tenant",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Facilitator",
                 schema: "Bill",
                 columns: table => new
@@ -395,6 +467,70 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         principalTable: "Tenant",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BillingPayment",
+                schema: "Bill",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    BillingId = table.Column<long>(type: "bigint", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    PaymentDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CheckSum = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BillingPayment", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BillingPayment_Billing_BillingId",
+                        column: x => x.BillingId,
+                        principalSchema: "Bill",
+                        principalTable: "Billing",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MerchantBilling",
+                schema: "Bill",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false),
+                    Additions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    AdditionsDescription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    Deductions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    DeductionsDescription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    RefundedTransactionsCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    CurrentPeriodFinalCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    CurrentPeriodCalculatedCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    CurrentPeriodPurchaseTransactions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    PreviousPeriodRefundedTransactions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    MerchantId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MerchantBilling", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MerchantBilling_Billing_Id",
+                        column: x => x.Id,
+                        principalSchema: "Bill",
+                        principalTable: "Billing",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MerchantBilling_Merchant_MerchantId",
+                        column: x => x.MerchantId,
+                        principalSchema: "Bill",
+                        principalTable: "Merchant",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -773,6 +909,143 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Installments",
+                schema: "Bill",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TenantId = table.Column<int>(type: "int", nullable: false),
+                    FinancialDocumentId = table.Column<long>(type: "bigint", nullable: false),
+                    BillingId = table.Column<long>(type: "bigint", nullable: true),
+                    FromBusinessIdentityId = table.Column<int>(type: "int", nullable: false),
+                    ToBusinessIdentityId = table.Column<int>(type: "int", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    Commission = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Number = table.Column<int>(type: "int", nullable: false),
+                    DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Type = table.Column<byte>(type: "tinyint", nullable: false),
+                    Status = table.Column<byte>(type: "tinyint", nullable: false),
+                    CheckSum = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
+                    TenantMerchantContractId1 = table.Column<int>(type: "int", nullable: true),
+                    CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Installments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Installments_Billing_BillingId",
+                        column: x => x.BillingId,
+                        principalSchema: "Bill",
+                        principalTable: "Billing",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Installments_BusinessIdentity_FromBusinessIdentityId",
+                        column: x => x.FromBusinessIdentityId,
+                        principalSchema: "Bill",
+                        principalTable: "BusinessIdentity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Installments_BusinessIdentity_ToBusinessIdentityId",
+                        column: x => x.ToBusinessIdentityId,
+                        principalSchema: "Bill",
+                        principalTable: "BusinessIdentity",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Installments_FinancialDocument_FinancialDocumentId",
+                        column: x => x.FinancialDocumentId,
+                        principalSchema: "Bill",
+                        principalTable: "FinancialDocument",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Installments_TenantMerchantContract_TenantMerchantContractId1",
+                        column: x => x.TenantMerchantContractId1,
+                        principalSchema: "Bill",
+                        principalTable: "TenantMerchantContract",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Installments_Tenant_TenantId",
+                        column: x => x.TenantId,
+                        principalSchema: "Bill",
+                        principalTable: "Tenant",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MerchantInstallment",
+                schema: "Bill",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false),
+                    TenantMerchantContractId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MerchantInstallment", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MerchantInstallment_Installments_Id",
+                        column: x => x.Id,
+                        principalSchema: "Bill",
+                        principalTable: "Installments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MerchantInstallment_TenantMerchantContract_TenantMerchantContractId",
+                        column: x => x.TenantMerchantContractId,
+                        principalSchema: "Bill",
+                        principalTable: "TenantMerchantContract",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Billing_BillingId",
+                schema: "Bill",
+                table: "Billing",
+                column: "BillingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Billing_FromBusinessIdentityId",
+                schema: "Bill",
+                table: "Billing",
+                column: "FromBusinessIdentityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Billing_ParentId",
+                schema: "Bill",
+                table: "Billing",
+                column: "ParentId",
+                unique: true,
+                filter: "[ParentId] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Billing_TenantId",
+                schema: "Bill",
+                table: "Billing",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Billing_ToBusinessIdentityId",
+                schema: "Bill",
+                table: "Billing",
+                column: "ToBusinessIdentityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BillingPayment_BillingId",
+                schema: "Bill",
+                table: "BillingPayment",
+                column: "BillingId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_Facilitator_TenantId",
                 schema: "Bill",
@@ -834,10 +1107,58 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 column: "TenantId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Installments_BillingId",
+                schema: "Bill",
+                table: "Installments",
+                column: "BillingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Installments_FinancialDocumentId",
+                schema: "Bill",
+                table: "Installments",
+                column: "FinancialDocumentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Installments_FromBusinessIdentityId",
+                schema: "Bill",
+                table: "Installments",
+                column: "FromBusinessIdentityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Installments_TenantId",
+                schema: "Bill",
+                table: "Installments",
+                column: "TenantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Installments_TenantMerchantContractId1",
+                schema: "Bill",
+                table: "Installments",
+                column: "TenantMerchantContractId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Installments_ToBusinessIdentityId",
+                schema: "Bill",
+                table: "Installments",
+                column: "ToBusinessIdentityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MerchantBilling_MerchantId",
+                schema: "Bill",
+                table: "MerchantBilling",
+                column: "MerchantId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MerchantBranch_MerchantId",
                 schema: "Bill",
                 table: "MerchantBranch",
                 column: "MerchantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MerchantInstallment_TenantMerchantContractId",
+                schema: "Bill",
+                table: "MerchantInstallment",
+                column: "TenantMerchantContractId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Organization_ParentId",
@@ -968,6 +1289,18 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 schema: "Bill");
 
             migrationBuilder.DropTable(
+                name: "BillingPayment",
+                schema: "Bill");
+
+            migrationBuilder.DropTable(
+                name: "MerchantBilling",
+                schema: "Bill");
+
+            migrationBuilder.DropTable(
+                name: "MerchantInstallment",
+                schema: "Bill");
+
+            migrationBuilder.DropTable(
                 name: "Organization",
                 schema: "Bill");
 
@@ -996,6 +1329,10 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 schema: "Bill");
 
             migrationBuilder.DropTable(
+                name: "Installments",
+                schema: "Bill");
+
+            migrationBuilder.DropTable(
                 name: "Provider",
                 schema: "Bill");
 
@@ -1013,6 +1350,10 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
             migrationBuilder.DropTable(
                 name: "WalletContract",
+                schema: "Bill");
+
+            migrationBuilder.DropTable(
+                name: "Billing",
                 schema: "Bill");
 
             migrationBuilder.DropTable(

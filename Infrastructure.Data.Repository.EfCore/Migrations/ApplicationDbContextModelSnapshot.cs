@@ -23,6 +23,44 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Core.Entities.BackgroundJobAggregate.BackgroundJob", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("VARCHAR");
+
+                    b.Property<DateTime>("CreatedDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatorUserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("VARCHAR");
+
+                    b.Property<DateTime>("EditDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("JobId")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobId")
+                        .IsUnique();
+
+                    b.ToTable("BackgroundJob", "Bill");
+                });
+
             modelBuilder.Entity("Domain.Core.Entities.BillingAggregate.Billing", b =>
                 {
                     b.Property<long>("Id")
@@ -95,13 +133,11 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<int>("GracePeriod")
                         .HasColumnType("int");
 
-                    b.Property<bool>("HasAttachment")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<int>("MainContractId")
+                        .HasColumnType("int");
 
                     b.Property<byte>("PeriodType")
                         .HasColumnType("tinyint");
@@ -133,6 +169,11 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
                     b.Property<int>("ToBusinessIdentityId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("Transferred")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<byte>("Type")
                         .HasColumnType("tinyint");
@@ -346,9 +387,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(32, 10)");
 
-                    b.Property<long?>("BillingId")
-                        .HasColumnType("bigint");
-
                     b.Property<decimal>("CashAmount")
                         .HasColumnType("decimal(32, 10)");
 
@@ -413,8 +451,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasColumnType("tinyint");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BillingId");
 
                     b.HasIndex("FinancialDocumentId");
 
@@ -1526,10 +1562,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
             modelBuilder.Entity("Domain.Core.Entities.InstallmentAggregate.Installment", b =>
                 {
-                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Billing")
-                        .WithMany("Installments")
-                        .HasForeignKey("BillingId");
-
                     b.HasOne("Domain.Core.Entities.FinancialDocumentAggregate.FinancialDocument", "FinancialDocument")
                         .WithMany()
                         .HasForeignKey("FinancialDocumentId")
@@ -1553,8 +1585,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasForeignKey("ToBusinessIdentityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Billing");
 
                     b.Navigation("FinancialDocument");
 
@@ -1872,8 +1902,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Navigation("CreditorChildren");
 
                     b.Navigation("DebtorChildren");
-
-                    b.Navigation("Installments");
 
                     b.Navigation("Payments");
                 });

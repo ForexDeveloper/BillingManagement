@@ -111,17 +111,13 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         return notNullDailyOriginDateInstallments.Concat(nullDailyOriginDateInstallments).ToDictionary(p => p.Key, p => p.Value);
     }
 
-    public async Task<IEnumerable<InstallmentDto>> GetInstallmentsInSpecificPeriod(ContractGroup contract,
+    public async Task<IEnumerable<InstallmentDto>> GetInstallmentsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await _applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Purchase &&
-                        startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
-                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
-                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
-                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
+            .Where(p => p.Type == InstallmentType.Purchase)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId))
+            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
             .Select(p => new InstallmentDto()
             {
                 Amount = p.Amount,
@@ -133,61 +129,20 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<decimal> GetSumOfTieredTransactionsFromStartOfPeriod(TenantMerchantContract contract,
-        DateTime startOfPeriod)
+    public async Task<decimal> GetSumOfTieredTransactionsInSpecificPeriod(TenantMerchantContract contract,
+        DateTime startOfPeriod, DateTime endOfPeriod)
     {
         var query = _applicationDbContext.MerchantInstallments
             .Where(p => p.Type == InstallmentType.Purchase &&
-                        startOfPeriod <= p.DueDate && p.DueDate <= DateTime.Today &&
+                        startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
+                        p.TenantMerchantContract.TenantId == contract.TenantId &&
+                        p.TenantMerchantContract.MerchantId == contract.MerchantId &&
                         p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
                         p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
                         p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
-                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId);
+                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType);
 
-        IQueryable<decimal> amountsQuery = null;
-
-        if (contract.CommissionReferenceTypes != null && contract.CommissionReferenceTypes.Any())
-        {
-            foreach (var contractCommissionReferenceType in contract.CommissionReferenceTypes)
-            {
-                switch (contractCommissionReferenceType)
-                {
-                    case CommissionReferenceType.CashAmount:
-
-                        var cashAmountQuery = query.Select(p => p.CashAmount);
-
-                        amountsQuery = amountsQuery != null ?
-                            amountsQuery.Union(cashAmountQuery) : cashAmountQuery;
-
-                        break;
-
-                    case CommissionReferenceType.CreditAmount:
-
-                        var creditAmountQuery = query.Select(p => p.CreditAmount);
-
-                        amountsQuery = amountsQuery != null ?
-                            amountsQuery.Union(creditAmountQuery) : creditAmountQuery;
-
-                        break;
-
-                    case CommissionReferenceType.PrepaymentAmount:
-
-                        var prePaymentAmountQuery = query.Select(p => p.PrepaymentAmount);
-
-                        amountsQuery = amountsQuery != null ?
-                            amountsQuery.Union(prePaymentAmountQuery) : prePaymentAmountQuery;
-
-                        break;
-
-                    case CommissionReferenceType.InterestAmount:
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
-
-        amountsQuery ??= query.Select(p => p.Amount);
+        var amountsQuery = GetSumOfTieredTransactionsQuery(contract.CommissionReferenceTypes, query);
 
         return await amountsQuery.SumAsync(p => p);
     }
@@ -196,19 +151,43 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         var query = _applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Purchase &&
-                        startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
-                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
-                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
-                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId);
+            .Where(p => p.Type == InstallmentType.Purchase)
+            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
+            .Where(p => contract.ContractIds.Contains(p.TenantMerchantContractId));
 
+        var amountsQuery = GetSumOfTieredTransactionsQuery(contract.CommissionReferenceTypes, query);
+
+        return await amountsQuery.SumAsync(p => p, cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfTransactionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
+        DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await _applicationDbContext.MerchantInstallments
+            .Where(p => p.Type == InstallmentType.Purchase)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId))
+            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
+            .SumAsync(p => p.Amount, cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
+        DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await _applicationDbContext.MerchantInstallments
+            .Where(p => p.Type == InstallmentType.Purchase)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId))
+            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
+            .SumAsync(p => p.Commission, cancellationToken);
+    }
+
+    private static IQueryable<decimal> GetSumOfTieredTransactionsQuery(
+        List<CommissionReferenceType> commissionReferenceTypes, IQueryable<MerchantInstallment> query)
+    {
         IQueryable<decimal> amountsQuery = null;
 
-        if (contract.CommissionReferenceTypes != null && contract.CommissionReferenceTypes.Any())
+        if (commissionReferenceTypes != null && commissionReferenceTypes.Any())
         {
-            foreach (var commissionReferenceType in contract.CommissionReferenceTypes)
+            foreach (var commissionReferenceType in commissionReferenceTypes)
             {
                 switch (commissionReferenceType)
                 {
@@ -240,42 +219,16 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
                         break;
 
                     case CommissionReferenceType.InterestAmount:
-                    default:
-                        throw new ArgumentOutOfRangeException();
+
+                        break;
+
+                    default: throw new ArgumentOutOfRangeException();
                 }
             }
         }
 
         amountsQuery ??= query.Select(p => p.Amount);
 
-        return await amountsQuery.SumAsync(p => p, cancellationToken);
-    }
-
-    public async Task<decimal> GetSumOfTransactionsInSpecificPeriod(ContractGroup contract,
-        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
-    {
-        return await _applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Purchase &&
-                        startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
-                        p.TenantMerchantContract.TenantId == contract.TenantId &&
-                        p.TenantMerchantContract.MerchantId == contract.MerchantId &&
-                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType)
-            .SumAsync(p => p.Amount, cancellationToken);
-    }
-
-    public async Task<decimal> GetSumOfCommissionsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
-        DateTime endOfPeriod, CancellationToken cancellationToken)
-    {
-        return await _applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Purchase &&
-                        startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
-                        p.TenantMerchantContract.TenantId == contract.TenantId &&
-                        p.TenantMerchantContract.MerchantId == contract.MerchantId &&
-                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType)
-            .SumAsync(p => p.Commission, cancellationToken);
+        return amountsQuery;
     }
 }

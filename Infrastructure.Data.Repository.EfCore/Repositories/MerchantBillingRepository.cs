@@ -24,7 +24,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
     public async Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken)
     {
         var billings = await _applicationDbContext.MerchantBillings
-            .Where(p => (p.Status == BillingStatus.Overdue && p.HasAttachment == false) ||
+            .Where(p => (p.Status == BillingStatus.Overdue && p.Transferred == false) ||
                         ((p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid) && p.DueDate.AddDays(1) < DateTime.Today))
             .Select(p => new NotSettledBilling
             {
@@ -44,7 +44,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
     public async Task<List<NegativeSettledBilling>> GetNegativeSettledBillings(CancellationToken cancellationToken)
     {
         return await _applicationDbContext.MerchantBillings
-            .Where(p => p.Status == BillingStatus.Settled && p.Amount < 0 && p.HasAttachment == false)
+            .Where(p => p.Status == BillingStatus.Settled && p.Amount < 0 && p.Transferred == false)
             .Select(p => new NegativeSettledBilling
             {
                 Billing = p,
@@ -75,10 +75,12 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
         return lastBillingDueDate == DateTime.MinValue ? null : lastBillingDueDate;
     }
 
-    public async Task<bool> FindAnotherBillingOnEndOfPeriod(DateTime endOfPeriod, CancellationToken cancellationToken)
+    public async Task<bool> FindAnotherBillingOnEndOfPeriod(int tenantId, int merchantId, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await _applicationDbContext.MerchantBillings
-            .Where(p => p.DueDate == endOfPeriod)
+            .Where(p => p.FromBusinessIdentityId == tenantId &&
+                        p.ToBusinessIdentityId == merchantId &&
+                        p.DueDate == endOfPeriod)
             .AnyAsync(cancellationToken);
     }
 }

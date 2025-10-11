@@ -101,10 +101,15 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
             BillingPeriodType = p.Key.BillingPeriodType,
             DailyBillingOriginDate = p.Key.DailyBillingOriginDate,
             CommissionCalculationType = p.Key.CommissionCalculationType,
-            Status = p.OrderByDescending(q => q.CreatedDateTime).First().Status,
-            CreatedDateTime = p.OrderBy(q => q.CreatedDateTime).First().CreatedDateTime,
-            EndorsementDate = p.OrderByDescending(q => q.CreatedDateTime).First().EditDateTime,
             ContractIds = p.OrderByDescending(q => q.CreatedDateTime).Select(q => q.Id).ToList(),
+
+            MainContractId = p.Any(q => q.Status)
+                ? p.First(q => q.Status).Id
+                : p.OrderByDescending(q => q.CreatedDateTime).First().Id,
+
+            Status = p.Any(q => q.Status)
+                ? p.First(q => q.Status).Status
+                : p.OrderByDescending(q => q.CreatedDateTime).First().Status,
 
             TieredCommissions = p.Any(q => q.Status)
                  ? p.First(q => q.Status).TieredCommissions

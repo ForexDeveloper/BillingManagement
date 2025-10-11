@@ -2,10 +2,14 @@
 using Application.Service.Contracts;
 using Application.Service.EventConsumers;
 using Application.Service.Services;
+using Domain.Core.Entities;
+using Domain.Core.Entities.BackgroundJobAggregate;
+using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
 using Domain.Core.Entities.GuarantorAggregate;
+using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -116,8 +120,13 @@ namespace Service.Worker
             services.AddScoped<IFinancierRepository, FinancierRepository>();
             services.AddScoped<IFacilitatorRepository, FacilitatorRepository>();
             services.AddScoped<IGuarantorRepository, GuarantorRepository>();
+
+            services.AddScoped<IBackgroundJobRepository, BackgroundJobRepository>();
+            services.AddScoped<IBillingRepository, BillingRepository>();
+            services.AddScoped<IInstallmentRepository, InstallmentRepository>();
             services.AddScoped<IMerchantBillingRepository, MerchantBillingRepository>();
             services.AddScoped<IMerchantInstallmentRepository, MerchantInstallmentRepository>();
+
             services.AddScoped<ITenantReadOnlyRepository, TenantReadOnlyRepository>();
             services.AddScoped<IOrganizationReadOnlyRepository, OrganizationReadOnlyRepository>();
             services.AddScoped<IFinancierReadOnlyRepository, FinancierReadOnlyRepository>();
@@ -130,7 +139,7 @@ namespace Service.Worker
             services.AddScoped<ITenantMerchantContractRepository, TenantMerchantContractRepository>();
             services.AddScoped<ITenantPlatformContractRepository, TenantPlatformContractRepository>();
         }
-        internal static void RegisteRedisServices(this IServiceCollection services, IConfiguration configuration)
+        internal static void RegisterRedisServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddRedisWithRedLockService(options =>
             {
@@ -140,7 +149,8 @@ namespace Service.Worker
         }
         internal static void RegisterServices(this IServiceCollection services)
         {
-            services.AddScoped<IMerchantBillingService, MerchantBillingService>();
+            services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+            //services.AddScoped<IMerchantBillingService, MerchantBillingService>();
             services.AddScoped<IWalletContractService, WalletContractService>();
         }
     }

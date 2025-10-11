@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Threading;
 using Domain.Core.Enums;
-using System.Globalization;
 using System.Threading.Tasks;
 using Application.Service.Helper;
 using System.Collections.Generic;
@@ -14,9 +13,7 @@ using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using Domain.Core.Entities.BillingAggregate;
 
 namespace Application.Service.Services;
 
@@ -27,7 +24,7 @@ public sealed class MerchantBillingService(
     IMerchantInstallmentRepository merchantInstallmentRepository,
     ITenantMerchantContractRepository tenantMerchantContractRepository) : IMerchantBillingService
 {
-    public async Task IssueOrOverdueBilling(CancellationToken cancellationToken)
+    public async Task IssueOrOverdueBilling(DateTime jobCreatedDateTime, CancellationToken cancellationToken)
     {
         var overdueBillings = await OverdueExpiredBillings(cancellationToken);
 
@@ -35,13 +32,15 @@ public sealed class MerchantBillingService(
 
         var groupContracts = await tenantMerchantContractRepository.GetAllGroupContractAsync(cancellationToken);
 
-        await CreateMerchantBillingsForAllPeriods(groupContracts, overdueBillings, negativeBillings, cancellationToken);
+        await CreateMerchantBillingsAtomic(groupContracts, overdueBillings, negativeBillings, jobCreatedDateTime, cancellationToken);
     }
 
-    private async Task CreateMerchantBillingsForAllPeriods(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
-        List<NegativeSettledBilling> negativeBillings, CancellationToken cancellationToken)
+    private async Task CreateMerchantBillings(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
+        List<NegativeSettledBilling> negativeBillings, DateTime jobCreatedDateTime, CancellationToken cancellationToken)
     {
         var activeContracts = contracts.Where(p => p.Status).ToList();
+
+        var deactiveContracts = contracts.Where(p => !p.Status).ToList();
 
         foreach (var groupContracts in contracts.GroupBy(p => new TenantMerchantIdentifier(p.TenantId, p.MerchantId)))
         {
@@ -59,237 +58,14 @@ public sealed class MerchantBillingService(
 
                 var installmentRange = await merchantInstallmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
 
-                var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
+                var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, jobCreatedDateTime, cancellationToken);
 
                 var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
 
-                switch (contract.Status)
+                if (financialDataRange != null)
                 {
-                    case true:
-                        await ScanPeriodsForActiveContract(contract, lastBillingDueDate, financialDataRange,
-                           financialQuery, billingDtos, cancellationToken);
-                        break;
 
-                    case false:
-                        ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, financialDataRange, financialQuery,
-                            billingDtos);
-                        break;
                 }
-
-                var oneDeactiveContractHasBilling = false;
-
-                var debtorBillings = GetDebtorBillings(overdueBillings, contract.ContractIds);
-
-                var creditorBillings = GetCreditorBillings(negativeBillings, contract.ContractIds);
-
-                var groupInstallments = await merchantInstallmentRepository.GetGroupContractInstallments(financialQuery.InstallmentQuery, cancellationToken);
-
-                var groupFinancialDocuments = await financialDocumentRepository.GetGroupContractFinancialDocuments(financialQuery.FinancialDocumentQuery, cancellationToken);
-
-                for (var i = 0; i < billingDtos.Count; i++)
-                {
-                    decimal previousDebitAmount = 0;
-                    decimal previousCreditAmount = 0;
-                    decimal previousPenaltyAmount = 0;
-                    decimal purchaseTransactionsAmount = 0;
-                    decimal purchaseTransactionsCashAmount = 0;
-                    decimal purchaseTransactionsCreditAmount = 0;
-                    decimal purchaseTransactionsPrepaymentAmount = 0;
-                    decimal refundedTransactionsAmount = 0;
-                    decimal purchaseTransactionsCommission = 0;
-                    decimal refundedTransactionsCommission = 0;
-                    decimal purchaseTransactionsCalculatedCommission = 0;
-
-                    var billingDto = billingDtos[i];
-
-                    var contractIdentifier = new ContractIdentifier(contract.TenantId, contract.MerchantId, contract.BillingPeriod,
-                        contract.BillingPeriodType, contract.DailyBillingOriginDate, contract.CommissionCalculationType);
-
-                    var installments = groupInstallments.GetValueOrDefault(contractIdentifier)?.Where(p =>
-                        billingDto.StartOfPeriod <= p.DueDate && p.DueDate < billingDto.EndOfPeriod).ToList() ?? [];
-
-                    var financialDocuments = groupFinancialDocuments.GetValueOrDefault(contractIdentifier)?.Where(p =>
-                            billingDto.StartOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < billingDto.EndOfPeriod).ToList() ?? [];
-
-                    foreach (var installment in installments)
-                    {
-                        purchaseTransactionsAmount += installment.Amount;
-                        purchaseTransactionsCashAmount += installment.CashAmount;
-                        purchaseTransactionsCreditAmount += installment.CreditAmount;
-                        purchaseTransactionsPrepaymentAmount += installment.PrepaymentAmount;
-                        purchaseTransactionsCalculatedCommission += installment.Commission;
-                    }
-
-                    foreach (var financialDocumentDto in financialDocuments)
-                    {
-                        refundedTransactionsAmount += financialDocumentDto.Amount;
-                        refundedTransactionsCommission += financialDocumentDto.PurchaseCommission ?? 0;
-                    }
-
-                    if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
-                    {
-                        var sumOfTieredTransactions = purchaseTransactionsAmount;
-
-                        if (contract.CommissionReferenceTypes != null && contract.CommissionReferenceTypes.Any())
-                        {
-                            sumOfTieredTransactions = 0;
-
-                            foreach (var commissionReferenceType in contract.CommissionReferenceTypes)
-                            {
-                                switch (commissionReferenceType)
-                                {
-                                    case CommissionReferenceType.CashAmount:
-                                        sumOfTieredTransactions += purchaseTransactionsCashAmount;
-                                        break;
-
-                                    case CommissionReferenceType.CreditAmount:
-                                        sumOfTieredTransactions += purchaseTransactionsCreditAmount;
-                                        break;
-
-                                    case CommissionReferenceType.PrepaymentAmount:
-                                        sumOfTieredTransactions += purchaseTransactionsPrepaymentAmount;
-                                        break;
-
-                                    case CommissionReferenceType.InterestAmount:
-                                        break;
-
-                                    default:
-                                        throw new ArgumentOutOfRangeException();
-                                }
-                            }
-                        }
-
-                        purchaseTransactionsCalculatedCommission = CalculateUniformedTieredCommission(contract, sumOfTieredTransactions);
-                    }
-
-                    purchaseTransactionsCommission = CalculateFinalCommission(contract, purchaseTransactionsCalculatedCommission);
-
-                    MerchantBilling debtorBilling = null;
-
-                    MerchantBilling creditorBilling = null;
-
-                    var replicateBilling = replicateBillings.LastOrDefault();
-
-                    if (replicateBilling != null)
-                    {
-                        var previousContract = billingDtos[i - 1].ContractGroup;
-
-                        var previousContractIdentifier = new ContractIdentifier(previousContract.TenantId,
-                            previousContract.MerchantId, previousContract.BillingPeriod, previousContract.BillingPeriodType,
-                            previousContract.DailyBillingOriginDate, previousContract.CommissionCalculationType);
-
-                        if (contractIdentifier == previousContractIdentifier)
-                        {
-                            var payableAmount = replicateBilling.GetPayableAmount();
-
-                            switch (payableAmount)
-                            {
-                                case > 0:
-                                    replicateBilling.Overdue();
-                                    debtorBilling = replicateBilling;
-                                    previousDebitAmount = payableAmount;
-                                    break;
-
-                                case < 0:
-                                    replicateBilling.Settle();
-                                    creditorBilling = replicateBilling;
-                                    previousCreditAmount = payableAmount;
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            replicateBillings.Clear();
-                        }
-                    }
-
-                    if (replicateBillings.Count == 0)
-                    {
-                        debtorBillings.ForEach(p => p.SetAttachment());
-
-                        creditorBillings.ForEach(p => p.SetAttachment());
-
-                        debtorBilling = debtorBillings.FirstOrDefault();
-
-                        creditorBilling = creditorBillings.FirstOrDefault();
-
-                        previousDebitAmount = debtorBillings.Sum(p => p.GetPayableAmount());
-
-                        previousCreditAmount = creditorBillings.Sum(p => p.GetPayableAmount());
-                    }
-
-                    var billing = new MerchantBilling(contract.TenantId,
-                        contract.TenantId,
-                        contract.MerchantId,
-                        BillingType.TenantToMerchant,
-                        contract.BillingPeriodType,
-                        billingDto.StartOfPeriod,
-                        billingDto.EndOfPeriod,
-                        0,
-                        billingDto.ContractIds,
-                        previousDebitAmount,
-                        previousCreditAmount,
-                        previousPenaltyAmount,
-                        purchaseTransactionsAmount,
-                        refundedTransactionsAmount,
-                        purchaseTransactionsCommission,
-                        refundedTransactionsCommission,
-                        purchaseTransactionsCalculatedCommission,
-                        debtorBilling,
-                        creditorBilling);
-
-                    replicateBillings.Add(billing);
-
-                    if (billing.Amount == 0)
-                    {
-                        if (!contract.Status) continue;
-
-                        if (contract.Status && !billingDto.CurrentPeriod) continue;
-
-                        if (contract.Status && billingDto.CurrentPeriod && oneDeactiveContractHasBilling) continue;
-                    }
-                    else
-                    {
-                        if (!contract.Status && billingDto.CurrentPeriod)
-                        {
-                            oneDeactiveContractHasBilling = true;
-                        }
-                    }
-
-                    billings.Add(billing);
-                }
-
-                await merchantBillingRepository.AddRangeAsync(billings, cancellationToken);
-
-                await unitOfWork.SaveChangesAsync(cancellationToken);
-            }
-        }
-    }
-
-    private async Task CreateMerchantBillingsForEachPeriod(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
-        List<NegativeSettledBilling> negativeBillings, CancellationToken cancellationToken)
-    {
-        var activeContracts = contracts.Where(p => p.Status).ToList();
-
-        foreach (var groupContracts in contracts.GroupBy(p => new TenantMerchantIdentifier(p.TenantId, p.MerchantId)))
-        {
-            foreach (var contract in groupContracts)
-            {
-                var billingDtos = new List<BillingDto>();
-
-                var financialQuery = new FinancialQuery();
-
-                var billings = new List<MerchantBilling>();
-
-                var replicateBillings = new List<MerchantBilling>();
-
-                var lastBillingDueDate = await merchantBillingRepository.GetLastBillingDueDate(contract.ContractIds, cancellationToken);
-
-                var installmentRange = await merchantInstallmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
-
-                var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
-
-                var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
 
                 switch (contract.Status)
                 {
@@ -326,10 +102,10 @@ public sealed class MerchantBillingService(
 
                     var billingDto = billingDtos[i];
 
-                    var installments = await merchantInstallmentRepository.GetInstallmentsInSpecificPeriod(contract,
+                    var installments = await merchantInstallmentRepository.GetInstallmentsInSpecificPeriod(contract.ContractIds,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                    var financialDocuments = await financialDocumentRepository.GetFinancialDocumentsInSpecificPeriod(contract,
+                    var financialDocuments = await financialDocumentRepository.GetFinancialDocumentsInSpecificPeriod(contract.ContractIds,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                     foreach (var installment in installments)
@@ -426,9 +202,9 @@ public sealed class MerchantBillingService(
 
                     if (replicateBillings.Count == 0)
                     {
-                        debtorBillings.ForEach(p => p.SetAttachment());
+                        debtorBillings.ForEach(p => p.Transfer());
 
-                        creditorBillings.ForEach(p => p.SetAttachment());
+                        creditorBillings.ForEach(p => p.Transfer());
 
                         debtorBilling = debtorBillings.FirstOrDefault();
 
@@ -447,7 +223,8 @@ public sealed class MerchantBillingService(
                         billingDto.StartOfPeriod,
                         billingDto.EndOfPeriod,
                         0,
-                        billingDto.ContractIds,
+                        contract.MainContractId,
+                        contract.ContractIds,
                         previousDebitAmount,
                         previousCreditAmount,
                         previousPenaltyAmount,
@@ -482,13 +259,13 @@ public sealed class MerchantBillingService(
 
                 await merchantBillingRepository.AddRangeAsync(billings, cancellationToken);
 
-                await unitOfWork.SaveChangesAsync(cancellationToken);
+                //await unitOfWork.SaveChangesAsync(cancellationToken);
             }
         }
     }
 
-    private async Task CreateMerchantBillingsForEachTransaction(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
-    List<NegativeSettledBilling> negativeBillings, CancellationToken cancellationToken)
+    private async Task CreateMerchantBillingsAtomic(List<ContractGroup> contracts, List<NotSettledBilling> overdueBillings,
+    List<NegativeSettledBilling> negativeBillings, DateTime jobCreatedDateTime, CancellationToken cancellationToken)
     {
         var activeContracts = contracts.Where(p => p.Status).ToList();
 
@@ -508,9 +285,14 @@ public sealed class MerchantBillingService(
 
                 var installmentRange = await merchantInstallmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
 
-                var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
+                var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, jobCreatedDateTime, cancellationToken);
 
                 var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
+
+                if (financialDataRange != null)
+                {
+
+                }
 
                 switch (contract.Status)
                 {
@@ -544,16 +326,16 @@ public sealed class MerchantBillingService(
 
                     var billingDto = billingDtos[i];
 
-                    purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(contract,
+                    purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(contract.ContractIds,
                             billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                    purchaseTransactionsCalculatedCommission = await merchantInstallmentRepository.GetSumOfCommissionsInSpecificPeriod(contract,
+                    purchaseTransactionsCalculatedCommission = await merchantInstallmentRepository.GetSumOfCommissionsInSpecificPeriod(contract.ContractIds,
                             billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                    refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(contract,
+                    refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(contract.ContractIds,
                             billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                    refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(contract,
+                    refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(contract.ContractIds,
                             billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                     if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
@@ -607,9 +389,9 @@ public sealed class MerchantBillingService(
 
                     if (replicateBillings.Count == 0)
                     {
-                        debtorBillings.ForEach(p => p.SetAttachment());
+                        debtorBillings.ForEach(p => p.Transfer());
 
-                        creditorBillings.ForEach(p => p.SetAttachment());
+                        creditorBillings.ForEach(p => p.Transfer());
 
                         debtorBilling = debtorBillings.FirstOrDefault();
 
@@ -628,7 +410,8 @@ public sealed class MerchantBillingService(
                         billingDto.StartOfPeriod,
                         billingDto.EndOfPeriod,
                         0,
-                        billingDto.ContractIds,
+                        contract.MainContractId,
+                        contract.ContractIds,
                         previousDebitAmount,
                         previousCreditAmount,
                         previousPenaltyAmount,
@@ -663,7 +446,7 @@ public sealed class MerchantBillingService(
 
                 await merchantBillingRepository.AddRangeAsync(billings, cancellationToken);
 
-                await unitOfWork.SaveChangesAsync(cancellationToken);
+                //await unitOfWork.SaveChangesAsync(cancellationToken);
             }
         }
     }
@@ -681,13 +464,15 @@ public sealed class MerchantBillingService(
 
         if (lastBillingDueDate.HasValue)
         {
-            (startOfPeriod, endOfPeriod) = GetPeriodByLastBillingDueDate(contract, lastBillingDueDate.Value);
+            (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodByLastBillingDueDate(contract.BillingPeriod,
+                contract.BillingPeriodType, contract.DailyBillingOriginDate, lastBillingDueDate.Value);
 
             if (endOfPeriod > today) return;
 
             currentPeriod = endOfPeriod == today;
 
-            var anotherBillingFound = await merchantBillingRepository.FindAnotherBillingOnEndOfPeriod(endOfPeriod, cancellationToken);
+            var anotherBillingFound = await merchantBillingRepository.FindAnotherBillingOnEndOfPeriod(contract.TenantId,
+                contract.MerchantId, endOfPeriod, cancellationToken);
 
             if (!anotherBillingFound)
             {
@@ -699,7 +484,8 @@ public sealed class MerchantBillingService(
 
         else if (financialDataRange != null)
         {
-            (startOfPeriod, endOfPeriod) = GetPeriodBySpecificDate(contract, financialDataRange.MinDate);
+            (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
+                contract.BillingPeriodType, contract.DailyBillingOriginDate, financialDataRange.MinDate);
 
             if (endOfPeriod > today) return;
 
@@ -712,7 +498,8 @@ public sealed class MerchantBillingService(
 
         if (!lastBillingDueDate.HasValue && financialDataRange == null)
         {
-            (startOfPeriod, endOfPeriod) = GetPeriodBySpecificDate(contract, today);
+            (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
+                contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
 
             currentPeriod = endOfPeriod == today;
 
@@ -735,12 +522,13 @@ public sealed class MerchantBillingService(
 
         if (lastBillingDueDate.HasValue)
         {
-            (startOfPeriod, endOfPeriod) = GetPeriodByLastBillingDueDate(contract, lastBillingDueDate.Value);
+            (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodByLastBillingDueDate(contract.BillingPeriod,
+                contract.BillingPeriodType, contract.DailyBillingOriginDate, lastBillingDueDate.Value);
         }
-
         else
         {
-            (startOfPeriod, endOfPeriod) = GetPeriodBySpecificDate(contract, financialDataRange.MinDate);
+            (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
+                contract.BillingPeriodType, contract.DailyBillingOriginDate, financialDataRange.MinDate);
         }
 
         if (endOfPeriod > today) return;
@@ -764,11 +552,10 @@ public sealed class MerchantBillingService(
     {
         var billingDto = new BillingDto
         {
-            CurrentPeriod = currentPeriod,
             ContractGroup = contract,
             EndOfPeriod = endOfPeriod,
             StartOfPeriod = startOfPeriod,
-            ContractIds = contract.ContractIds
+            CurrentPeriod = currentPeriod
         };
 
         billingDtos.Add(billingDto);
@@ -845,6 +632,8 @@ public sealed class MerchantBillingService(
 
     private static decimal CalculateUniformedTieredCommission(ContractGroup contract, decimal totalTransactionsAmount)
     {
+        if (contract.TieredCommissions == null) return 0;
+
         var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
             p.FromAmount < totalTransactionsAmount && totalTransactionsAmount <= p.ToAmount);
 
@@ -931,132 +720,6 @@ public sealed class MerchantBillingService(
         return false;
     }
 
-    private static (DateTime StartOfPeriod, DateTime EndOfPeriod) GetPeriodBySpecificDate(ContractGroup contract, DateTime specificDate)
-    {
-        int difference;
-        DateTime startOfPeriod;
-        DateTime endOfPeriod;
-
-        var pc = new PersianCalendar();
-
-        var year = pc.GetYear(specificDate);
-        var month = pc.GetMonth(specificDate);
-        var dayOfWeek = pc.GetDayOfWeek(specificDate);
-        var dayOfMonth = pc.GetDayOfMonth(specificDate);
-
-        var period = contract.BillingPeriod;
-
-        switch (contract.BillingPeriodType)
-        {
-            case TimeInterval.Day:
-
-                if (!contract.DailyBillingOriginDate.HasValue) throw new Exception();
-
-                var originDate = contract.DailyBillingOriginDate.Value;
-
-                if (specificDate.Date < originDate.Date)
-                {
-                    startOfPeriod = DateTime.MaxValue;
-                    endOfPeriod = DateTime.MaxValue;
-                    break;
-                }
-
-                var totalDays = (specificDate.Date - originDate.Date).Days;
-
-                difference = period - (totalDays % period);
-
-                startOfPeriod = pc.AddDays(specificDate, -difference);
-
-                endOfPeriod = pc.AddDays(startOfPeriod, period);
-
-                break;
-
-            case TimeInterval.Week:
-
-                if ((DayOfWeek)period >= dayOfWeek)
-                {
-                    difference = 7 - (period - (int)dayOfWeek);
-                }
-                else
-                {
-                    difference = (int)dayOfWeek - period;
-                }
-
-                startOfPeriod = pc.AddDays(specificDate, -difference);
-
-                endOfPeriod = pc.AddWeeks(startOfPeriod, 1);
-
-                break;
-
-            case TimeInterval.Month:
-
-                var regulatePeriod = DateHelper.RegulateBillingPeriod(pc, year, month, period);
-
-                if (regulatePeriod >= dayOfMonth)
-                {
-                    startOfPeriod = pc.AddMonths(new DateTime(year, month, regulatePeriod, pc), -1);
-
-                    startOfPeriod = DateHelper.RegulateDateOfPeriod(pc, startOfPeriod, period);
-                }
-                else
-                {
-                    startOfPeriod = pc.ToDateTime(year, month, period, 0, 0, 0, 0);
-                }
-
-                endOfPeriod = pc.AddMonths(startOfPeriod, 1);
-
-                endOfPeriod = DateHelper.RegulateDateOfPeriod(pc, endOfPeriod, period);
-
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        return new ValueTuple<DateTime, DateTime>(startOfPeriod, endOfPeriod);
-    }
-
-    private static (DateTime StartOfPeriod, DateTime EndOfPeriod) GetPeriodByLastBillingDueDate(ContractGroup contract, DateTime lastBillingDueDate)
-    {
-        DateTime startOfPeriod;
-        DateTime endOfPeriod;
-
-        var pc = new PersianCalendar();
-
-        switch (contract.BillingPeriodType)
-        {
-            case TimeInterval.Day:
-
-                startOfPeriod = lastBillingDueDate;
-
-                endOfPeriod = pc.AddDays(startOfPeriod, contract.BillingPeriod);
-
-                break;
-
-            case TimeInterval.Week:
-
-                startOfPeriod = lastBillingDueDate;
-
-                endOfPeriod = pc.AddWeeks(startOfPeriod, 1);
-
-                break;
-
-            case TimeInterval.Month:
-
-                startOfPeriod = lastBillingDueDate;
-
-                endOfPeriod = pc.AddMonths(startOfPeriod, 1);
-
-                endOfPeriod = DateHelper.RegulateDateOfPeriod(pc, endOfPeriod, contract.BillingPeriod);
-
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-
-        return new ValueTuple<DateTime, DateTime>(startOfPeriod, endOfPeriod);
-    }
 }
 
 public sealed record FinancialQuery

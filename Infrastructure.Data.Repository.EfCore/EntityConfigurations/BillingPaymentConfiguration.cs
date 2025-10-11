@@ -1,6 +1,6 @@
-﻿using Domain.Core.Entities.BillingPaymentAggregate;
+﻿using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.BillingPaymentAggregate;
 using Infrastructure.Data.Repository.EfCore.Constants;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations;
@@ -20,7 +20,7 @@ public sealed class BillingPaymentConfiguration : IEntityTypeConfiguration<Billi
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasQueryFilter(p => !p.IsDeleted);
-        builder.ToTable("BillingPayment");
 
+        builder.ToTable("BillingPayment");
     }
 }

@@ -8,6 +8,8 @@ public abstract record GetBillingViewModel
 {
     public long Id { get; set; }
 
+    public int MerchantId { get; set; }
+
     public string Code { get; set; }
 
     public string Title { get; set; }
@@ -24,9 +26,17 @@ public abstract record GetBillingViewModel
 
     public DateTime EndDate { get; set; }
 
+    public DateTime DueDate { get; set; }
+
+    public bool IsPayable { get; set; }
+
     public decimal PaidAmount { get; set; }
 
     public decimal PayableAmount { get; set; }
+
+    public decimal Additions { get; set; }
+
+    public decimal Deductions { get; set; }
 
     public decimal PreviousDebitAmount { get; set; }
 

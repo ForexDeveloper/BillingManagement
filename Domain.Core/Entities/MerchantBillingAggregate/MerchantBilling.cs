@@ -4,7 +4,6 @@ using Domain.Core.Helper;
 using System.Collections.Generic;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.InstallmentAggregate;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 
@@ -26,33 +25,13 @@ public sealed class MerchantBilling : Billing
     }
 
     public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        TimeInterval periodType, DateTime startDate, DateTime endDate, int gracePeriod, List<int> contractIds,
-        decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
+        TimeInterval periodType, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
+        List<int> contractIds, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
         decimal purchaseTransactionsAmount, decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
         decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission,
         Billing? debtor = null, Billing? creditor = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId,
         type, periodType, previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate,
-        gracePeriod, contractIds, debtor, creditor)
-    {
-        PurchaseTransactionsAmount = purchaseTransactionsAmount;
-        RefundedTransactionsAmount = refundedTransactionsAmount;
-        PurchaseTransactionsCommission = purchaseTransactionsCommission;
-        RefundedTransactionsCommission = refundedTransactionsCommission;
-        PurchaseTransactionsCalculatedCommission = purchaseTransactionsCalculatedCommission;
-        CalculateAmount();
-        SettleOrIssue();
-        SetCheckSum();
-    }
-
-    public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        TimeInterval periodType, DateTime startDate, DateTime endDate, int gracePeriod, List<int> contractIds,
-        decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
-        decimal purchaseTransactionsAmount, decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
-        decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission,
-        IEnumerable<Installment>? installments = null, Billing? debtor = null, Billing? creditor = null) : base(
-        tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount,
-        previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds, installments, debtor,
-        creditor)
+        gracePeriod, mainContractId, contractIds, debtor, creditor)
     {
         PurchaseTransactionsAmount = purchaseTransactionsAmount;
         RefundedTransactionsAmount = refundedTransactionsAmount;

@@ -43,4 +43,9 @@ public abstract class Repository<TEntity, TKey>(ApplicationDbContext application
     {
         return await Entities.FirstOrDefaultAsync(p => p.Id.Equals(id), cancellationToken ?? CancellationToken.None);
     }
+
+    public virtual async Task<bool> AnyAsync(TKey id, CancellationToken? cancellationToken = null)
+    {
+        return await Entities.AnyAsync(p => p.Id.Equals(id), cancellationToken ?? CancellationToken.None);
+    }
 }
