@@ -1,5 +1,6 @@
-﻿using Domain.Core.Entities.FinancialDocumentAggregate;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Infrastructure.Data.Repository.EfCore.Constants;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations
@@ -12,10 +13,11 @@ namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations
             builder.Property(p => p.Id).IsRequired();
             builder.Property(p => p.Id).ValueGeneratedNever();
 
-            builder.Property(p => p.Amount).HasColumnType("decimal(32, 10)").IsRequired();
-            builder.Property(p => p.CreditAmount).HasColumnType("decimal(32, 10)").IsRequired();
-            builder.Property(p => p.CashAmount).HasColumnType("decimal(32, 10)").IsRequired();
-            builder.Property(p => p.PrepaymentAmount).HasColumnType("decimal(32, 10)").IsRequired();
+            builder.Property(p => p.Amount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+            builder.Property(p => p.Commission).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+            builder.Property(p => p.CashAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+            builder.Property(p => p.CreditAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+            builder.Property(p => p.PrepaymentAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
 
 
             builder.Property(p => p.Description).HasMaxLength(500);

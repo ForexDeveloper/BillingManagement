@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
-using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.FinancialDocumentAggregate;
@@ -16,6 +15,8 @@ public interface IFinancialDocumentRepository
     void Update(FinancialDocument financialDocument);
 
     void UpdateRange(List<FinancialDocument> financialDocuments);
+
+    void UpdatePartial(FinancialDocument financialDocument, string propertyName);
 
     Task<FinancialDocument> GetByIdAsync(long id);
 
@@ -33,28 +34,15 @@ public interface IFinancialDocumentRepository
 
     IQueryable<FinancialDocument> CreateJobFinancialDocumentQuery(DateTime startOfPeriod, DateTime endOfPeriod, IEnumerable<int> contractIds);
 
-    Task<bool> ExecuteQueryAnyAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
+    Task<FinancialDocumentRange?> GetFinancialDocumentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate,
+        DateTime jobCreatedDateTime, CancellationToken cancellationToken);
 
-    Task<decimal> GetPeriodTotalTransactionsAmount(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
+    Task<IEnumerable<FinancialDocumentDto>> GetFinancialDocumentsInSpecificPeriod(IEnumerable<int> contractIds,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
 
-    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, int billingPeriod,
-        TimeInterval billingPeriodType, DateTime? dailyBillingOriginDate,
-        CommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod);
+    Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
+        DateTime endOfPeriod, CancellationToken cancellationToken);
 
-    Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod);
-
-    Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken);
-}
-
-public sealed record FinancialDocumentDto
-{
-    public long Id { get; set; }
-
-    public decimal Amount { get; set; }
-
-    public FinancialDocumentType Type { get; set; }
-
-    public decimal? PurchaseCommission { get; set; }
-
-    public DateTime CreatedDateTime { get; set; }
+    Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
+        DateTime endOfPeriod, CancellationToken cancellationToken);
 }

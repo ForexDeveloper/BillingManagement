@@ -10,12 +10,13 @@ namespace Domain.Base
         public TKey Id { get; protected set; }
 
         public DateTime CreatedDateTime { get; protected set; } = DateTime.Now;
-        public DateTime EditDateTime { get; protected set; } = DateTime.Now;
 
+        public DateTime EditDateTime { get; protected set; } = DateTime.Now;
         
         [MaxLength(100)]
         [Column(TypeName = "VARCHAR")]
         public string? CreatorUserId { get; protected set; }
+
         [MaxLength(200)]
         [Column(TypeName = "VARCHAR")]
         public string? ClientId { get; protected set; }
@@ -30,7 +31,6 @@ namespace Domain.Base
         {
             EditDateTime = editDateTime;
         }
-
 
         public void SetClientId(string clientId)
         {

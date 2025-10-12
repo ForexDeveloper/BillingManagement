@@ -39,7 +39,7 @@ public class GetTenantsQuery : BasePaginatedListRequest, IRequest<GetTenantsVm>
                 PageSize = tenantsModel.PageSize,
                 TotalCount = tenantsModel.TotalCount,
                 Items = tenantsModel.Items.Select(x =>
-                new TenantViewModel()
+                new TenantVM()
                 {
                     Id = x.Id,
                     Title = x.Title,

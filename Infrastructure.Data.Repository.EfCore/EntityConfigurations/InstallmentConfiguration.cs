@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.InstallmentAggregate;
+﻿using Domain.Core.Entities.InstallmentAggregate;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Infrastructure.Data.Repository.EfCore.Constants;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations;
@@ -18,10 +19,13 @@ public sealed class InstallmentConfiguration : IEntityTypeConfiguration<Installm
         builder.Property(p => p.DueDate).IsRequired();
         builder.Property(p => p.TenantId).IsRequired();
         builder.Property(p => p.Commission).IsRequired();
-        builder.Property(p => p.BillingId).IsRequired(false);
+        builder.Property(p => p.FinancialDocumentId).IsRequired();
         builder.Property(p => p.ToBusinessIdentityId).IsRequired();
         builder.Property(p => p.FromBusinessIdentityId).IsRequired();
         builder.Property(p => p.Amount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+        builder.Property(p => p.CashAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+        builder.Property(p => p.CreditAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
+        builder.Property(p => p.PrepaymentAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
 
         builder.Property(p => p.CheckSum).HasMaxLength(500).IsRequired();
 
@@ -29,14 +33,6 @@ public sealed class InstallmentConfiguration : IEntityTypeConfiguration<Installm
 
         builder.HasQueryFilter(p => !p.IsDeleted);
 
-        builder.HasOne(p => p.FromBusinessIdentity)
-            .WithMany()
-            .HasForeignKey(p => p.FromBusinessIdentityId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(p => p.ToBusinessIdentity)
-            .WithMany()
-            .HasForeignKey(p => p.ToBusinessIdentityId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.ToTable(nameof(Installment));
     }
 }

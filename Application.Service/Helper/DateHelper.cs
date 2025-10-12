@@ -10,27 +10,21 @@ public static class DateHelper
     public static List<DateTime> CalculateInstallments(DateTime depositDate, int? numberOfInstallments,
        TimeInterval? installmentBreakType, int? installmentBreak, int billingPeriod, TimeInterval periodType)
     {
+        PersianCalendar pc = new();
+
         List<DateTime> installmentDates = [];
 
-        PersianCalendar pc = new();
-        var persianYear = pc.GetYear(depositDate);
-        var persianMonth = pc.GetMonth(depositDate);
-        var persianDay = pc.GetDayOfMonth(depositDate);
+        var installmentDate = depositDate.Date;
 
-        var installmentDate = depositDate;
-
-        if (installmentBreakType is not null && installmentBreak is not null && installmentBreakType is > 0 && installmentBreak is > 0)
+        if (installmentBreakType.HasValue && installmentBreak > 0)
         {
             installmentDate = installmentBreakType switch
             {
-                TimeInterval.Day => pc.AddDays(new DateTime(persianYear, persianMonth, persianDay, pc),
-                    installmentBreak.Value),
+                TimeInterval.Day => pc.AddDays(installmentDate, installmentBreak.Value),
 
-                TimeInterval.Week => pc.AddWeeks(new DateTime(persianYear, persianMonth, persianDay, pc),
-                    installmentBreak.Value),
+                TimeInterval.Week => pc.AddWeeks(installmentDate, installmentBreak.Value),
 
-                TimeInterval.Month => pc.AddMonths(new DateTime(persianYear, persianMonth, persianDay, pc),
-                    installmentBreak.Value),
+                TimeInterval.Month => pc.AddMonths(installmentDate, installmentBreak.Value),
 
                 _ => depositDate
             };
@@ -38,31 +32,23 @@ public static class DateHelper
 
         for (var i = 0; i < numberOfInstallments; i++)
         {
-            var year = pc.GetYear(installmentDate);
-            var month = pc.GetMonth(installmentDate);
-            var day = pc.GetDayOfMonth(installmentDate);
-
             switch (periodType)
             {
                 case TimeInterval.Day:
 
-                    installmentDate = pc.AddDays(new DateTime(year, month, day, pc), billingPeriod);
+                    installmentDate = pc.AddDays(installmentDate, billingPeriod);
 
                     break;
 
                 case TimeInterval.Week:
 
-                    installmentDate = pc.AddWeeks(new DateTime(year, month, day, pc), 1);
+                    installmentDate = pc.AddWeeks(installmentDate, 1);
 
                     break;
 
                 case TimeInterval.Month:
 
-                    installmentDate = pc.AddMonths(new DateTime(year, month, day, pc), 1);
-
-                    var regulatedDateString = GetRegulatedDateString(installmentDate, billingPeriod);
-
-                    installmentDate = ConvertPersianToGregorian(regulatedDateString);
+                    installmentDate = pc.AddMonths(installmentDate, 1);
 
                     break;
 
@@ -76,25 +62,15 @@ public static class DateHelper
         return installmentDates;
     }
 
-    public static string GetRegulatedDateString(DateTime date, int periodOfMonth)
+    public static int RegulateBillingPeriod(PersianCalendar pc, int year, int month, int billingPeriod)
     {
-        var pc = new PersianCalendar();
-
-        var year = pc.GetYear(date);
-        var month = pc.GetMonth(date);
         var daysInMonth = pc.GetDaysInMonth(year, month);
 
-        periodOfMonth = RegulateBillingPeriod(daysInMonth, periodOfMonth);
-
-        return $"{year}/{month:00}/{periodOfMonth:00}";
-    }
-
-    public static int RegulateBillingPeriod(int daysInMonth, int billingPeriod)
-    {
-        if (daysInMonth == 29 && (billingPeriod == 30 || billingPeriod == 31))
+        if (daysInMonth == 29 && billingPeriod is 30 or 31)
         {
             billingPeriod = 29;
         }
+
         else if (daysInMonth == 30 && billingPeriod == 31)
         {
             billingPeriod = 30;
@@ -103,19 +79,41 @@ public static class DateHelper
         return billingPeriod;
     }
 
-    private static DateTime ConvertPersianToGregorian(string? persianDate)
+    public static DateTime RegulateDateOfPeriod(PersianCalendar pc, DateTime dateOfPeriod, int billingPeriod)
     {
-        if (string.IsNullOrEmpty(persianDate))
-            throw new Exception("Invalid persianDate");
+        var year = pc.GetYear(dateOfPeriod);
+        var month = pc.GetMonth(dateOfPeriod);
+        var dayOfMonth = pc.GetDayOfMonth(dateOfPeriod);
+        var daysInMonth = pc.GetDaysInMonth(year, month);
 
-        PersianCalendar pc = new();
+        switch (daysInMonth)
+        {
+            case 30:
+            {
+                if (dayOfMonth is 29 && billingPeriod is 30)
+                { 
+                    dateOfPeriod = pc.ToDateTime(year, month, 30, 0, 0, 0, 0);
+                }
 
-        var persianDateParts = persianDate.Split("/");
+                break;
+            }
 
-        int year = Convert.ToInt32(persianDateParts[0]);
-        int month = Convert.ToInt32(persianDateParts[1]);
-        int day = Convert.ToInt32(persianDateParts[2]);
+            case 31:
+            {
+                if (dayOfMonth is 29 && billingPeriod is 30)
+                { 
+                    dateOfPeriod = pc.ToDateTime(year, month, 30, 0, 0, 0, 0);
+                }
 
-        return pc.ToDateTime(year, month, day, 0, 0, 0, 0);
+                if (dayOfMonth is 29 or 30 && billingPeriod is 31)
+                { 
+                    dateOfPeriod = pc.ToDateTime(year, month, 31, 0, 0, 0, 0);
+                }
+
+                break;
+            }
+        }
+
+        return dateOfPeriod;
     }
 }

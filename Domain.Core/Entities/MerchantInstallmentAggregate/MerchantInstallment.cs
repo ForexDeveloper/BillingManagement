@@ -20,18 +20,20 @@ public sealed class MerchantInstallment : Installment
     }
 
     public MerchantInstallment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
-        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, int number, DateTime dueDate,
-        InstallmentType type) : base(financialDocument, tenantId,
-        fromBusinessIdentityId, toBusinessIdentityId, amount, number, dueDate, type)
+        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, decimal cashAmount,
+        decimal creditAmount, decimal prepaymentAmount, int number, DateTime dueDate, InstallmentType type) : base(
+        financialDocument, tenantId, fromBusinessIdentityId, toBusinessIdentityId, amount, cashAmount, creditAmount,
+        prepaymentAmount, number, dueDate, type)
     {
         TenantMerchantContractId = tenantMerchantContractId;
         SetCheckSum();
     }
 
     public MerchantInstallment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
-        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, int number, DateTime dueDate,
-        InstallmentType type) : base(tenantId, financialDocumentId,
-        fromBusinessIdentityId, toBusinessIdentityId, amount, number, dueDate, type)
+        int toBusinessIdentityId, int tenantMerchantContractId, decimal amount, decimal cashAmount,
+        decimal creditAmount, decimal prepaymentAmount, int number, DateTime dueDate, InstallmentType type) : base(
+        tenantId, financialDocumentId, fromBusinessIdentityId, toBusinessIdentityId, amount, cashAmount, creditAmount,
+        prepaymentAmount, number, dueDate, type)
     {
         TenantMerchantContractId = tenantMerchantContractId;
         SetCheckSum();
@@ -39,16 +41,23 @@ public sealed class MerchantInstallment : Installment
 
     protected override void SetCheckSum()
     {
-        CheckSum = $"{FromBusinessIdentityId}{ToBusinessIdentityId}{Amount:F10}{Status}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}".Hash();
+        CheckSum = GenerateCheckSum().Hash();
     }
 
     protected override void ValidateCheckSum()
     {
-        var comperedTo = $"{FromBusinessIdentityId}{ToBusinessIdentityId}{Amount:F10}{Status}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
+        var comperedTo = GenerateCheckSum();
 
         if (!comperedTo.Validate(CheckSum))
         {
             throw new ArgumentValidationException("InconsistentData", "اطلاعات موجود در دیتابیس صحیح نمی باشد.");
         }
+    }
+
+    protected override string GenerateCheckSum()
+    {
+        return $"{FromBusinessIdentityId}{ToBusinessIdentityId}{TenantId}{FinancialDocumentId}" +
+               $"{Amount:F10}{CashAmount:F10}{CreditAmount:F10}{PrepaymentAmount:F10}{Commission:F10}" +
+               $"{Status}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
     }
 }

@@ -4,12 +4,15 @@ namespace Domain.Core.Enums;
 
 public enum InstallmentType : byte
 {
-    [Description("قسط")]
-    Installment = 1,
+    [Description("خرید")]
+    Purchase = 1,
+
+    [Description("ریفاند")]
+    Refund = 2,
 
     [Description("جریمه")]
-    Penalty = 2,
+    Penalty = 3,
 
     [Description("کارمزد")]
-    Commission = 3
+    Commission = 4
 }

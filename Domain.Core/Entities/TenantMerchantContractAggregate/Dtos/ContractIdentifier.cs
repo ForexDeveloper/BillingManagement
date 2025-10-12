@@ -16,17 +16,28 @@ public sealed record ContractIdentifier
 
     public TimeInterval BillingPeriodType { get; set; }
 
-    public DateTime? BillingDailyOriginDate { get; set; }
+    public DateTime? DailyBillingOriginDate { get; set; }
 
     public CommissionCalculationType CommissionCalculationType { get; set; }
 
-    public ContractIdentifier(int tenantId, int merchantId, int billingPeriod, TimeInterval billingPeriodType, DateTime? billingDailyOriginDate, CommissionCalculationType commissionCalculationType)
+    public ContractIdentifier(int tenantId, int merchantId, int billingPeriod, TimeInterval billingPeriodType,
+        CommissionCalculationType commissionCalculationType)
     {
         TenantId = tenantId;
         MerchantId = merchantId;
         BillingPeriod = billingPeriod;
         BillingPeriodType = billingPeriodType;
-        BillingDailyOriginDate = billingDailyOriginDate;
+        CommissionCalculationType = commissionCalculationType;
+    }
+
+    public ContractIdentifier(int tenantId, int merchantId, int billingPeriod, TimeInterval billingPeriodType,
+        DateTime? dailyBillingOriginDate, CommissionCalculationType commissionCalculationType)
+    {
+        TenantId = tenantId;
+        MerchantId = merchantId;
+        BillingPeriod = billingPeriod;
+        BillingPeriodType = billingPeriodType;
+        DailyBillingOriginDate = dailyBillingOriginDate;
         CommissionCalculationType = commissionCalculationType;
     }
 
@@ -34,4 +45,14 @@ public sealed record ContractIdentifier
     {
 
     }
+}
+
+/// <summary>
+/// به هیچ وجه از رکورد به کلاس تبدیل نشود. جاب صورتسحاب منفجر می شود
+/// </summary>
+public sealed record TenantMerchantIdentifier(int TenantId, int MerchantId)
+{
+    public int TenantId { get; set; } = TenantId;
+
+    public int MerchantId { get; set; } = MerchantId;
 }

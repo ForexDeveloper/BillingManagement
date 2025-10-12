@@ -2,7 +2,7 @@
 
 namespace Application.Query.ViewModels.MerchantBillings;
 
-public sealed record GetCurrentPeriodFinalCommissionViewModel
+public sealed record GetPurchaseTransactionsCommissionViewModel
 {
     public long Id { get; set; }
 
@@ -14,7 +14,7 @@ public sealed record GetCurrentPeriodFinalCommissionViewModel
 
     public decimal CalculatedCommission { get; set; }
 
-    public decimal CurrentPeriodPurchaseTransactions { get; set; }
+    public decimal PurchaseTransactionsCommission { get; set; }
 
     public IEnumerable<GetMerchantBillingContractViewModel> Contracts { get; set; }
 }

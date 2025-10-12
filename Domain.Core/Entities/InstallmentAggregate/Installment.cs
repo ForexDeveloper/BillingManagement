@@ -1,11 +1,10 @@
-﻿using Domain.Base;
-using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantAggregate;
+﻿using System;
+using Domain.Base;
 using Domain.Core.Enums;
-using System;
+using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 
 namespace Domain.Core.Entities.InstallmentAggregate;
 
@@ -15,13 +14,17 @@ public abstract class Installment : BaseEntity<long>
 
     public long FinancialDocumentId { get; protected set; }
 
-    public long? BillingId { get; protected set; }
-
     public int FromBusinessIdentityId { get; protected set; }
 
     public int ToBusinessIdentityId { get; protected set; }
 
     public decimal Amount { get; protected set; }
+
+    public decimal CashAmount { get; protected set; }
+
+    public decimal CreditAmount { get; protected set; }
+
+    public decimal PrepaymentAmount { get; protected set; }
 
     public decimal Commission { get; protected set; }
 
@@ -39,8 +42,6 @@ public abstract class Installment : BaseEntity<long>
 
     public Tenant Tenant { get; protected set; }
 
-    public Billing Billing { get; protected set; }
-
     public FinancialDocument FinancialDocument { get; protected set; }
 
     public BusinessIdentity FromBusinessIdentity { get; protected set; }
@@ -53,11 +54,10 @@ public abstract class Installment : BaseEntity<long>
     }
 
     protected Installment(FinancialDocument financialDocument, int tenantId, int fromBusinessIdentityId,
-        int toBusinessIdentityId, decimal amount, int number,
-        DateTime dueDate, InstallmentType type)
+        int toBusinessIdentityId, decimal amount, decimal cashAmount, decimal creditAmount, decimal prepaymentAmount,
+        int number, DateTime dueDate, InstallmentType type)
     {
         Type = type;
-        Amount = amount;
         Number = number;
         DueDate = dueDate;
         TenantId = tenantId;
@@ -65,11 +65,11 @@ public abstract class Installment : BaseEntity<long>
         FinancialDocument = financialDocument;
         ToBusinessIdentityId = toBusinessIdentityId;
         FromBusinessIdentityId = fromBusinessIdentityId;
-        SetAmount(amount);
+        SetTotalAmounts(amount, cashAmount, creditAmount, prepaymentAmount);
     }
 
     protected Installment(int tenantId, long financialDocumentId, int fromBusinessIdentityId,
-        int toBusinessIdentityId, decimal amount, int number,
+        int toBusinessIdentityId, decimal amount, decimal cashAmount, decimal creditAmount, decimal prepaymentAmount, int number,
         DateTime dueDate, InstallmentType type)
     {
         Type = type;
@@ -80,17 +80,7 @@ public abstract class Installment : BaseEntity<long>
         FinancialDocumentId = financialDocumentId;
         ToBusinessIdentityId = toBusinessIdentityId;
         FromBusinessIdentityId = fromBusinessIdentityId;
-        SetAmount(amount);
-    }
-
-    private void SetAmount(decimal amount)
-    {
-        if (amount <= 0)
-        {
-            throw new ArgumentValidationException(nameof(amount), "مبلغ قسط نمی تواند کوچک تر مساوی صفر باشد");
-        }
-
-        Amount = amount;
+        SetTotalAmounts(amount, cashAmount, creditAmount, prepaymentAmount);
     }
 
     public void SetCommission(decimal commission)
@@ -103,7 +93,37 @@ public abstract class Installment : BaseEntity<long>
         Commission = commission;
     }
 
+    private void SetTotalAmounts(decimal amount, decimal cashAmount, decimal creditAmount, decimal prepaymentAmount)
+    {
+        if (amount < 0)
+        {
+            throw new ArgumentValidationException(nameof(amount), "مبلغ قسط نمی تواند کوچک تر از صفر باشد");
+        }
+
+        if (cashAmount < 0)
+        {
+            throw new ArgumentValidationException(nameof(cashAmount), "مبلغ نقدی قسط نمی تواند کوچک تر از صفر باشد");
+        }
+
+        if (creditAmount < 0)
+        {
+            throw new ArgumentValidationException(nameof(creditAmount), "مبلغ مازاد نقدی قسط نمی تواند کوچک تر از صفر باشد");
+        }
+
+        if (prepaymentAmount < 0)
+        {
+            throw new ArgumentValidationException(nameof(prepaymentAmount), "مبلغ پیش پرداخت قسط نمی تواند کوچک تر از صفر باشد");
+        }
+
+        Amount = amount;
+        CashAmount = cashAmount;
+        CreditAmount = creditAmount;
+        PrepaymentAmount = prepaymentAmount;
+    }
+
     protected abstract void SetCheckSum();
 
     protected abstract void ValidateCheckSum();
+
+    protected abstract string GenerateCheckSum();
 }
