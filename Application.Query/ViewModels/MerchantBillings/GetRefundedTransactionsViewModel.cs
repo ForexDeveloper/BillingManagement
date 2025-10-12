@@ -1,6 +1,6 @@
 ﻿namespace Application.Query.ViewModels.MerchantBillings;
 
-public sealed record GetPreviousPeriodRefundedTransactionsViewModel
+public sealed record GetRefundedTransactionsViewModel
 {
     public long Id { get; set; }
 

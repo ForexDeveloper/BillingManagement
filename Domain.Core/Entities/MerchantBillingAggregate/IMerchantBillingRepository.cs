@@ -7,15 +7,15 @@ using Domain.Core.Entities.BillingAggregate.Dtos;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 
-public interface IMerchantBillingRepository
+public interface IMerchantBillingRepository : IRepository<MerchantBilling, long>
 {
     Task AddRangeAsync(IEnumerable<MerchantBilling> billings, CancellationToken cancellationToken);
 
-    IQueryable<MerchantBilling> CreateJobBillingQuery(DateTime startOfPeriod, DateTime endOfPeriod);
-
     Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken);
 
-    Task<bool> FindInContractPeriodAsync(IQueryable<MerchantBilling> query, CancellationToken cancellation);
+    Task<List<NegativeSettledBilling>> GetNegativeSettledBillings(CancellationToken cancellationToken);
 
-    Task<bool> FindInContractPeriodAsync(DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
+    Task<DateTime?> GetLastBillingDueDate(IEnumerable<int> contractIds, CancellationToken cancellationToken);
+
+    Task<bool> FindAnotherBillingOnEndOfPeriod(int tenantId, int merchantId, DateTime endOfPeriod, CancellationToken cancellationToken);
 }

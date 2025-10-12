@@ -31,6 +31,9 @@ using Shared.MinIO;
 using Shared.MinIO.Contracts;
 using Shared.Redis;
 using System.Reflection;
+using Domain.Core.Entities.BackgroundJobAggregate;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.InstallmentAggregate;
 
 namespace Service.Rest
 {
@@ -61,8 +64,13 @@ namespace Service.Rest
             services.AddScoped<IFinancialDocumentRepository, FinancialDocumentRepository>();
             services.AddScoped<IFinancierRepository, FinancierRepository>();
             services.AddScoped<IGuarantorRepository, GuarantorRepository>();
+
+            services.AddScoped<IBackgroundJobRepository, BackgroundJobRepository>();
+            services.AddScoped<IBillingRepository, BillingRepository>();
+            services.AddScoped<IInstallmentRepository, InstallmentRepository>();
             services.AddScoped<IMerchantBillingRepository, MerchantBillingRepository>();
             services.AddScoped<IMerchantInstallmentRepository, MerchantInstallmentRepository>();
+
             services.AddScoped<IMerchantRepository, MerchantRepository>();
             services.AddScoped<IOrganizationRepository, OrganizationRepository>();
             services.AddScoped<IProviderRepository, ProviderRepository>();
@@ -130,6 +138,7 @@ namespace Service.Rest
 
         internal static void RegisterServices(this IServiceCollection services)
         {
+            services.AddScoped<IBackgroundJobService, BackgroundJobService>();
             services.AddScoped<ITenantMerchantContractService, TenantMerchantContractService>();
             services.AddScoped<IAttachmentService, AttachmentService>();
             services.AddScoped<IMerchantBillingService, MerchantBillingService>();

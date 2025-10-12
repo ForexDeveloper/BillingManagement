@@ -15,8 +15,6 @@ public abstract class Billing : BaseEntity<long>
 {
     public int TenantId { get; protected set; }
 
-    public long? ParentId { get; protected set; }
-
     public int FromBusinessIdentityId { get; protected set; }
 
     public int ToBusinessIdentityId { get; protected set; }
@@ -37,9 +35,21 @@ public abstract class Billing : BaseEntity<long>
 
     public decimal PreviousPenaltyAmount { get; protected set; }
 
+    public decimal AdditionsAmount { get; protected set; }
+
+    public decimal DeductionsAmount { get; protected set; }
+
+    public string? AdditionsDescription { get; protected set; }
+
+    public string? DeductionsDescription { get; protected set; }
+
     public int GracePeriod { get; protected set; }
 
-    public IEnumerable<int> ContractIds { get; protected set; }
+    public bool Transferred { get; protected set; }
+
+    public int MainContractId { get; protected set; }
+
+    public List<int> ContractIds { get; protected set; }
 
     public DateTime StartDate { get; protected set; }
 
@@ -47,23 +57,29 @@ public abstract class Billing : BaseEntity<long>
 
     public DateTime DueDate { get; protected set; }
 
+    public long? DebtorId { get; protected set; }
+
+    public long? CreditorId { get; protected set; }
+
     public byte[] RowVersion { get; protected set; }
 
     public string CheckSum { get; protected set; }
 
     public Tenant Tenant { get; protected set; }
 
-    public Billing? Parent { get; protected set; }
+    public Billing? Debtor { get; protected set; }
+
+    public Billing? Creditor { get; protected set; }
 
     public BusinessIdentity FromBusinessIdentity { get; protected set; }
 
     public BusinessIdentity ToBusinessIdentity { get; protected set; }
 
-    public List<Installment> Installments { get; protected set; } = [];
-
     public List<BillingPayment> Payments { get; protected set; } = [];
 
-    public ICollection<Billing> Children { get; protected set; } = [];
+    public ICollection<Billing> DebtorChildren { get; protected set; } = [];
+
+    public ICollection<Billing> CreditorChildren { get; protected set; } = [];
 
     protected decimal PayableAmount => Amount - PaidAmount;
 
@@ -76,14 +92,19 @@ public abstract class Billing : BaseEntity<long>
 
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
-        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, Billing? parent = null)
+        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
+        List<int> contractIds, Billing? debtor = null, Billing? creditor = null)
     {
         Type = type;
-        Parent = parent;
+        Debtor = debtor;
+        Transferred = false;
+        Creditor = creditor;
         TenantId = tenantId;
+        AdditionsAmount = 0;
+        DeductionsAmount = 0;
         PeriodType = periodType;
         GracePeriod = gracePeriod;
+        MainContractId = mainContractId;
         PreviousDebitAmount = previousDebitAmount;
         PreviousCreditAmount = previousCreditAmount;
         ToBusinessIdentityId = toBusinessIdentityId;
@@ -92,30 +113,6 @@ public abstract class Billing : BaseEntity<long>
 
         GenerateCode();
         SetContractIds(contractIds);
-        SetDueDate(endDate, gracePeriod);
-        SetBillingRanges(startDate, endDate);
-    }
-
-    protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
-        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, IEnumerable<Installment> installments, Billing? parent = null)
-    {
-        Type = type;
-        Parent = parent;
-        TenantId = tenantId;
-        PeriodType = periodType;
-        GracePeriod = gracePeriod;
-        PreviousDebitAmount = previousDebitAmount;
-        PreviousCreditAmount = previousCreditAmount;
-        ToBusinessIdentityId = toBusinessIdentityId;
-        PreviousPenaltyAmount = previousPenaltyAmount;
-        FromBusinessIdentityId = fromBusinessIdentityId;
-
-        GenerateCode();
-        SetContractIds(contractIds);
-        AddInstallments(installments);
-        SetDueDate(endDate, gracePeriod);
         SetBillingRanges(startDate, endDate);
     }
 
@@ -129,12 +126,17 @@ public abstract class Billing : BaseEntity<long>
         UpdateStatus(BillingStatus.Overdue);
     }
 
-    public decimal GetDebitAmount()
+    public void Transfer()
+    {
+        Transferred = true;
+    }
+
+    public decimal GetPayableAmount()
     {
         return PayableAmount;
     }
 
-    public decimal CalculateDebitAmount()
+    public decimal CalculatePayableAmount()
     {
         return Amount - Payments.Sum(p => p.Amount);
     }
@@ -147,17 +149,12 @@ public abstract class Billing : BaseEntity<long>
         SetEditDateTime(DateTime.Now);
     }
 
-    private void SetDueDate(DateTime endDate, int gracePeriod)
-    {
-        DueDate = endDate.AddDays(gracePeriod);
-    }
-
     private void GenerateCode()
     {
         Code = Guid.NewGuid().ToString();
     }
 
-    private void SetContractIds(IEnumerable<int> contractIds)
+    private void SetContractIds(List<int> contractIds)
     {
         if (contractIds == null || contractIds.Any() == false)
         {
@@ -176,19 +173,17 @@ public abstract class Billing : BaseEntity<long>
 
         StartDate = startDate;
         EndDate = endDate;
-    }
-
-    private void AddInstallments(IEnumerable<Installment> installments)
-    {
-        Installments.AddRange(installments);
+        DueDate = endDate;
     }
 
     protected void SettleOrIssue()
     {
-        Status = Amount == 0 ? BillingStatus.Settled : BillingStatus.Issued;
+        Status = Amount <= 0 ? BillingStatus.Settled : BillingStatus.Issued;
     }
 
     protected abstract void SetCheckSum();
 
     protected abstract void ValidateCheckSum();
+
+    protected abstract string GenerateCheckSum();
 }

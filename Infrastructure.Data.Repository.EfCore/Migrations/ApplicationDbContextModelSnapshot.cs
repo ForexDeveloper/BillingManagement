@@ -23,6 +23,44 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Core.Entities.BackgroundJobAggregate.BackgroundJob", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClientId")
+                        .HasMaxLength(200)
+                        .HasColumnType("VARCHAR");
+
+                    b.Property<DateTime>("CreatedDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatorUserId")
+                        .HasMaxLength(100)
+                        .HasColumnType("VARCHAR");
+
+                    b.Property<DateTime>("EditDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("JobId")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobId")
+                        .IsUnique();
+
+                    b.ToTable("BackgroundJob", "Bill");
+                });
+
             modelBuilder.Entity("Domain.Core.Entities.BillingAggregate.Billing", b =>
                 {
                     b.Property<long>("Id")
@@ -31,11 +69,15 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<decimal>("Amount")
+                    b.Property<decimal>("AdditionsAmount")
                         .HasColumnType("decimal(32, 10)");
 
-                    b.Property<long?>("BillingId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("AdditionsDescription")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(32, 10)");
 
                     b.Property<string>("CheckSum")
                         .IsRequired()
@@ -53,7 +95,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
                     b.Property<string>("ContractIds")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<DateTime>("CreatedDateTime")
                         .HasColumnType("datetime2");
@@ -61,6 +104,19 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<string>("CreatorUserId")
                         .HasMaxLength(100)
                         .HasColumnType("VARCHAR");
+
+                    b.Property<long?>("CreditorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DebtorId")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("DeductionsAmount")
+                        .HasColumnType("decimal(32, 10)");
+
+                    b.Property<string>("DeductionsDescription")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime2");
@@ -80,8 +136,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<long?>("ParentId")
-                        .HasColumnType("bigint");
+                    b.Property<int>("MainContractId")
+                        .HasColumnType("int");
 
                     b.Property<byte>("PeriodType")
                         .HasColumnType("tinyint");
@@ -114,18 +170,21 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<int>("ToBusinessIdentityId")
                         .HasColumnType("int");
 
+                    b.Property<bool>("Transferred")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<byte>("Type")
                         .HasColumnType("tinyint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BillingId");
+                    b.HasIndex("CreditorId");
+
+                    b.HasIndex("DebtorId");
 
                     b.HasIndex("FromBusinessIdentityId");
-
-                    b.HasIndex("ParentId")
-                        .IsUnique()
-                        .HasFilter("[ParentId] IS NOT NULL");
 
                     b.HasIndex("TenantId");
 
@@ -232,7 +291,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasColumnType("VARCHAR");
 
                     b.Property<decimal?>("Commission")
-                        .HasColumnType("decimal(18,2)");
+                        .IsRequired()
+                        .HasColumnType("decimal(32, 10)");
 
                     b.Property<DateTime>("CreatedDateTime")
                         .HasColumnType("datetime2");
@@ -327,8 +387,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(32, 10)");
 
-                    b.Property<long?>("BillingId")
-                        .HasColumnType("bigint");
+                    b.Property<decimal>("CashAmount")
+                        .HasColumnType("decimal(32, 10)");
 
                     b.Property<string>("CheckSum")
                         .IsRequired()
@@ -349,6 +409,9 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("VARCHAR");
 
+                    b.Property<decimal>("CreditAmount")
+                        .HasColumnType("decimal(32, 10)");
+
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime2");
 
@@ -367,6 +430,9 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<int>("Number")
                         .HasColumnType("int");
 
+                    b.Property<decimal>("PrepaymentAmount")
+                        .HasColumnType("decimal(32, 10)");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -378,9 +444,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<int>("TenantId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("TenantMerchantContractId1")
-                        .HasColumnType("int");
-
                     b.Property<int>("ToBusinessIdentityId")
                         .HasColumnType("int");
 
@@ -389,19 +452,15 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BillingId");
-
                     b.HasIndex("FinancialDocumentId");
 
                     b.HasIndex("FromBusinessIdentityId");
 
                     b.HasIndex("TenantId");
 
-                    b.HasIndex("TenantMerchantContractId1");
-
                     b.HasIndex("ToBusinessIdentityId");
 
-                    b.ToTable("Installments", "Bill");
+                    b.ToTable("Installment", "Bill");
 
                     b.UseTptMappingStrategy();
                 });
@@ -1206,39 +1265,20 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 {
                     b.HasBaseType("Domain.Core.Entities.BillingAggregate.Billing");
 
-                    b.Property<decimal>("Additions")
+                    b.Property<decimal>("PurchaseTransactionsAmount")
                         .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("AdditionsDescription")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<decimal>("CurrentPeriodCalculatedCommission")
+                    b.Property<decimal>("PurchaseTransactionsCalculatedCommission")
                         .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("CurrentPeriodFinalCommission")
+                    b.Property<decimal>("PurchaseTransactionsCommission")
                         .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("CurrentPeriodPurchaseTransactions")
-                        .HasColumnType("decimal(32, 10)");
-
-                    b.Property<decimal>("Deductions")
-                        .HasColumnType("decimal(32, 10)");
-
-                    b.Property<string>("DeductionsDescription")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<int?>("MerchantId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("PreviousPeriodRefundedTransactions")
+                    b.Property<decimal>("RefundedTransactionsAmount")
                         .HasColumnType("decimal(32, 10)");
 
                     b.Property<decimal>("RefundedTransactionsCommission")
                         .HasColumnType("decimal(32, 10)");
-
-                    b.HasIndex("MerchantId");
 
                     b.ToTable("MerchantBilling", "Bill");
                 });
@@ -1419,20 +1459,21 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
             modelBuilder.Entity("Domain.Core.Entities.BillingAggregate.Billing", b =>
                 {
-                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", null)
-                        .WithMany("Children")
-                        .HasForeignKey("BillingId");
+                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Creditor")
+                        .WithMany("CreditorChildren")
+                        .HasForeignKey("CreditorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Debtor")
+                        .WithMany("DebtorChildren")
+                        .HasForeignKey("DebtorId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "FromBusinessIdentity")
                         .WithMany()
                         .HasForeignKey("FromBusinessIdentityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Parent")
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.BillingAggregate.Billing", "ParentId")
-                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
                         .WithMany()
@@ -1446,9 +1487,11 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("FromBusinessIdentity");
+                    b.Navigation("Creditor");
 
-                    b.Navigation("Parent");
+                    b.Navigation("Debtor");
+
+                    b.Navigation("FromBusinessIdentity");
 
                     b.Navigation("Tenant");
 
@@ -1519,10 +1562,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
             modelBuilder.Entity("Domain.Core.Entities.InstallmentAggregate.Installment", b =>
                 {
-                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Billing")
-                        .WithMany("Installments")
-                        .HasForeignKey("BillingId");
-
                     b.HasOne("Domain.Core.Entities.FinancialDocumentAggregate.FinancialDocument", "FinancialDocument")
                         .WithMany()
                         .HasForeignKey("FinancialDocumentId")
@@ -1541,17 +1580,11 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", null)
-                        .WithMany("Installments")
-                        .HasForeignKey("TenantMerchantContractId1");
-
                     b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "ToBusinessIdentity")
                         .WithMany()
                         .HasForeignKey("ToBusinessIdentityId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Billing");
 
                     b.Navigation("FinancialDocument");
 
@@ -1736,10 +1769,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasForeignKey("Domain.Core.Entities.MerchantBillingAggregate.MerchantBilling", "Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Domain.Core.Entities.MerchantAggregate.Merchant", null)
-                        .WithMany("MerchantBillings")
-                        .HasForeignKey("MerchantId");
                 });
 
             modelBuilder.Entity("Domain.Core.Entities.FacilitatorAggregate.Facilitator", b =>
@@ -1870,9 +1899,9 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
             modelBuilder.Entity("Domain.Core.Entities.BillingAggregate.Billing", b =>
                 {
-                    b.Navigation("Children");
+                    b.Navigation("CreditorChildren");
 
-                    b.Navigation("Installments");
+                    b.Navigation("DebtorChildren");
 
                     b.Navigation("Payments");
                 });
@@ -1897,8 +1926,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Navigation("Children");
 
                     b.Navigation("FinancialDocuments");
-
-                    b.Navigation("Installments");
                 });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", b =>
@@ -1934,8 +1961,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantAggregate.Merchant", b =>
                 {
-                    b.Navigation("MerchantBillings");
-
                     b.Navigation("MerchantBranches");
                 });
 #pragma warning restore 612, 618

@@ -7,65 +7,80 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.BillingAggregate.Dtos;
 using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
-public sealed class MerchantBillingRepository(ApplicationDbContext applicationDbContext) : IMerchantBillingRepository
+public sealed class MerchantBillingRepository(ApplicationDbContext applicationDbContext)
+    : Repository<MerchantBilling, long>(applicationDbContext), IMerchantBillingRepository
 {
+    private readonly ApplicationDbContext _applicationDbContext = applicationDbContext;
+
+    public async Task AddRangeAsync(IEnumerable<MerchantBilling> billings, CancellationToken cancellationToken)
+    {
+        await _applicationDbContext.MerchantBillings.AddRangeAsync(billings, cancellationToken);
+    }
+
     public async Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken)
     {
-        var billings = await applicationDbContext.MerchantBillings
-            .Where(p => (p.Status == BillingStatus.Overdue && p.Children.Any() == false) ||
+        var billings = await _applicationDbContext.MerchantBillings
+            .Where(p => (p.Status == BillingStatus.Overdue && p.Transferred == false) ||
                         ((p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid) && p.DueDate.AddDays(1) < DateTime.Today))
             .Select(p => new NotSettledBilling
             {
                 Billing = p,
                 PaidAmount = p.Payments.Sum(q => q.Amount),
-                Contract = applicationDbContext.TenantMerchantContracts.Include(q => q.Children)
-                    .OrderByDescending(q => q.CreatedDateTime).FirstOrDefault(q => p.ContractIds.Contains(q.Id))
+                ActiveContractId = _applicationDbContext.TenantMerchantContracts.Where(q =>
+                    q.Status &&
+                    q.TenantId == p.FromBusinessIdentityId &&
+                    q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
             })
+            .OrderByDescending(p => p.Billing.EndDate)
             .ToListAsync(cancellationToken);
-
-        foreach (var billing in billings)
-        {
-            billing.FinalEndorsementContractId = GetFinalContractId(billing.Contract);
-        }
 
         return billings;
     }
 
-    public IQueryable<MerchantBilling> CreateJobBillingQuery(DateTime startOfPeriod, DateTime endOfPeriod)
+    public async Task<List<NegativeSettledBilling>> GetNegativeSettledBillings(CancellationToken cancellationToken)
     {
-        return applicationDbContext.MerchantBillings.Where(p => startOfPeriod == p.StartDate && endOfPeriod == p.EndDate);
+        return await _applicationDbContext.MerchantBillings
+            .Where(p => p.Status == BillingStatus.Settled && p.Amount < 0 && p.Transferred == false)
+            .Select(p => new NegativeSettledBilling
+            {
+                Billing = p,
+                ActiveContractId = _applicationDbContext.TenantMerchantContracts.Where(q =>
+                    q.Status &&
+                    q.TenantId == p.FromBusinessIdentityId &&
+                    q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
+            })
+            .OrderByDescending(p => p.Billing.EndDate)
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<bool> FindInContractPeriodAsync(IQueryable<MerchantBilling> query, CancellationToken cancellationToken)
+    public async Task<DateTime?> GetLastBillingDueDate(IEnumerable<int> contractIds, CancellationToken cancellationToken)
     {
-        return await query.AnyAsync(cancellationToken);
+        //return await applicationDbContext.MerchantBillings.AsNoTracking()
+        //    .Where(p => p.ContractIds.Any(q => contractIds.Contains(q)))
+        //    .MaxAsync(p => p.DueDate, cancellationToken);
+
+
+        // resharper suggestion should not be applied !!!
+
+        var lastBillingDueDate = await _applicationDbContext.MerchantBillings.AsNoTracking()
+            .OrderByDescending(p => p.DueDate)
+            .Where(p => p.ContractIds.Any(q => contractIds.Contains(q)))
+            .Select(p => p.DueDate)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return lastBillingDueDate == DateTime.MinValue ? null : lastBillingDueDate;
     }
 
-    public async Task<bool> FindInContractPeriodAsync(DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    public async Task<bool> FindAnotherBillingOnEndOfPeriod(int tenantId, int merchantId, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
-        return await applicationDbContext.MerchantBillings
-            .Where(p => startOfPeriod == p.StartDate && endOfPeriod == p.EndDate).AnyAsync(cancellationToken);
-    }
-
-    public async Task AddRangeAsync(IEnumerable<MerchantBilling> billings, CancellationToken cancellationToken)
-    {
-        await applicationDbContext.MerchantBillings.AddRangeAsync(billings, cancellationToken);
-    }
-
-    private static int GetFinalContractId(TenantMerchantContract contract)
-    {
-        if (contract.Children == null || !contract.Children.Any()) return contract.Id;
-
-        foreach (var child in contract.Children)
-        {
-            return GetFinalContractId(child);
-        }
-
-        return contract.Id;
+        return await _applicationDbContext.MerchantBillings
+            .Where(p => p.FromBusinessIdentityId == tenantId &&
+                        p.ToBusinessIdentityId == merchantId &&
+                        p.DueDate == endOfPeriod)
+            .AnyAsync(cancellationToken);
     }
 }

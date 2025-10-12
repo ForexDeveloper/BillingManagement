@@ -15,13 +15,13 @@ public sealed record ContractGroup
 
     public TimeInterval BillingPeriodType { get; set; }
 
-    public DateTime? BillingDailyOriginDate { get; set; }
+    public DateTime? DailyBillingOriginDate { get; set; }
 
-    public bool HasEndorsement { get; set; }
+    public required bool Status { get; set; }
 
-    public DateTime EndorsementDate { get; set; }
+    public required int MainContractId { get; set; }
 
-    public IEnumerable<int> ContractIds { get; set; }
+    public List<int> ContractIds { get; set; }
 
     public decimal? PeriodMinCommissionAmount { get; set; }
 
@@ -30,4 +30,16 @@ public sealed record ContractGroup
     public List<TieredCommission> TieredCommissions { get; set; }
 
     public CommissionCalculationType CommissionCalculationType { get; set; }
+
+    public required List<CommissionReferenceType> CommissionReferenceTypes { get; set; }
+
+    public ContractIdentifier CreateIdentifier()
+    {
+        return new ContractIdentifier(TenantId,
+            MerchantId,
+            BillingPeriod,
+            BillingPeriodType,
+            DailyBillingOriginDate,
+            CommissionCalculationType);
+    }
 }

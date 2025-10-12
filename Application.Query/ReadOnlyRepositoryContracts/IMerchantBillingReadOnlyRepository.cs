@@ -13,13 +13,17 @@ public interface IMerchantBillingReadOnlyRepository
 
     Task<GetPreviousDebitViewModel> GetPreviousDebitAsync(GetPreviousDebitQuery query);
 
+    Task<GetPreviousCreditViewModel> GetPreviousCreditAsync(GetPreviousCreditQuery query);
+
     Task<GetAdditionsViewModel> GetAdditionsAsync(GetAdditionsQuery query);
 
     Task<GetDeductionsViewModel> GetDeductionsAsync(GetDeductionsQuery query);
 
-    Task<GetRefundedTransactionsCommissionViewModel> GetRefundedPurchasesCommissionAsync(GetRefundedPurchasesCommissionQuery query);
+    Task<GetPurchaseTransactionsViewModel> GetPurchaseTransactionsAsync(GetPurchaseTransactionsQuery query);
 
-    Task<GetPreviousPeriodRefundedTransactionsViewModel> GetPreviousPeriodRefundedPurchasesAsync(GetPreviousPeriodRefundedTransactionsQuery query);
+    Task<GetRefundedTransactionsViewModel> GetRefundedTransactionsAsync(GetRefundedTransactionsQuery query);
 
-    Task<GetCurrentPeriodFinalCommissionViewModel> GetCurrentPeriodFinalCommissionAsync(GetCurrentPeriodFinalCommissionQuery query);
+    Task<GetPurchaseTransactionsCommissionViewModel> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query);
+
+    Task<GetRefundedTransactionsCommissionViewModel> GetRefundedTransactionsCommissionAsync(GetRefundedTransactionsCommissionQuery query);
 }

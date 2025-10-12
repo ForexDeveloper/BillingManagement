@@ -1,8 +1,8 @@
-﻿using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.TenantMerchantContractAggregate;
 
@@ -28,7 +28,5 @@ public interface ITenantMerchantContractRepository
 
     Task<List<ContractGroup>> GetAllGroupContractAsync(CancellationToken cancellationToken);
 
-    Task<List<ContractGroup>> GetCurrentGroupContractsAsync(CancellationToken cancellationToken);
-
-    (DateTime StartOfPeriod, DateTime EndOfPeriod) GetContractActivePeriod(TenantMerchantContract contract);
+    DateTime GetActiveContractStartOfPeriod(TenantMerchantContract contract);
 }

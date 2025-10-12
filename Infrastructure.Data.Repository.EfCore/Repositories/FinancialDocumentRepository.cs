@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
@@ -14,11 +14,6 @@ namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
 public sealed class FinancialDocumentRepository(ApplicationDbContext applicationDbContext) : IFinancialDocumentRepository
 {
-    public void Attach(long id, decimal? commission)
-    {
-
-    }
-
     public async Task AddAsync(FinancialDocument financialDocument)
     {
         await applicationDbContext.FinancialDocuments.AddAsync(financialDocument);
@@ -42,6 +37,12 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
     public void UpdateRange(List<FinancialDocument> financialDocuments)
     {
         applicationDbContext.FinancialDocuments.UpdateRange(financialDocuments);
+    }
+
+    public void UpdatePartial(FinancialDocument financialDocument, string propertyName)
+    {
+        applicationDbContext.FinancialDocuments.Attach(financialDocument);
+        applicationDbContext.FinancialDocuments.Entry(financialDocument).Property(propertyName).IsModified = true;
     }
 
     public async Task<List<FinancialDocument>> GetAllAsync()
@@ -84,56 +85,40 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
     public IQueryable<FinancialDocument> CreateJobFinancialDocumentQuery(DateTime startOfPeriod, DateTime endOfPeriod, IEnumerable<int> contractIds)
     {
         return applicationDbContext.FinancialDocuments
-            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod);
+    }
+
+    public async Task<FinancialDocumentRange> GetFinancialDocumentRange(IEnumerable<int> contractIds,
+        DateTime? lastBillingDueDate, DateTime jobCreatedDateTime, CancellationToken cancellationToken)
+    {
+        var query = applicationDbContext.FinancialDocuments.AsNoTracking()
+            .Where(p => p.Type == FinancialDocumentType.Refund)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value));
+
+        query = lastBillingDueDate.HasValue ?
+            query.Where(p => lastBillingDueDate <= p.CreatedDateTime && p.CreatedDateTime < DateTime.Today) :
+            query.Where(p => jobCreatedDateTime <= p.CreatedDateTime && p.CreatedDateTime < DateTime.Today);
+
+        var found = await query.AnyAsync(cancellationToken);
+
+        if (found == false) return null;
+
+        var minCreatedDateTime = await query.MinAsync(p => p.CreatedDateTime, cancellationToken);
+
+        var maxCreatedDateTime = await query.MaxAsync(p => p.CreatedDateTime, cancellationToken);
+
+        return new FinancialDocumentRange(minCreatedDateTime, maxCreatedDateTime);
     }
 
-    public async Task<bool> ExecuteQueryAnyAsync(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
+    public async Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(
+        IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
     {
-        return await query.AnyAsync(cancellationToken);
-    }
+        if (query == null) return new Dictionary<ContractIdentifier, List<FinancialDocumentDto>>();
 
-    public async Task<decimal> GetPeriodTotalTransactionsAmount(int tenantId, int merchantId, DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
-    {
-        return await applicationDbContext.FinancialDocuments
-            .Where(p => p.FromBusinessIdentityId == tenantId && p.ToBusinessIdentityId == merchantId)
-            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
-            .Where(p => p.Type == FinancialDocumentType.Purchase).SumAsync(p => p.Amount, cancellationToken);
-    }
-
-    public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(int tenantId, int merchantId, int billingPeriod,
-        TimeInterval billingPeriodType, DateTime? dailyBillingOriginDate,
-        CommissionCalculationType commissionCalculationType, DateTime startOfPeriod, DateTime endOfPeriod)
-    {
-        return await applicationDbContext.FinancialDocuments
-            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod &&
-                        p.TenantMerchantContract.BillingPeriod == billingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == billingPeriodType &&
-                        p.TenantMerchantContract.DailyBillingOriginDate == dailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == commissionCalculationType &&
-                        p.FromBusinessIdentityId == tenantId && p.ToBusinessIdentityId == merchantId)
-            .Where(p => p.Type == FinancialDocumentType.Purchase).SumAsync(p => p.Amount);
-    }
-
-    public async Task<decimal> GetSumOfTransactionsOfCurrentPeriod(TenantMerchantContract contract, DateTime startOfPeriod, DateTime endOfPeriod)
-    {
-        return await applicationDbContext.FinancialDocuments
-            .Where(p => p.Type == FinancialDocumentType.Purchase &&
-                        startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod &&
-                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
-                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType &&
-                        p.FromBusinessIdentityId == contract.TenantId && p.ToBusinessIdentityId == contract.MerchantId)
-            .SumAsync(p => p.Amount);
-    }
-
-    public async Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
-    {
         return await query.AsNoTracking().Select(p => new
         {
-            p.Id,
-            p.Type,
             p.Amount,
             p.CreatedDateTime,
             PurchaseCommission = p.Parent.Commission,
@@ -141,7 +126,8 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             p.TenantMerchantContract.MerchantId,
             p.TenantMerchantContract.BillingPeriod,
             p.TenantMerchantContract.BillingPeriodType,
-            p.TenantMerchantContract.DailyBillingOriginDate
+            p.TenantMerchantContract.DailyBillingOriginDate,
+            p.TenantMerchantContract.CommissionCalculationType
         })
         .GroupBy(p => new ContractIdentifier()
         {
@@ -149,15 +135,50 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             MerchantId = p.MerchantId,
             BillingPeriod = p.BillingPeriod,
             BillingPeriodType = p.BillingPeriodType,
-            BillingDailyOriginDate = p.DailyBillingOriginDate
+            DailyBillingOriginDate = p.DailyBillingOriginDate,
+            CommissionCalculationType = p.CommissionCalculationType
         })
         .ToDictionaryAsync(p => p.Key, p => p.Select(q => new FinancialDocumentDto()
         {
-            Id = q.Id,
-            Type = q.Type,
             Amount = q.Amount,
             CreatedDateTime = q.CreatedDateTime,
             PurchaseCommission = q.PurchaseCommission
         }).ToList(), cancellationToken);
+    }
+
+    public async Task<IEnumerable<FinancialDocumentDto>> GetFinancialDocumentsInSpecificPeriod(IEnumerable<int> contractIds,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.FinancialDocuments
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
+            .Select(p => new FinancialDocumentDto()
+            {
+                Amount = p.Amount,
+                CreatedDateTime = p.CreatedDateTime,
+                PurchaseCommission = p.Parent.Commission
+            })
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(IEnumerable<int> contractIds,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.FinancialDocuments
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
+            .SumAsync(p => p.Amount, cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(IEnumerable<int> contractIds,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await applicationDbContext.FinancialDocuments
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
+            .SumAsync(p => p.Parent.Commission, cancellationToken) ?? 0;
     }
 }

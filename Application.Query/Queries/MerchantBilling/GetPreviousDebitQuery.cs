@@ -13,7 +13,7 @@ public sealed record GetPreviousDebitQuery(int TenantId, long Id) : IRequest<Get
     public int TenantId { get; set; } = TenantId;
 }
 
-public sealed class GetMerchantBillingPreviousDebitQueryHandler(IMerchantBillingReadOnlyRepository repository)
+public sealed class GetDebitQueryHandler(IMerchantBillingReadOnlyRepository repository)
     : IRequestHandler<GetPreviousDebitQuery, GetPreviousDebitViewModel>
 {
     public async Task<GetPreviousDebitViewModel> Handle(GetPreviousDebitQuery query,

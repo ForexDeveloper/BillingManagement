@@ -1,4 +1,6 @@
-﻿namespace Application.Query.ViewModels.MerchantBillings;
+﻿using System.Collections.Generic;
+
+namespace Application.Query.ViewModels.MerchantBillings;
 
 public sealed record GetRefundedTransactionsCommissionViewModel
 {
@@ -6,5 +8,5 @@ public sealed record GetRefundedTransactionsCommissionViewModel
 
     public decimal Amount { get; set; }
 
-    public GetMerchantBillingContractViewModel Contract { get; set; }
+    public IEnumerable<GetMerchantBillingContractViewModel> Contracts { get; set; }
 }

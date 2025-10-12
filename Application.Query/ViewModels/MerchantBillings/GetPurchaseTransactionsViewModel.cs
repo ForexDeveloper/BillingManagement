@@ -1,6 +1,6 @@
 ﻿namespace Application.Query.ViewModels.MerchantBillings;
 
-public sealed record GetCurrentPeriodPurchaseTransactionsViewModel
+public sealed record GetPurchaseTransactionsViewModel
 {
      public long Id { get; set; }
 

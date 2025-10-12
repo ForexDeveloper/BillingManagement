@@ -4,29 +4,20 @@ using Domain.Core.Helper;
 using System.Collections.Generic;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.InstallmentAggregate;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 
 public sealed class MerchantBilling : Billing
 {
-    public decimal Additions { get; private set; }
+    public decimal PurchaseTransactionsAmount { get; private set; }
 
-    public string? AdditionsDescription { get; private set; }
+    public decimal RefundedTransactionsAmount { get; private set; }
 
-    public decimal Deductions { get; private set; }
-
-    public string? DeductionsDescription { get; private set; }
+    public decimal PurchaseTransactionsCommission { get; private set; }
 
     public decimal RefundedTransactionsCommission { get; private set; }
 
-    public decimal CurrentPeriodFinalCommission { get; private set; }
-
-    public decimal CurrentPeriodCalculatedCommission { get; private set; }
-
-    public decimal CurrentPeriodPurchaseTransactions { get; private set; }
-
-    public decimal PreviousPeriodRefundedTransactions { get; private set; }
+    public decimal PurchaseTransactionsCalculatedCommission { get; private set; }
 
     private MerchantBilling()
     {
@@ -34,44 +25,19 @@ public sealed class MerchantBilling : Billing
     }
 
     public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
-        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, decimal currentPeriodCalculatedCommission, decimal currentPeriodFinalCommission,
-        decimal refundedTransactionsCommission, decimal previousPeriodRefundedTransactions,
-        decimal currentPeriodPurchaseTransactions,
-        Billing? parent = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType,
-        previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds,
-        parent)
+        TimeInterval periodType, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
+        List<int> contractIds, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
+        decimal purchaseTransactionsAmount, decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
+        decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission,
+        Billing? debtor = null, Billing? creditor = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId,
+        type, periodType, previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate,
+        gracePeriod, mainContractId, contractIds, debtor, creditor)
     {
-        Additions = 0;
-        Deductions = 0;
-        CurrentPeriodFinalCommission = currentPeriodFinalCommission;
+        PurchaseTransactionsAmount = purchaseTransactionsAmount;
+        RefundedTransactionsAmount = refundedTransactionsAmount;
+        PurchaseTransactionsCommission = purchaseTransactionsCommission;
         RefundedTransactionsCommission = refundedTransactionsCommission;
-        CurrentPeriodPurchaseTransactions = currentPeriodPurchaseTransactions;
-        CurrentPeriodCalculatedCommission = currentPeriodCalculatedCommission;
-        PreviousPeriodRefundedTransactions = previousPeriodRefundedTransactions;
-        CalculateAmount();
-        SettleOrIssue();
-        SetCheckSum();
-    }
-
-    public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
-        decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod,
-        IEnumerable<int> contractIds, decimal currentPeriodCalculatedCommission, decimal currentPeriodFinalCommission,
-        decimal refundedTransactionsCommission, decimal previousPeriodRefundedTransactions,
-        decimal currentPeriodPurchaseTransactions, IEnumerable<Installment>? installments = null,
-        Billing? parent = null) : base(tenantId,
-        fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount, previousCreditAmount,
-        previousPenaltyAmount, startDate, endDate, gracePeriod, contractIds, installments, parent)
-    {
-        Additions = 0;
-        Deductions = 0;
-        CurrentPeriodFinalCommission = currentPeriodFinalCommission;
-        RefundedTransactionsCommission = refundedTransactionsCommission;
-        CurrentPeriodPurchaseTransactions = currentPeriodPurchaseTransactions;
-        CurrentPeriodCalculatedCommission = currentPeriodCalculatedCommission;
-        PreviousPeriodRefundedTransactions = previousPeriodRefundedTransactions;
+        PurchaseTransactionsCalculatedCommission = purchaseTransactionsCalculatedCommission;
         CalculateAmount();
         SettleOrIssue();
         SetCheckSum();
@@ -84,7 +50,7 @@ public sealed class MerchantBilling : Billing
             throw new ArgumentValidationException(nameof(additions), "مبلغ اضافات نمی تواند از 0 کوچکتر باشد");
         }
 
-        Additions = additions;
+        AdditionsAmount = additions;
         AdditionsDescription = additionDescription;
         CalculateAmount();
     }
@@ -96,7 +62,7 @@ public sealed class MerchantBilling : Billing
             throw new ArgumentValidationException(nameof(deductions), "مبلغ کسورات نمی تواند از 0 کوچکتر باشد");
         }
 
-        Amount += Deductions;
+        Amount += DeductionsAmount;
 
         if (Amount < deductions)
         {
@@ -104,33 +70,41 @@ public sealed class MerchantBilling : Billing
         }
 
         DeductionsDescription = deductionDescription;
-        Deductions = deductions;
+        DeductionsAmount = deductions;
         CalculateAmount();
     }
 
     private void CalculateAmount()
     {
-        var totalCredit = PreviousDebitAmount + CurrentPeriodPurchaseTransactions + RefundedTransactionsCommission + Additions;
+        var totalDebit = PreviousDebitAmount + PurchaseTransactionsAmount + RefundedTransactionsCommission + AdditionsAmount;
 
-        var totalDebit = PreviousCreditAmount + CurrentPeriodFinalCommission + PreviousPeriodRefundedTransactions + Deductions;
+        var totalCredit = PreviousCreditAmount + PurchaseTransactionsCommission + RefundedTransactionsAmount + DeductionsAmount;
 
-        Amount = totalCredit - totalDebit;
+        Amount = totalDebit - totalCredit;
 
         SetCheckSum();
     }
 
     protected override void SetCheckSum()
     {
-        CheckSum = $"{FromBusinessIdentityId}{ToBusinessIdentityId}{TenantId}{Amount:F10}{PreviousDebitAmount:F10}{PreviousCreditAmount:F10}{PreviousPenaltyAmount:F10}{GracePeriod}{Status}{StartDate:yyyy-MM-ddTHH:mm:ss}{EndDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}".Hash();
+        CheckSum = GenerateCheckSum().Hash();
     }
 
     protected override void ValidateCheckSum()
     {
-        var comperedTo = $"{FromBusinessIdentityId}{ToBusinessIdentityId}{TenantId}{Amount:F10}{PreviousDebitAmount:F10}{PreviousCreditAmount:F10}{PreviousPenaltyAmount:F10}{GracePeriod}{Status}{StartDate:yyyy-MM-ddTHH:mm:ss}{EndDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
+        var comperedTo = GenerateCheckSum();
 
         if (!comperedTo.Validate(CheckSum))
         {
             throw new ArgumentValidationException("InconsistentData", "اطلاعات موجود در دیتابیس صحیح نمی باشد.");
         }
+    }
+
+    protected override string GenerateCheckSum()
+    {
+        return $"{FromBusinessIdentityId}{ToBusinessIdentityId}{TenantId}{Amount:F10}" +
+               $"{PreviousDebitAmount:F10}{PurchaseTransactionsAmount:F10}{RefundedTransactionsCommission:F10}{AdditionsAmount:F10}" +
+               $"{PreviousCreditAmount:F10}{PurchaseTransactionsCommission:F10}{RefundedTransactionsAmount:F10}{DeductionsAmount:F10}" +
+               $"{GracePeriod}{Status}{StartDate:yyyy-MM-ddTHH:mm:ss}{EndDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
     }
 }

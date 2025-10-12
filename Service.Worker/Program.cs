@@ -51,7 +51,7 @@ try
 
             services.RegisterEventBus(hostContext.Configuration);
             services.RegisterOutBoxServices(hostContext.Configuration);
-            services.RegisteRedisServices(configuration);
+            services.RegisterRedisServices(configuration);
             services.RegisterRepositories();
             services.RegisterServices();
 
