@@ -1,14 +1,16 @@
-﻿using System;
+﻿using Domain.Core.Entities.BillingAggregate.Dtos;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Domain.Core.Entities.BillingAggregate.Dtos;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 
 public interface IMerchantBillingRepository : IRepository<MerchantBilling, long>
 {
+    Task<MerchantBilling> GetByBillingIdAsync(long billingId);
+    void Update(MerchantBilling billings);
     Task AddRangeAsync(IEnumerable<MerchantBilling> billings, CancellationToken cancellationToken);
 
     Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken);

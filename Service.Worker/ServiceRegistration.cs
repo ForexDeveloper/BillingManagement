@@ -152,6 +152,7 @@ namespace Service.Worker
             services.AddScoped<IBackgroundJobService, BackgroundJobService>();
             //services.AddScoped<IMerchantBillingService, MerchantBillingService>();
             services.AddScoped<IWalletContractService, WalletContractService>();
+            services.AddScoped<IBillingPaymentService, BillingPaymentService>();
         }
     }
 }

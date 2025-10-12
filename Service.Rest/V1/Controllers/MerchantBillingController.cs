@@ -1,14 +1,14 @@
-﻿using MediatR;
-using System.Net;
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using Microsoft.AspNetCore.Authorization;
-using Application.Command.BillingCommands;
+﻿using Application.Command.BillingCommands;
+using Application.Query.Queries.MerchantBilling;
 using Application.Query.ViewModels.Billings;
+using Application.Query.ViewModels.MerchantBillings;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Service.Rest.V1.RequestModels.Billings;
 using Shared.IdentityServerProvider.Contracts;
-using Application.Query.Queries.MerchantBilling;
-using Application.Query.ViewModels.MerchantBillings;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Net;
 
 namespace Service.Rest.V1.Controllers;
 
@@ -151,5 +151,17 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
         var commission = await mediator.Send(new GetRefundedTransactionsCommissionQuery(currentUserService.TenantId, id));
 
         return Ok(commission);
+    }
+
+
+    [HttpGet("{id}/pay-amount/{amount}/is-payable")]
+    [SwaggerOperation("Check billing is payable")]
+    [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing list not found")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing is payable returned", typeof(bool))]
+    public async Task<ActionResult<bool>> IsBillingPayable([FromRoute] long id, [FromRoute] decimal amount)
+    {
+        var isBillingPayable = await mediator.Send(new IsMerchantBillingPayableQuery(currentUserService.TenantId, id, amount));
+
+        return Ok(isBillingPayable);
     }
 }

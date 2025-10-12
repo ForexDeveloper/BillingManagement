@@ -9,18 +9,24 @@ namespace Domain.Core.Entities.BillingPaymentAggregate;
 public class BillingPayment : BaseEntity<long>
 {
     public long BillingId { get; protected set; }
-
+    public long PaymentId { get; protected set; }
     public decimal Amount { get; protected set; }
-
     public DateTime PaymentDate { get; protected set; }
-
     public string CheckSum { get; protected set; }
-
     public Billing Billing { get; protected set; }
 
     protected BillingPayment()
     {
 
+    }
+
+    public BillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)
+    {
+        BillingId = billingId;
+        PaymentId = paymentId;
+        Amount = amount;
+        PaymentDate = paymentDate;
+        SetCheckSum();
     }
 
     private void SetAmount(decimal amount)
@@ -33,8 +39,16 @@ public class BillingPayment : BaseEntity<long>
 
     private void SetCheckSum()
     {
-        //CheckSum = $"{BillingId}{Amount:F10}/*{State}{PaymentDetailId}*/{PaymentDate:yyyy-MM-ddTHH:mm:ss}".Hash();
+        CheckSum = $"{BillingId}{PaymentId}{Amount:F10}/{PaymentDate:yyyy-MM-ddTHH:mm:ss}".Hash();
+    }
 
-        CheckSum = $"{BillingId}{Amount:F10}/{PaymentDate:yyyy-MM-ddTHH:mm:ss}".Hash();
+    protected void ValidateCheckSum()
+    {
+        var comperedTo = $"{BillingId}{PaymentId}{Amount:F10}{PaymentDate:yyyy-MM-ddTHH:mm:ss}";
+
+        if (!comperedTo.Validate(CheckSum))
+        {
+            throw new ArgumentValidationException("InconsistentData", "اطلاعات موجود در دیتابیس صحیح نمی باشد.");
+        }
     }
 }
