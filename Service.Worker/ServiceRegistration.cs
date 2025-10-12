@@ -142,6 +142,7 @@ namespace Service.Worker
         {
             services.AddScoped<IMerchantBillingService, MerchantBillingService>();
             services.AddScoped<IWalletContractService, WalletContractService>();
+            services.AddScoped<IBillingPaymentService, BillingPaymentService>();
         }
     }
 }

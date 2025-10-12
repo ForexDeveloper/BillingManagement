@@ -1,7 +1,8 @@
-﻿using System.Threading.Tasks;
+﻿using Application.Query.Queries.MerchantBilling;
+using Application.Query.QueryModels.MerchantBillings;
 using Application.Query.ViewModels.Billings;
-using Application.Query.Queries.MerchantBilling;
 using Application.Query.ViewModels.MerchantBillings;
+using System.Threading.Tasks;
 
 namespace Application.Query.ReadOnlyRepositoryContracts;
 
@@ -22,4 +23,6 @@ public interface IMerchantBillingReadOnlyRepository
     Task<GetPreviousPeriodRefundedTransactionsViewModel> GetPreviousPeriodRefundedPurchasesAsync(GetPreviousPeriodRefundedTransactionsQuery query);
 
     Task<GetCurrentPeriodFinalCommissionViewModel> GetCurrentPeriodFinalCommissionAsync(GetCurrentPeriodFinalCommissionQuery query);
+
+    Task<GetMerchantBillingQueryModel> GetBillingByIdAsync(long id, int tenantId);
 }

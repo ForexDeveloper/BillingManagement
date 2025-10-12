@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.BillingPaymentAggregate;
+using Domain.Core.Entities.InstallmentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
+using System;
 using System.Collections.Generic;
-using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.InstallmentAggregate;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 
@@ -132,5 +133,10 @@ public sealed class MerchantBilling : Billing
         {
             throw new ArgumentValidationException("InconsistentData", "اطلاعات موجود در دیتابیس صحیح نمی باشد.");
         }
+    }
+
+    public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)
+    {
+        Payments.Add(new BillingPayment(billingId, paymentId, amount, paymentDate));
     }
 }
