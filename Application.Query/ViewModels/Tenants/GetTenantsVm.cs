@@ -3,6 +3,6 @@ using System;
 
 namespace Application.Query.ViewModels.Tenants;
 
-public class GetTenantsVm : BasePaginatedListQueryResult<TenantViewModel>
+public class GetTenantsVm : BasePaginatedListQueryResult<TenantVM>
 {
 }
