@@ -48,8 +48,8 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 {
                     var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
 
-                    financialDocument.SetCommission(commission);
-                }
+                //    financialDocument.SetCommission(commission);
+                //}
 
                 await unitOfWork.SaveChangesAsync();
 

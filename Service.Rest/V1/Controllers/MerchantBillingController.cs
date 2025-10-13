@@ -1,21 +1,21 @@
-﻿using MediatR;
-using System.Net;
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using Microsoft.AspNetCore.Authorization;
-using Application.Command.BillingCommands;
+﻿using Application.Command.BillingCommands;
+using Application.Query.Queries.MerchantBilling;
 using Application.Query.ViewModels.Billings;
+using Application.Query.ViewModels.MerchantBillings;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Service.Rest.V1.RequestModels.Billings;
 using Shared.IdentityServerProvider.Contracts;
-using Application.Query.Queries.MerchantBilling;
-using Application.Query.ViewModels.MerchantBillings;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Net;
 
 namespace Service.Rest.V1.Controllers;
 
 [Authorize]
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/tenant-panel/merchants/billings")]
+[Route("api/tenant-panel/merchant-billings")]
 public sealed class MerchantBillingController(IMediator mediator, ICurrentUserService currentUserService) : ControllerBase
 {
     [HttpGet]
@@ -151,5 +151,17 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
         var commission = await mediator.Send(new GetRefundedTransactionsCommissionQuery(currentUserService.TenantId, id));
 
         return Ok(commission);
+    }
+
+
+    [HttpGet("{billingId}/pay-amount/{amount}/payable-amount")]
+    [SwaggerOperation("Get billing payable amount")]
+    [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing not found")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing payable amount returned", typeof(decimal))]
+    public async Task<ActionResult<decimal>> GetBillingPayableAmount([FromRoute] long id, [FromRoute] decimal amount)
+    {
+        var merchantBillingPayableAmount = await mediator.Send(new GetMerchantBillingPayableAmountQuery(currentUserService.TenantId, id, amount));
+
+        return Ok(merchantBillingPayableAmount);
     }
 }

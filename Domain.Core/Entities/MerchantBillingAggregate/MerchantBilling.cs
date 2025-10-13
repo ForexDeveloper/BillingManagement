@@ -1,6 +1,9 @@
-﻿using System;
+﻿using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.BillingPaymentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
+using System;
 using System.Collections.Generic;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
@@ -106,5 +109,10 @@ public sealed class MerchantBilling : Billing
                $"{PreviousDebitAmount:F10}{PurchaseTransactionsAmount:F10}{RefundedTransactionsCommission:F10}{AdditionsAmount:F10}" +
                $"{PreviousCreditAmount:F10}{PurchaseTransactionsCommission:F10}{RefundedTransactionsAmount:F10}{DeductionsAmount:F10}" +
                $"{GracePeriod}{Status}{StartDate:yyyy-MM-ddTHH:mm:ss}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
+    }
+
+    public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)
+    {
+        Payments.Add(new BillingPayment(billingId, paymentId, amount, paymentDate));
     }
 }

@@ -145,6 +145,7 @@ namespace Service.Rest
             services.AddScoped<ITenantPlatformContractService, TenantPlatformContractService>();
             services.AddScoped<IWalletContractService, WalletContractService>();
             services.AddScoped<IMerchantBillingService, MerchantBillingService>();
+            services.AddScoped<IBillingPaymentService, BillingPaymentService>();
             services.AddScoped<IMerchantInstallmentService, MerchantInstallmentService>();
         }
 

@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Domain.Core.Entities.BillingAggregate.Dtos;
+using Domain.Core.Entities.MerchantBillingAggregate;
+using Domain.Core.Enums;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Domain.Core.Enums;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.BillingAggregate.Dtos;
-using Domain.Core.Entities.MerchantBillingAggregate;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
@@ -83,4 +83,18 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
                         p.DueDate == endOfPeriod)
             .AnyAsync(cancellationToken);
     }
+
+    public async Task<MerchantBilling> GetByBillingIdAsync(long billingId)
+    {
+        var merchantBilling = await applicationDbContext.MerchantBillings.Include(mb => mb.Payments)
+            .FirstOrDefaultAsync(mb => mb.Id == billingId);
+
+        return merchantBilling;
+    }
+
+    public void Update(MerchantBilling billings)
+    {
+        applicationDbContext.MerchantBillings.Update(billings);
+    }
+
 }

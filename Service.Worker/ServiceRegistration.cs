@@ -77,6 +77,9 @@ namespace Service.Worker
                 x.AddConsumer<MerchantBranchAddedOrUpdatedEventConsumer>()
                     .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
 
+                x.AddConsumer<BillingManualPaymentUpdateStateEventConsumer>()
+                    .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
+
                 x.AddConfigureEndpointsCallback((name, cfg) =>
                 {
                     if (cfg is IRabbitMqReceiveEndpointConfigurator rmq)
@@ -152,6 +155,7 @@ namespace Service.Worker
             services.AddScoped<IBackgroundJobService, BackgroundJobService>();
             services.AddScoped<IMerchantBillingService, MerchantBillingService>();
             services.AddScoped<IWalletContractService, WalletContractService>();
+            services.AddScoped<IBillingPaymentService, BillingPaymentService>();
         }
     }
 }

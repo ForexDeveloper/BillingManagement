@@ -1,21 +1,20 @@
-﻿using MediatR;
-using System.Net;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Swashbuckle.AspNetCore.Annotations;
-using Application.Command.BillingCommands;
-using Service.Rest.V1.RequestModels.Billings;
-using Shared.IdentityServerProvider.Contracts;
+﻿using Application.Command.BillingCommands;
 using Application.Query.Queries.MerchantBilling;
 using Application.Query.ViewModels.MerchantBillings;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Service.Rest.V1.RequestModels.Billings;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Net;
 
 namespace Service.Rest.V1.Controllers.AdminPanel;
 
 [Authorize]
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/admin-panel/tenants")]
-public sealed class AdminMerchantBillingController(IMediator mediator, ICurrentUserService currentUserService) : ControllerBase
+[Route("api/admin-panel/merchant-billings")]
+public sealed class AdminMerchantBillingController(IMediator mediator) : ControllerBase
 {
     [HttpGet("{id}/merchants/billings/{billingId}")]
     [SwaggerOperation("Get merchant billing list")]
@@ -136,5 +135,16 @@ public sealed class AdminMerchantBillingController(IMediator mediator, ICurrentU
         var commission = await mediator.Send(new GetRefundedTransactionsCommissionQuery(id, billingId));
 
         return Ok(commission);
+    }
+
+    [HttpGet("{billingId}/tenants/{tenantId}/pay-amount/{amount}/payable-amount")]
+    [SwaggerOperation("Get billing payable amount")]
+    [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing not found")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing payable amount returned", typeof(decimal))]
+    public async Task<ActionResult<decimal>> GetBillingPayableAmount([FromRoute] int id, [FromRoute] long billingId, [FromRoute] decimal amount)
+    {
+        var merchantBillingPayableAmount = await mediator.Send(new GetMerchantBillingPayableAmountQuery(id, billingId, amount));
+
+        return Ok(merchantBillingPayableAmount);
     }
 }

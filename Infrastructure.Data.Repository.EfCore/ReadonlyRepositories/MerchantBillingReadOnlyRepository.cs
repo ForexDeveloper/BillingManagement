@@ -1,12 +1,13 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Shared.Utilities.Extensions;
-using Microsoft.EntityFrameworkCore;
-using Application.Query.ViewModels.Billings;
-using Application.Query.Queries.MerchantBilling;
+﻿using Application.Query.Queries.MerchantBilling;
+using Application.Query.QueryModels.MerchantBillings;
 using Application.Query.ReadOnlyRepositoryContracts;
+using Application.Query.ViewModels.Billings;
 using Application.Query.ViewModels.MerchantBillings;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Microsoft.EntityFrameworkCore;
+using Shared.Utilities.Extensions;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
 
@@ -233,5 +234,20 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                         })
                     })
             }).FirstOrDefaultAsync();
+    }
+
+    public async Task<GetMerchantBillingQueryModel> GetBillingByIdAsync(long id, int tenantId)
+    {
+        var billing = await dbContext.MerchantBillings.FirstOrDefaultAsync(p => p.Id == id && p.TenantId == tenantId);
+
+        return billing == null ? null : new GetMerchantBillingQueryModel
+        {
+            Id = billing.Id,
+            DueDate = billing.DueDate,
+            EndDate = billing.EndDate,
+            GracePeriod = billing.GracePeriod,
+            Status = billing.Status,
+            PayableAmount = billing.GetPayableAmount()
+        };
     }
 }
