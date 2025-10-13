@@ -2,7 +2,6 @@
 using Application.Service.Contracts;
 using Application.Service.EventConsumers;
 using Application.Service.Services;
-using Domain.Core.Entities;
 using Domain.Core.Entities.BackgroundJobAggregate;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.FacilitatorAggregate;
@@ -75,6 +74,9 @@ namespace Service.Worker
                     .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
 
                 x.AddConsumer<MerchantBranchAddedOrUpdatedEventConsumer>()
+                    .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
+
+                x.AddConsumer<BillingManualPaymentUpdateStateEventConsumer>()
                     .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
 
                 x.AddConfigureEndpointsCallback((name, cfg) =>
