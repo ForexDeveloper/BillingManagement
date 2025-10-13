@@ -5,6 +5,7 @@ using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Enums;
 using Domain.Core.UnitOfWorkContracts;
+using Shared.EventBus.Contracts;
 using Shared.EventBus.Events;
 using System;
 using System.Threading.Tasks;
@@ -14,10 +15,12 @@ public class BillingPaymentService : IBillingPaymentService
 {
     private readonly IMerchantBillingRepository _merchantBillingRepository;
     private readonly IApplicationDbContextUnitOfWork _unitOfWork;
+    private readonly IOutboxService _outboxService;
 
-    public BillingPaymentService(IMerchantBillingRepository merchantBillingRepository)
+    public BillingPaymentService(IMerchantBillingRepository merchantBillingRepository, IOutboxService outboxService)
     {
         _merchantBillingRepository = merchantBillingRepository;
+        _outboxService = outboxService;
     }
 
     public bool IsMerchantBillingPayable(MerchantBillingPayableDto request)
@@ -40,7 +43,7 @@ public class BillingPaymentService : IBillingPaymentService
 
     public async Task MerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent requset)
     {
-        var billing = await _merchantBillingRepository.GetByBillingIdAsync(requset.BillId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
+        var billing = await _merchantBillingRepository.GetByBillingIdAsync(requset.BillingId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
         var payableAmount = billing.GetPayableAmount();
 
         var merchantBillingPayableDto = new MerchantBillingPayableDto(
@@ -48,10 +51,10 @@ public class BillingPaymentService : IBillingPaymentService
 
         if (!IsMerchantBillingPayable(merchantBillingPayableDto))
         {
-            throw new ArgumentValidationException(nameof(requset.BillId), "صورت حساب قابل پرداخت نمی باشد.");
+            throw new ArgumentValidationException(nameof(requset.BillingId), "صورت حساب قابل پرداخت نمی باشد.");
         }
 
-        billing.AddBillingPayment(requset.BillId, requset.PaymentId, requset.Amount, requset.PaymentDate);
+        billing.AddBillingPayment(requset.BillingId, requset.PaymentId, requset.Amount, requset.PaymentDate);
 
         if (requset.Amount == payableAmount)
         {
@@ -61,6 +64,13 @@ public class BillingPaymentService : IBillingPaymentService
         {
             billing.UpdateStatus(BillingStatus.PartiallyPaid);
         }
+
+        _outboxService.AddNewEvent(new PmBillingManualPaymentUpdateStateEvent
+        {
+            BillingId = requset.BillingId,
+            PaymentId = requset.PaymentId,
+            Amount = requset.Amount,
+        });
 
         _merchantBillingRepository.Update(billing);
         await _unitOfWork.SaveChangesAsync();

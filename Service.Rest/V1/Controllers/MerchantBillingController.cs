@@ -15,7 +15,7 @@ namespace Service.Rest.V1.Controllers;
 [Authorize]
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/tenant-panel/merchants/billings")]
+[Route("api/tenant-panel/merchant-billings")]
 public sealed class MerchantBillingController(IMediator mediator, ICurrentUserService currentUserService) : ControllerBase
 {
     [HttpGet]
@@ -154,14 +154,14 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/pay-amount/{amount}/is-payable")]
-    [SwaggerOperation("Check billing is payable")]
-    [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing list not found")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing is payable returned", typeof(bool))]
-    public async Task<ActionResult<bool>> IsBillingPayable([FromRoute] long id, [FromRoute] decimal amount)
+    [HttpGet("{billingId}/pay-amount/{amount}/payable-amount")]
+    [SwaggerOperation("Get billing payable amount")]
+    [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing not found")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing payable amount returned", typeof(decimal))]
+    public async Task<ActionResult<decimal>> GetBillingPayableAmount([FromRoute] long id, [FromRoute] decimal amount)
     {
-        var isBillingPayable = await mediator.Send(new IsMerchantBillingPayableQuery(currentUserService.TenantId, id, amount));
+        var merchantBillingPayableAmount = await mediator.Send(new GetMerchantBillingPayableAmountQuery(currentUserService.TenantId, id, amount));
 
-        return Ok(isBillingPayable);
+        return Ok(merchantBillingPayableAmount);
     }
 }

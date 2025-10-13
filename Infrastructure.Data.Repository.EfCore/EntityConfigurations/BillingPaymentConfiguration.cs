@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.BillingPaymentAggregate;
+﻿using Domain.Core.Entities.BillingPaymentAggregate;
 using Infrastructure.Data.Repository.EfCore.Constants;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Data.Repository.EfCore.EntityConfigurations;
@@ -11,6 +11,8 @@ public sealed class BillingPaymentConfiguration : IEntityTypeConfiguration<Billi
     {
         builder.HasKey(p => p.Id);
         builder.Property(p => p.Id).IsRequired();
+        builder.Property(p => p.PaymentId).IsRequired();
+        builder.HasIndex(p => p.PaymentId).IsUnique(true);
         builder.Property(p => p.Amount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.CheckSum).HasMaxLength(500).IsRequired();
 

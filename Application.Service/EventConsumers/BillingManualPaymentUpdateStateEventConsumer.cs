@@ -32,7 +32,7 @@ public class BillingManualPaymentUpdateStateEventConsumer : IConsumer<PmBillingM
         stopWatch.Start();
         bool succeed = true;
 
-        var lockName = $"billing:payment:{context.Message.BillId}";
+        var lockName = $"billing:merchant:payment:{context.Message.BillingId}";
         using var redLock = await _distributedLockFactory.CreateLockAsync(lockName,
             TimeSpan.FromSeconds(3),
             TimeSpan.FromSeconds(6),

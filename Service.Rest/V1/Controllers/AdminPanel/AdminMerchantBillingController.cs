@@ -5,7 +5,6 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Service.Rest.V1.RequestModels.Billings;
-using Shared.IdentityServerProvider.Contracts;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 
@@ -14,8 +13,8 @@ namespace Service.Rest.V1.Controllers.AdminPanel;
 [Authorize]
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/admin-panel/tenants")]
-public sealed class AdminMerchantBillingController(IMediator mediator, ICurrentUserService currentUserService) : ControllerBase
+[Route("api/admin-panel/merchant-billings")]
+public sealed class AdminMerchantBillingController(IMediator mediator) : ControllerBase
 {
     [HttpGet("{id}/merchants/billings/{billingId}")]
     [SwaggerOperation("Get merchant billing list")]
@@ -138,14 +137,14 @@ public sealed class AdminMerchantBillingController(IMediator mediator, ICurrentU
         return Ok(commission);
     }
 
-    [HttpGet("{id}/merchants/billings/{billingId}/pay-amount/{amount}/is-payable")]
-    [SwaggerOperation("Check billing is payable")]
-    [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing list not found")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing is payable returned", typeof(bool))]
-    public async Task<ActionResult<bool>> IsBillingPayable([FromRoute] int id, [FromRoute] long billingId, [FromRoute] decimal amount)
+    [HttpGet("{billingId}/tenants/{tenantId}/pay-amount/{amount}/payable-amount")]
+    [SwaggerOperation("Get billing payable amount")]
+    [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing not found")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing payable amount returned", typeof(decimal))]
+    public async Task<ActionResult<decimal>> GetBillingPayableAmount([FromRoute] int id, [FromRoute] long billingId, [FromRoute] decimal amount)
     {
-        var isBillingPayable = await mediator.Send(new IsMerchantBillingPayableQuery(id, billingId, amount));
+        var merchantBillingPayableAmount = await mediator.Send(new GetMerchantBillingPayableAmountQuery(id, billingId, amount));
 
-        return Ok(isBillingPayable);
+        return Ok(merchantBillingPayableAmount);
     }
 }
