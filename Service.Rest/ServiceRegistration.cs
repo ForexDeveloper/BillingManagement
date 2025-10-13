@@ -145,6 +145,7 @@ namespace Service.Rest
             services.AddScoped<ITenantPlatformContractService, TenantPlatformContractService>();
             services.AddScoped<IWalletContractService, WalletContractService>();
             services.AddScoped<IMerchantBillingService, MerchantBillingService>();
+            services.AddScoped<IMerchantInstallmentService, MerchantInstallmentService>();
         }
 
         internal static void RegisterPublicAppConfiguration(this IServiceCollection services, IConfiguration configuration)

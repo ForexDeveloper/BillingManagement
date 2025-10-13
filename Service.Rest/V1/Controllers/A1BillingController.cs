@@ -5,13 +5,14 @@ using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Enums;
+using Domain.Core.UnitOfWorkContracts;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Infrastructure.Data.Repository.EfCore.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.Contracts;
+using System.Drawing;
 using System.Globalization;
 using System.Text.Json;
-using Domain.Core.UnitOfWorkContracts;
 
 namespace Service.Rest.V1.Controllers;
 
@@ -25,7 +26,8 @@ public class A1BillingController(
     IMerchantInstallmentRepository merchantInstallmentRepository,
     IBackgroundJobService backgroundJobService,
     IApplicationDbContextUnitOfWork unitOfWork,
-    IMerchantBillingService merchantBillingService)
+    IMerchantBillingService merchantBillingService,
+    IMerchantInstallmentService merchantInstallmentService)
     : ControllerBase
 {
     [HttpPost("installment")]
@@ -412,7 +414,7 @@ public class A1BillingController(
 
     private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
     {
-        var today = DateTime.Today.AddDays(-1);
+        var today = DateTime.Today.AddDays(-3);
 
         var financialDocumentTargetAmount = financialDocument.Amount;
 

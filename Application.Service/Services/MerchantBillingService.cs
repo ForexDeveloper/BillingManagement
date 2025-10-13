@@ -54,11 +54,6 @@ public sealed class MerchantBillingService(
 
             var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
 
-            if (financialDataRange != null)
-            {
-
-            }
-
             switch (contract.Status)
             {
                 case true:
@@ -460,7 +455,7 @@ public sealed class MerchantBillingService(
             var anotherBillingFound = await merchantBillingRepository.FindAnotherBillingOnEndOfPeriod(contract.TenantId,
                 contract.MerchantId, endOfPeriod, cancellationToken);
 
-            if (!anotherBillingFound)
+            if (anotherBillingFound == false)
             {
                 CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
             }
