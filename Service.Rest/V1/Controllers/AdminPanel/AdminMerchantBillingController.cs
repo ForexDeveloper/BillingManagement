@@ -1,12 +1,12 @@
-﻿using Application.Command.BillingCommands;
+﻿using MediatR;
+using System.Net;
+using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Authorization;
+using Application.Command.BillingCommands;
+using Service.Rest.V1.RequestModels.Billings;
 using Application.Query.Queries.MerchantBilling;
 using Application.Query.ViewModels.MerchantBillings;
-using MediatR;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Service.Rest.V1.RequestModels.Billings;
-using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
 
 namespace Service.Rest.V1.Controllers.AdminPanel;
 
@@ -16,7 +16,7 @@ namespace Service.Rest.V1.Controllers.AdminPanel;
 [Route("api/admin-panel/merchant-billings")]
 public sealed class AdminMerchantBillingController(IMediator mediator) : ControllerBase
 {
-    [HttpGet("{id}/merchants/billings/{billingId}")]
+    [HttpGet("{billingId}/tenants/{tenantId}")]
     [SwaggerOperation("Get merchant billing list")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "merchant billing not found")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing returned", typeof(GetMerchantBillingViewModel))]

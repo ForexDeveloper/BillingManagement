@@ -31,7 +31,7 @@ public class A1BillingController(
     : ControllerBase
 {
     [HttpPost("installment")]
-    public async Task<ActionResult<GetCategoryListVm>> SetMerchantInstallments(int tenantId, int merchantId, int financialDocumentId)
+    public async Task<ActionResult<GetCategoryListVm>> SetMerchantInstallments(int tenantId, int merchantId, int financialDocumentId, int day)
     {
         try
         {
@@ -70,9 +70,15 @@ public class A1BillingController(
 
             //var contract = await tenantMerchantContractRepository.GetActiveContractAsync(contract.TenantId, contract.MerchantId);
 
-            var commission = await CreateMerchantInstallments(contract, financialDocument);
+            for (int i = 0; i < day; i++)
+            {
+                for (int j = 0; j < 400; j++)
+                {
+                    var commission = await CreateMerchantInstallments(contract, financialDocument, i);
 
-            financialDocument.SetCommission(commission);
+                    financialDocument.SetCommission(commission);
+                }
+            }
 
             await unitOfWork.SaveChangesAsync();
 
@@ -412,9 +418,9 @@ public class A1BillingController(
         }
     }
 
-    private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
+    private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument, int day)
     {
-        var today = DateTime.Today.AddDays(-3);
+        var today = DateTime.Today.AddDays(-day);
 
         var financialDocumentTargetAmount = financialDocument.Amount;
 
@@ -452,52 +458,7 @@ public class A1BillingController(
         switch (contract.CommissionCalculationType)
         {
             case CommissionCalculationType.UniformTiered:
-                break;
-
             case CommissionCalculationType.CumulativeTiered:
-
-                var (startOfPeriod, _) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
-                    contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
-
-                var sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
-                    startOfPeriod, today);
-
-                if (contract.TieredCommissions == null) break;
-
-                var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
-                    p.FromAmount < sumOfTieredTransactions && sumOfTieredTransactions <= p.ToAmount);
-
-                if (tieredCommission == null)
-                {
-                    var minTieredCommission = contract.TieredCommissions.MinBy(p => p.ToAmount);
-
-                    var maxTieredCommission = contract.TieredCommissions.MaxBy(p => p.ToAmount);
-
-                    if (sumOfTieredTransactions <= minTieredCommission.FromAmount)
-                    {
-                        tieredCommission = minTieredCommission;
-                    }
-
-                    else if (sumOfTieredTransactions > maxTieredCommission.ToAmount)
-                    {
-                        tieredCommission = maxTieredCommission;
-                    }
-
-                    if (tieredCommission == null) break;
-
-                    financialDocumentCommission = financialDocumentTargetAmount * (tieredCommission.Percentage / 100);
-
-                    if (financialDocumentCommission > tieredCommission.MaxAmount)
-                    {
-                        financialDocumentCommission = tieredCommission.MaxAmount.Value;
-                    }
-
-                    if (financialDocumentCommission < tieredCommission.MinAmount)
-                    {
-                        financialDocumentCommission = tieredCommission.MinAmount.Value;
-                    }
-                }
-
                 break;
 
             case CommissionCalculationType.FixedPercentage:
@@ -505,6 +466,8 @@ public class A1BillingController(
                 if (!contract.FixedPercentageCommission.HasValue) break;
 
                 financialDocumentCommission = financialDocumentTargetAmount * (contract.FixedPercentageCommission.Value / 100);
+
+                financialDocumentCommission = RoundHelper.RoundAmount(financialDocumentCommission);
 
                 if (financialDocumentCommission > contract.TransactionMaxCommissionAmount)
                 {
@@ -530,7 +493,7 @@ public class A1BillingController(
 
         var installmentCount = contract.InstallmentsCount ?? 1;
 
-        var installmentDates = DateHelper.CalculateInstallments(today, contract.InstallmentsCount,
+        var installmentDates = DateHelper.CalculateInstallments(today, installmentCount,
             TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
 
         var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);

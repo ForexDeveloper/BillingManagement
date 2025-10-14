@@ -66,6 +66,8 @@ public sealed class MerchantBillingService(
                     break;
             }
 
+            if (billingDtos.Count == 0) continue;
+
             var tenantMerchantId = new TenantMerchantIdentifier(contract.TenantId, contract.MerchantId);
 
             if (!billingsDtoSets.TryAdd(tenantMerchantId, billingDtos))
@@ -83,25 +85,18 @@ public sealed class MerchantBillingService(
     {
         foreach (var (_, billingDtos) in billingDtoGroups)
         {
-            if (billingDtos.Count == 0) continue;
-
             var oneDeactiveContractHasBilling = false;
 
             var billings = new List<MerchantBilling>();
 
             var replicateBillings = new List<MerchantBilling>();
 
-            var contract = billingDtos.First().ContractGroup;
-
-            var debtorBillings = GetDebtorBillings(overdueBillings, contract.ContractIds);
-
-            var creditorBillings = GetCreditorBillings(negativeBillings, contract.ContractIds);
-
             for (var i = 0; i < billingDtos.Count; i++)
             {
                 decimal previousDebitAmount = 0;
                 decimal previousCreditAmount = 0;
                 decimal previousPenaltyAmount = 0;
+                decimal sumOfTieredTransactions = 0;
                 decimal purchaseTransactionsAmount = 0;
                 decimal refundedTransactionsAmount = 0;
                 decimal purchaseTransactionsCommission = 0;
@@ -110,31 +105,47 @@ public sealed class MerchantBillingService(
 
                 var billingDto = billingDtos[i];
 
+                var contract = billingDto.ContractGroup;
+
                 purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(contract.ContractIds,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                purchaseTransactionsCalculatedCommission = await merchantInstallmentRepository.GetSumOfCommissionsInSpecificPeriod(contract.ContractIds,
-                        billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
-
                 refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(contract.ContractIds,
-                        billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+                    billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                 refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(contract.ContractIds,
+                    billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+
+                if (contract.CommissionCalculationType is CommissionCalculationType.FixedPercentage or CommissionCalculationType.FixedAmount)
+                {
+                    purchaseTransactionsCalculatedCommission = await merchantInstallmentRepository.GetSumOfCommissionsInSpecificPeriod(contract.ContractIds,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+                }
 
                 if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
-                    var sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
-                            billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+                    sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
+                        billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                     purchaseTransactionsCalculatedCommission = CalculateUniformedTieredCommission(contract, sumOfTieredTransactions);
                 }
 
-                purchaseTransactionsCommission = CalculateFinalCommission(contract, purchaseTransactionsCalculatedCommission);
+                else if (contract.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+                {
+                    sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
+                        billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+
+                    purchaseTransactionsCalculatedCommission = CalculateCumulativeTieredCommission(contract, sumOfTieredTransactions);
+                }
 
                 MerchantBilling debtorBilling = null;
-
                 MerchantBilling creditorBilling = null;
+
+                purchaseTransactionsCommission = CalculateFinalCommission(contract, purchaseTransactionsCalculatedCommission);
+
+                var debtorBillings = GetDebtorBillings(overdueBillings, contract.ContractIds);
+
+                var creditorBillings = GetCreditorBillings(negativeBillings, contract.ContractIds);
 
                 var replicateBilling = replicateBillings.LastOrDefault();
 
@@ -518,7 +529,7 @@ public sealed class MerchantBillingService(
 
         if (endOfPeriod > financialDataRange.MaxDate)
         {
-            CreateBillingDto(contract, billingDtos, currentPeriod, endOfPeriod, startOfPeriod);
+            CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
         }
         else
         {
@@ -637,19 +648,83 @@ public sealed class MerchantBillingService(
 
         if (tieredCommission == null) return 0;
 
-        var currentPeriodCalculatedCommission = totalTransactionsAmount * tieredCommission.Percentage;
+        var commission = totalTransactionsAmount * (tieredCommission.Percentage / 100);
 
-        if (currentPeriodCalculatedCommission > tieredCommission.MaxAmount)
+        commission = RoundHelper.RoundAmount(commission);
+
+        if (commission > tieredCommission.MaxAmount)
         {
-            currentPeriodCalculatedCommission = tieredCommission.MaxAmount.Value;
+            commission = tieredCommission.MaxAmount.Value;
         }
 
-        if (currentPeriodCalculatedCommission < tieredCommission.MinAmount)
+        if (commission < tieredCommission.MinAmount)
         {
-            currentPeriodCalculatedCommission = tieredCommission.MinAmount.Value;
+            commission = tieredCommission.MinAmount.Value;
         }
 
-        return currentPeriodCalculatedCommission;
+        return commission;
+    }
+
+    private static decimal CalculateCumulativeTieredCommission(ContractGroup contract, decimal totalTransactionsAmount)
+    {
+        if (contract.TieredCommissions == null) return 0;
+
+        decimal commission = 0;
+
+        var remainingAmount = totalTransactionsAmount;
+
+        foreach (var tieredCommission in contract.TieredCommissions.OrderBy(p => p.FromAmount))
+        {
+            decimal targetAmount;
+
+            decimal calculatedCommission;
+
+            if (tieredCommission.ToAmount == null)
+            {
+                targetAmount = remainingAmount;
+
+                calculatedCommission = targetAmount * (tieredCommission.Percentage / 100);
+
+                calculatedCommission = RoundHelper.RoundAmount(calculatedCommission);
+
+                commission += calculatedCommission;
+
+                break;
+            }
+
+            var tieredTotalAmount = tieredCommission.ToAmount.Value - tieredCommission.FromAmount;
+
+            if (remainingAmount >= tieredTotalAmount)
+            {
+                targetAmount = tieredTotalAmount;
+            }
+            else
+            {
+                targetAmount = remainingAmount;
+            }
+
+            calculatedCommission = targetAmount * (tieredCommission.Percentage / 100);
+
+            calculatedCommission = RoundHelper.RoundAmount(calculatedCommission);
+
+            if (calculatedCommission > tieredCommission.MaxAmount)
+            {
+                calculatedCommission = tieredCommission.MaxAmount.Value;
+            }
+
+            if (calculatedCommission < tieredCommission.MinAmount)
+            {
+                calculatedCommission = tieredCommission.MinAmount.Value;
+            }
+
+            commission += calculatedCommission;
+
+            remainingAmount -= tieredTotalAmount;
+
+            if (remainingAmount <= 0) break;
+        }
+
+        return commission;
     }
 
     private static List<MerchantBilling> GetDebtorBillings(List<NotSettledBilling> overdueBillings, IEnumerable<int> contactIds)

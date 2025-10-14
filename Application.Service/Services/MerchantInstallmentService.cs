@@ -52,52 +52,9 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository re
 
         switch (contract.CommissionCalculationType)
         {
-            case CommissionCalculationType.UniformTiered:
-                break;
+            case CommissionCalculationType.FixedAmount:
 
-            case CommissionCalculationType.CumulativeTiered:
-
-                var (startOfPeriod, _) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
-                    contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
-
-                var sumOfTieredTransactions = await repository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
-                        startOfPeriod, today);
-
-                if (contract.TieredCommissions == null) break;
-
-                var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
-                    p.FromAmount < sumOfTieredTransactions && sumOfTieredTransactions <= p.ToAmount);
-
-                if (tieredCommission == null)
-                {
-                    var minTieredCommission = contract.TieredCommissions.MinBy(p => p.ToAmount);
-
-                    var maxTieredCommission = contract.TieredCommissions.MaxBy(p => p.ToAmount);
-
-                    if (sumOfTieredTransactions <= minTieredCommission.FromAmount)
-                    {
-                        tieredCommission = minTieredCommission;
-                    }
-
-                    else if (sumOfTieredTransactions > maxTieredCommission.ToAmount)
-                    {
-                        tieredCommission = maxTieredCommission;
-                    }
-
-                    if (tieredCommission == null) break;
-
-                    financialDocumentCommission = financialDocumentTargetAmount * (tieredCommission.Percentage / 100);
-
-                    if (financialDocumentCommission > tieredCommission.MaxAmount)
-                    {
-                        financialDocumentCommission = tieredCommission.MaxAmount.Value;
-                    }
-
-                    if (financialDocumentCommission < tieredCommission.MinAmount)
-                    {
-                        financialDocumentCommission = tieredCommission.MinAmount.Value;
-                    }
-                }
+                financialDocumentCommission = contract.FixedAmountCommission ?? 0;
 
                 break;
 
@@ -105,24 +62,12 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository re
 
                 if (!contract.FixedPercentageCommission.HasValue) break;
 
-                financialDocumentCommission = financialDocumentTargetAmount * (contract.FixedPercentageCommission.Value / 100);
-
-                if (financialDocumentCommission > contract.TransactionMaxCommissionAmount)
-                {
-                    financialDocumentCommission = contract.TransactionMaxCommissionAmount.Value;
-                }
-
-                if (financialDocumentCommission < contract.TransactionMinCommissionAmount)
-                {
-                    financialDocumentCommission = contract.TransactionMinCommissionAmount.Value;
-                }
+                financialDocumentCommission = CalculateFixedPercentageCommission(contract, financialDocumentTargetAmount);
 
                 break;
 
-            case CommissionCalculationType.FixedAmount:
-
-                financialDocumentCommission = contract.FixedAmountCommission ?? 0;
-
+            case CommissionCalculationType.UniformTiered:
+            case CommissionCalculationType.CumulativeTiered:
                 break;
 
             default:
@@ -146,7 +91,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository re
         var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
         var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
 
-        var installmentDates = DateHelper.CalculateInstallments(today, contract.InstallmentsCount,
+        var installmentDates = DateHelper.CalculateInstallments(today, installmentCount,
             TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
 
         List<MerchantInstallment> installments = [];
@@ -201,6 +146,27 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository re
         }
 
         await repository.AddRangeAsync(installments);
+
+        return financialDocumentCommission;
+    }
+
+    private static decimal CalculateFixedPercentageCommission(TenantMerchantContract contract, decimal financialDocumentTargetAmount)
+    {
+        if (!contract.FixedPercentageCommission.HasValue) return 0;
+
+        var financialDocumentCommission = financialDocumentTargetAmount * (contract.FixedPercentageCommission.Value / 100);
+
+        financialDocumentCommission = RoundHelper.RoundAmount(financialDocumentCommission);
+
+        if (financialDocumentCommission > contract.TransactionMaxCommissionAmount)
+        {
+            financialDocumentCommission = contract.TransactionMaxCommissionAmount.Value;
+        }
+
+        if (financialDocumentCommission < contract.TransactionMinCommissionAmount)
+        {
+            financialDocumentCommission = contract.TransactionMinCommissionAmount.Value;
+        }
 
         return financialDocumentCommission;
     }
