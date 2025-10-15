@@ -35,7 +35,7 @@ public class A1BillingController(
     {
         try
         {
-            var today = DateTime.Today;
+            var today = DateTime.Today.AddDays(1);
 
             var pc = new PersianCalendar();
 
@@ -54,6 +54,25 @@ public class A1BillingController(
             var shiftDay1 = pc.AddDays(today, 1);
             var shiftWeek1 = pc.AddWeeks(today, 1);
             var shiftMonth1 = pc.AddMonths(today, 1);
+
+            var originDate = new DateTime(2025, 9, 22).AddDays(-3000);
+            var startDate = new DateTime(2025, 10, 13);
+            var dueDate = new DateTime(2025, 10, 16);
+
+            var difference = (startDate.Date - originDate.Date).TotalDays;
+            var remaining = difference % 3;
+
+            difference = (dueDate.Date - originDate.Date).TotalDays;
+            remaining = difference % 3;
+
+            var (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(3,
+                TimeInterval.Day, originDate, today);
+
+            difference = (startOfPeriod.Date - originDate.Date).TotalDays;
+            remaining = difference % 3;
+
+            difference = (endOfPeriod.Date - originDate.Date).TotalDays;
+            remaining = difference % 3;
 
             var financialDocument = await financialDocumentRepository.GetByIdAsync(financialDocumentId);
 
@@ -80,7 +99,7 @@ public class A1BillingController(
                 }
             }
 
-            await unitOfWork.SaveChangesAsync();
+            //await unitOfWork.SaveChangesAsync();
 
             var wallets = new List<WalletDto>
             {

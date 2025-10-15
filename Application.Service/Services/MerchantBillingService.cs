@@ -122,7 +122,7 @@ public sealed class MerchantBillingService(
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
                 }
 
-                if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
+                else if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
                 {
                     sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
@@ -489,6 +489,16 @@ public sealed class MerchantBillingService(
                 calculatedCommission = targetAmount * (tieredCommission.Percentage / 100);
 
                 calculatedCommission = RoundHelper.RoundAmount(calculatedCommission);
+
+                if (calculatedCommission > tieredCommission.MaxAmount)
+                {
+                    calculatedCommission = tieredCommission.MaxAmount.Value;
+                }
+
+                if (calculatedCommission < tieredCommission.MinAmount)
+                {
+                    calculatedCommission = tieredCommission.MinAmount.Value;
+                }
 
                 commission += calculatedCommission;
 

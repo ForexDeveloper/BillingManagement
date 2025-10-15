@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Domain.Core.Entities.InstallmentAggregate.Dtos;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -19,9 +18,6 @@ public interface IMerchantInstallmentRepository : IRepository<MerchantInstallmen
 
     Task<IEnumerable<InstallmentDto>> GetInstallmentsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
-
-    Task<decimal> GetSumOfTieredTransactionsInSpecificPeriod(TenantMerchantContract contract,
-        DateTime startOfPeriod, DateTime endOfPeriod);
 
     Task<decimal> GetSumOfTieredTransactionsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken);
