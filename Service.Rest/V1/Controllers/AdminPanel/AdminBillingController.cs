@@ -13,10 +13,10 @@ namespace Service.Rest.V1.Controllers.AdminPanel;
 [Authorize]
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/admin-panel/tenants")]
+[Route("api/admin-panel/billings/tenants")]
 public sealed class AdminBillingController(IMediator mediator, ICurrentUserService currentUserService) : ControllerBase
 {
-    [HttpGet("{id}/billings")]
+    [HttpGet("{id}")]
     [SwaggerOperation("Get billing list")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "billing list not found")]
     [SwaggerResponse((int)HttpStatusCode.OK, "billing list returned", typeof(GetBillingsViewModel))]

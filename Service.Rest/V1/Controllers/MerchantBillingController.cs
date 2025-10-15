@@ -18,9 +18,9 @@ namespace Service.Rest.V1.Controllers;
 [Route("api/tenant-panel/merchant-billings")]
 public sealed class MerchantBillingController(IMediator mediator, ICurrentUserService currentUserService) : ControllerBase
 {
-    [HttpGet]
+    [HttpGet]   
+    [Route("/api/tenant-panel/merchants/{id}/merchant-billings")]
     [SwaggerOperation("Get merchant billing list")]
-    [Route("/api/tenant-panel/merchants/{id}/billings")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "merchant billing list not found")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing list returned", typeof(GetBillingsViewModel))]
     public async Task<ActionResult> GetListAsync([FromRoute] int id, [FromQuery] GetBillingsRequest request)
