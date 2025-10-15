@@ -24,8 +24,6 @@ public abstract record GetBillingViewModel
 
     public DateTime StartDate { get; set; }
 
-    public DateTime EndDate { get; set; }
-
     public DateTime DueDate { get; set; }
 
     public bool IsPayable { get; set; }

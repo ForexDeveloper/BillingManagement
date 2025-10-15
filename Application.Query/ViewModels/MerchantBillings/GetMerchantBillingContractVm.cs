@@ -1,10 +1,11 @@
 ﻿using System;
 using Domain.Core.Enums;
 using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
 
 namespace Application.Query.ViewModels.MerchantBillings;
 
-public sealed record GetMerchantBillingContractViewModel
+public sealed record GetMerchantBillingContractVm
 {
     public int Id { get; set; }
 
@@ -13,6 +14,8 @@ public sealed record GetMerchantBillingContractViewModel
     public DateTime StartDate { get; set; }
 
     public DateTime EndDate { get; set; }
+
+    public string Description { get; set; }
 
     public decimal? FixedAmountCommission { get; set; }
 
@@ -30,18 +33,5 @@ public sealed record GetMerchantBillingContractViewModel
 
     public CommissionCalculationType? CommissionCalculationType { get; set; }
 
-    public IEnumerable<TieredCommissionViewModel> TieredCommissions { get; set; }
-}
-
-public sealed record TieredCommissionViewModel
-{
-    public decimal FromAmount { get; set; }
-
-    public decimal? ToAmount { get; set; }
-
-    public decimal? MinAmount { get; set; }
-
-    public decimal? MaxAmount { get; set; }
-
-    public decimal Percentage { get; set; }
+    public List<TieredCommission> TieredCommissions { get; set; }
 }

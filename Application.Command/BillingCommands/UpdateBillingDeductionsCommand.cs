@@ -16,7 +16,7 @@ public sealed record UpdateBillingDeductionsCommand(int TenantId, long Id, decim
 
     public decimal Amount { get; set; } = Amount;
 
-    public string? Description { get; set; } = Description;
+    public string Description { get; set; } = Description;
 
 }
 

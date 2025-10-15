@@ -12,6 +12,8 @@ public sealed class GetBillingsItemViewModel
 
     public string Code { get; set; }
 
+    public string MerchantTitle { get; set; }
+
     public BillingType Type { get; set; }
 
     public string TypeTitle { get; set; }
@@ -22,7 +24,7 @@ public sealed class GetBillingsItemViewModel
 
     public DateTime DueDate { get; set; }
 
-    public DateTime EndDate { get; set; }
+    public DateTime PaymentDeadlineDate { get; set; }
 
     public decimal PayableAmount { get; set; }
 }

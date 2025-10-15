@@ -41,12 +41,9 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                 financialDocument = await CreateFinancialDocument(context);
 
-                var contract = await tenantMerchantContractRepository.GetActiveContractAsync(
-                    financialDocument.TenantId, financialDocument.ToBusinessIdentityId);
-
                 if (financialDocument.Type == FinancialDocumentType.Purchase)
                 {
-                    var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+                    var commission = await merchantInstallmentService.CreateInstallments(financialDocument);
 
                     financialDocument.SetCommission(commission);
                 }

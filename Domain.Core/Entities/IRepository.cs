@@ -11,6 +11,8 @@ public interface IRepository<TEntity, in TKey> where TEntity : BaseEntity<TKey>
 
     Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken? cancellationToken = null);
 
+    void Update(TEntity entity);
+
     void UpdatePartial(TEntity entity, string property);
 
     void UpdatePartial(TEntity entity, IEnumerable<string> properties);

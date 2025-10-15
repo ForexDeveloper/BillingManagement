@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -12,15 +13,9 @@ public interface IFinancialDocumentRepository
 
     void Update(FinancialDocument financialDocument);
 
-    void UpdateRange(List<FinancialDocument> financialDocuments);
-
-    void UpdatePartial(FinancialDocument financialDocument, string propertyName);
-
     Task<FinancialDocument> GetByIdAsync(long id);
 
     Task<List<FinancialDocument>> GetRefundsByParentIdAsync(long parentId);
-
-    Task<List<FinancialDocument>> GetAllAsync();
 
     Task<bool> IsTenantPlatformContractUsedInTransaction(int tenantPlatformContractId);
 
@@ -41,4 +36,7 @@ public interface IFinancialDocumentRepository
 
     Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken);
+
+    IQueryable<int?> GetParentTenantMerchantContractIds(IEnumerable<int> contractIds, DateTime startOfPeriod,
+        DateTime endOfPeriod);
 }

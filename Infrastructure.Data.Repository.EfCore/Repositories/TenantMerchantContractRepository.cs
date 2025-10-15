@@ -10,21 +10,19 @@ using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
-public sealed class TenantMerchantContractRepository(ApplicationDbContext applicationDbContext) : ITenantMerchantContractRepository
+public sealed class TenantMerchantContractRepository(ApplicationDbContext applicationDbContext)
+    : Repository<TenantMerchantContract, int>(applicationDbContext), ITenantMerchantContractRepository
 {
+    private readonly ApplicationDbContext _applicationDbContext = applicationDbContext;
+
     public async Task AddAsync(TenantMerchantContract tenantMerchantContract)
     {
-        await applicationDbContext.TenantMerchantContracts.AddAsync(tenantMerchantContract);
-    }
-
-    public void Update(TenantMerchantContract tenantMerchantContract)
-    {
-        applicationDbContext.TenantMerchantContracts.Update(tenantMerchantContract);
+        await _applicationDbContext.TenantMerchantContracts.AddAsync(tenantMerchantContract);
     }
 
     public async Task<TenantMerchantContract> GetAsync(int id)
     {
-        var contract = await applicationDbContext.TenantMerchantContracts
+        var contract = await _applicationDbContext.TenantMerchantContracts
             .Include(x => x.Tenant)
             .Include(x => x.Merchant)
             .FirstOrDefaultAsync(x => x.Id == id);
@@ -34,20 +32,20 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
 
     public async Task<bool> IsContractBelongToTenantAsync(int id, int tenantId)
     {
-        var result = await applicationDbContext.TenantMerchantContracts.AnyAsync(x => x.Id == id && x.TenantId == tenantId);
+        var result = await _applicationDbContext.TenantMerchantContracts.AnyAsync(x => x.Id == id && x.TenantId == tenantId);
 
         return result;
     }
 
     public async Task<bool> IsExistsActiveContractAsync(int tenantId, int merchantId, int? contractId = null)
     {
-        return await applicationDbContext.TenantMerchantContracts.AnyAsync(x =>
+        return await _applicationDbContext.TenantMerchantContracts.AnyAsync(x =>
             x.TenantId == tenantId && x.MerchantId == merchantId && x.Status == true && x.EndDate >= System.DateTime.Now && (!contractId.HasValue || x.Id != contractId));
     }
 
     public async Task<bool> IsDuplicatedContractNumberAsync(string contractNumber)
     {
-        return await applicationDbContext.TenantMerchantContracts.AnyAsync(x =>
+        return await _applicationDbContext.TenantMerchantContracts.AnyAsync(x =>
             x.ContractNumber == contractNumber.Trim() && !x.IsDeleted);
     }
 
@@ -55,21 +53,21 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
     {
         //TODO  x.EndDate >= DateTime.Now && DateTime.Now >= x.StartDate 
 
-        return await applicationDbContext.TenantMerchantContracts.OrderByDescending(p => p.CreatedDateTime)
+        return await _applicationDbContext.TenantMerchantContracts.OrderByDescending(p => p.CreatedDateTime)
             .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.MerchantId == merchantId && x.Status);
 
-        return await applicationDbContext.TenantMerchantContracts
+        return await _applicationDbContext.TenantMerchantContracts
             .FirstOrDefaultAsync(x => x.TenantId == tenantId && x.MerchantId == merchantId && x.Status == true && x.EndDate >= DateTime.Now);
     }
 
     public async Task<bool> HasEndorsement(int contractId, int tenantId)
     {
-        return await applicationDbContext.TenantMerchantContracts.AnyAsync(x => x.ParentId == contractId && x.TenantId == tenantId);
+        return await _applicationDbContext.TenantMerchantContracts.AnyAsync(x => x.ParentId == contractId && x.TenantId == tenantId);
     }
 
     public async Task<List<int>> GetContractIdsHasEndorsement(List<int> contractIds)
     {
-        var result = await applicationDbContext.TenantMerchantContracts
+        var result = await _applicationDbContext.TenantMerchantContracts
         .Where(x => contractIds.Contains(x.ParentId.Value))
         .Select(x => x.ParentId.Value)
         .ToListAsync();
@@ -79,7 +77,7 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
 
     public async Task<List<ContractGroup>> GetAllGroupContractAsync(CancellationToken cancellationToken)
     {
-        var contracts = await applicationDbContext.TenantMerchantContracts.AsNoTracking().Select(p => new
+        var contracts = await _applicationDbContext.TenantMerchantContracts.AsNoTracking().Select(p => new
         {
             p.Id,
             p.Status,

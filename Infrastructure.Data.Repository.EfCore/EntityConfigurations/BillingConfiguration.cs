@@ -12,7 +12,6 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
     {
         builder.HasKey(p => p.Id);
         builder.Property(p => p.Id).IsRequired();
-        builder.Property(p => p.EndDate).IsRequired();
         builder.Property(p => p.DueDate).IsRequired();
         builder.Property(p => p.StartDate).IsRequired();
         builder.Property(p => p.TenantId).IsRequired();
@@ -20,6 +19,7 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.GracePeriod).IsRequired();
         builder.Property(p => p.DebtorId).IsRequired(false);
         builder.Property(p => p.CreditorId).IsRequired(false);
+        builder.Property(p => p.PaymentDeadlineDate).IsRequired();
         builder.Property(p => p.ToBusinessIdentityId).IsRequired();
         builder.Property(p => p.FromBusinessIdentityId).IsRequired();
         builder.Property(p => p.Code).HasMaxLength(100).IsRequired();

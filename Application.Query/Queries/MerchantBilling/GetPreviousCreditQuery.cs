@@ -6,7 +6,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetPreviousCreditQuery(int TenantId, long Id) : IRequest<GetPreviousCreditViewModel>
+public sealed record GetPreviousCreditQuery(int TenantId, long Id) : IRequest<GetPreviousCreditVm>
 {
     public long Id { get; set; } = Id;
 
@@ -14,9 +14,9 @@ public sealed record GetPreviousCreditQuery(int TenantId, long Id) : IRequest<Ge
 }
 
 public sealed class GetPreviousCreditQueryHandler(IMerchantBillingReadOnlyRepository repository)
-    : IRequestHandler<GetPreviousCreditQuery, GetPreviousCreditViewModel>
+    : IRequestHandler<GetPreviousCreditQuery, GetPreviousCreditVm>
 {
-    public async Task<GetPreviousCreditViewModel> Handle(GetPreviousCreditQuery query,
+    public async Task<GetPreviousCreditVm> Handle(GetPreviousCreditQuery query,
         CancellationToken cancellationToken)
     {
         return await repository.GetPreviousCreditAsync(query);

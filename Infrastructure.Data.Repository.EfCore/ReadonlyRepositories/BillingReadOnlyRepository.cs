@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Application.Query.Queries.Billings;
 using Application.Query.ViewModels.Billings;
 using Application.Query.ReadOnlyRepositoryContracts;
-
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
@@ -45,11 +44,13 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
             Type = p.Type,
             Status = p.Status,
             DueDate = p.DueDate,
-            EndDate = p.EndDate,
             TypeTitle = p.Type.GetEnumDescription(),
             StatusTitle = p.Status.GetEnumDescription(),
-            PayableAmount = p.Amount - p.Payments.Sum(q => q.Amount)
+            PaymentDeadlineDate = p.PaymentDeadlineDate,
+            PayableAmount = p.Amount - p.Payments.Sum(q => q.Amount),
+            MerchantTitle = dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title
         })
+        .OrderByDescending(p => p.DueDate)
         .Skip((query.PageIndex - 1) * query.PageSize)
         .Take(query.PageSize)
         .ToListAsync();

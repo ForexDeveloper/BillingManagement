@@ -43,7 +43,7 @@ public class BillingPaymentService : IBillingPaymentService
 
     public async Task MerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent requset)
     {
-        var billing = await _merchantBillingRepository.GetByBillingIdAsync(requset.BillingId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
+        var billing = await _merchantBillingRepository.GetAsync(requset.BillingId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
         var payableAmount = billing.GetPayableAmount();
 
         var merchantBillingPayableDto = new MerchantBillingPayableDto(
@@ -58,11 +58,11 @@ public class BillingPaymentService : IBillingPaymentService
 
         if (requset.Amount == payableAmount)
         {
-            billing.UpdateStatus(BillingStatus.Settled);
+            billing.Settle();
         }
         else
         {
-            billing.UpdateStatus(BillingStatus.PartiallyPaid);
+            billing.PartialPay();
         }
 
         _outboxService.AddNewEvent(new PmBillingManualPaymentUpdateStateEvent
@@ -73,6 +73,7 @@ public class BillingPaymentService : IBillingPaymentService
         });
 
         _merchantBillingRepository.Update(billing);
+
         await _unitOfWork.SaveChangesAsync();
     }
 }

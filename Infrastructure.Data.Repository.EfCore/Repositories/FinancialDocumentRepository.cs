@@ -34,22 +34,6 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
         applicationDbContext.FinancialDocuments.Update(financialDocument);
     }
 
-    public void UpdateRange(List<FinancialDocument> financialDocuments)
-    {
-        applicationDbContext.FinancialDocuments.UpdateRange(financialDocuments);
-    }
-
-    public void UpdatePartial(FinancialDocument financialDocument, string propertyName)
-    {
-        applicationDbContext.FinancialDocuments.Attach(financialDocument);
-        applicationDbContext.FinancialDocuments.Entry(financialDocument).Property(propertyName).IsModified = true;
-    }
-
-    public async Task<List<FinancialDocument>> GetAllAsync()
-    {
-        return await applicationDbContext.FinancialDocuments.ToListAsync();
-    }
-
     public async Task<bool> IsTenantPlatformContractUsedInTransaction(int tenantPlatformContractId)
     {
         return await applicationDbContext.FinancialDocuments
@@ -104,40 +88,6 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
         return new FinancialDocumentRange(minCreatedDateTime, maxCreatedDateTime);
     }
 
-    public async Task<Dictionary<ContractIdentifier, List<FinancialDocumentDto>>> GetGroupContractFinancialDocuments(
-        IQueryable<FinancialDocument> query, CancellationToken cancellationToken)
-    {
-        if (query == null) return new Dictionary<ContractIdentifier, List<FinancialDocumentDto>>();
-
-        return await query.AsNoTracking().Select(p => new
-        {
-            p.Amount,
-            p.CreatedDateTime,
-            PurchaseCommission = p.Parent.Commission,
-            p.TenantMerchantContract.TenantId,
-            p.TenantMerchantContract.MerchantId,
-            p.TenantMerchantContract.BillingPeriod,
-            p.TenantMerchantContract.BillingPeriodType,
-            p.TenantMerchantContract.DailyBillingOriginDate,
-            p.TenantMerchantContract.CommissionCalculationType
-        })
-        .GroupBy(p => new ContractIdentifier()
-        {
-            TenantId = p.TenantId,
-            MerchantId = p.MerchantId,
-            BillingPeriod = p.BillingPeriod,
-            BillingPeriodType = p.BillingPeriodType,
-            DailyBillingOriginDate = p.DailyBillingOriginDate,
-            CommissionCalculationType = p.CommissionCalculationType
-        })
-        .ToDictionaryAsync(p => p.Key, p => p.Select(q => new FinancialDocumentDto()
-        {
-            Amount = q.Amount,
-            CreatedDateTime = q.CreatedDateTime,
-            PurchaseCommission = q.PurchaseCommission
-        }).ToList(), cancellationToken);
-    }
-
     public async Task<IEnumerable<FinancialDocumentDto>> GetFinancialDocumentsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
@@ -172,5 +122,17 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
             .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
             .SumAsync(p => p.Parent.Commission, cancellationToken) ?? 0;
+    }
+
+    public IQueryable<int?> GetParentTenantMerchantContractIds(IEnumerable<int> contractIds, DateTime startOfPeriod,
+        DateTime endOfPeriod)
+    {
+        return applicationDbContext.FinancialDocuments
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
+            .Where(p => p.Parent.TenantMerchantContract.CommissionCalculationType == CommissionCalculationType.FixedAmount ||
+                        p.Parent.TenantMerchantContract.CommissionCalculationType == CommissionCalculationType.FixedPercentage)
+            .Select(p => p.Parent.TenantMerchantContractId);
     }
 }

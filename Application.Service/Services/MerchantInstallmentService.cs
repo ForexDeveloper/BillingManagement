@@ -11,11 +11,19 @@ using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Application.Service.Services;
 
-public sealed class MerchantInstallmentService(IMerchantInstallmentRepository repository) : IMerchantInstallmentService
+public sealed class MerchantInstallmentService(
+    IMerchantInstallmentRepository merchantInstallmentRepository,
+    ITenantMerchantContractRepository tenantMerchantContractRepository) : IMerchantInstallmentService
 {
-    public async Task<decimal> CreateInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
+    public async Task<decimal> CreateInstallments(FinancialDocument financialDocument)
     {
+        if (!financialDocument.TenantMerchantContractId.HasValue) return 0;
+
         var today = DateTime.Today;
+
+        var contractId = financialDocument.TenantMerchantContractId.Value;
+
+        var contract = await tenantMerchantContractRepository.GetAsync(contractId);
 
         var financialDocumentTargetAmount = financialDocument.Amount;
 
@@ -123,8 +131,8 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository re
 
             var installmentDate = installmentDates[i];
 
-            var installment = new MerchantInstallment(financialDocument, contract.TenantId,
-                contract.TenantId, contract.MerchantId, contract.Id, amount, cashAmount,
+            var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
+                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contractId, amount, cashAmount,
                 creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Purchase);
 
             installments.Add(installment);
@@ -145,7 +153,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository re
             }
         }
 
-        await repository.AddRangeAsync(installments);
+        await merchantInstallmentRepository.AddRangeAsync(installments);
 
         return financialDocumentCommission;
     }

@@ -2,7 +2,7 @@
 
 namespace Application.Query.ViewModels.MerchantBillings;
 
-public sealed record GetMerchantBillingViewModel : GetBillingViewModel
+public sealed record GetMerchantBillingVm : GetBillingViewModel
 {
     public decimal PurchaseTransactionsAmount { get; set; }
 

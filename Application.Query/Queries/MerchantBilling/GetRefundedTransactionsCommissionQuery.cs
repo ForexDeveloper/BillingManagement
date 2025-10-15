@@ -6,7 +6,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetRefundedTransactionsCommissionQuery(int TenantId, long Id) : IRequest<GetRefundedTransactionsCommissionViewModel>
+public sealed record GetRefundedTransactionsCommissionQuery(int TenantId, long Id) : IRequest<GetRefundedTransactionsCommissionVm>
 {
     public long Id { get; set; } = Id;
 
@@ -14,9 +14,9 @@ public sealed record GetRefundedTransactionsCommissionQuery(int TenantId, long I
 }
 
 public sealed class GetRefundedTransactionsCommissionQueryHandler(IMerchantBillingReadOnlyRepository repository)
-    : IRequestHandler<GetRefundedTransactionsCommissionQuery, GetRefundedTransactionsCommissionViewModel>
+    : IRequestHandler<GetRefundedTransactionsCommissionQuery, GetRefundedTransactionsCommissionVm>
 {
-    public async Task<GetRefundedTransactionsCommissionViewModel> Handle(GetRefundedTransactionsCommissionQuery query,
+    public async Task<GetRefundedTransactionsCommissionVm> Handle(GetRefundedTransactionsCommissionQuery query,
         CancellationToken cancellationToken)
     {
         return await repository.GetRefundedTransactionsCommissionAsync(query);

@@ -3,6 +3,9 @@ using Application.Query.QueryModels.MerchantBillings;
 using Application.Query.ReadOnlyRepositoryContracts;
 using Application.Query.ViewModels.Billings;
 using Application.Query.ViewModels.MerchantBillings;
+using Domain.Core.Constants;
+using Domain.Core.Entities.Shared;
+using Domain.Core.Enums;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Microsoft.EntityFrameworkCore;
 using Shared.Utilities.Extensions;
@@ -37,7 +40,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             Type = p.Type,
             Status = p.Status,
             DueDate = p.DueDate,
-            EndDate = p.EndDate,
+            PaymentDeadlineDate = p.PaymentDeadlineDate,
             TypeTitle = p.Type.GetEnumDescription(),
             StatusTitle = p.Status.GetEnumDescription(),
             PayableAmount = p.Amount - p.Payments.Sum(q => q.Amount)
@@ -55,16 +58,15 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
         };
     }
 
-    public async Task<GetMerchantBillingViewModel> GetBillingAsync(GetMerchantBillingQuery query)
+    public async Task<GetMerchantBillingVm> GetBillingAsync(GetMerchantBillingQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetMerchantBillingViewModel
+            .Select(p => new GetMerchantBillingVm
             {
                 Id = p.Id,
                 Code = p.Code,
                 Status = p.Status,
-                EndDate = p.EndDate,
                 DueDate = p.DueDate,
                 StartDate = p.StartDate,
                 IsPayable = p.Amount > 0,
@@ -93,94 +95,99 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetPreviousDebitViewModel> GetPreviousDebitAsync(GetPreviousDebitQuery query)
+    public async Task<GetPreviousDebitVm> GetPreviousDebitAsync(GetPreviousDebitQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetPreviousDebitViewModel
+            .Select(p => new GetPreviousDebitVm
             {
                 Id = p.Debtor.Id,
                 EndDate = p.Debtor.DueDate,
                 StartDate = p.Debtor.StartDate,
-                Amount = p.Debtor.Amount - p.Debtor.Payments.Sum(q => q.Amount)
+                Amount = p.PreviousDebitAmount
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetPreviousCreditViewModel> GetPreviousCreditAsync(GetPreviousCreditQuery query)
+    public async Task<GetPreviousCreditVm> GetPreviousCreditAsync(GetPreviousCreditQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetPreviousCreditViewModel
+            .Select(p => new GetPreviousCreditVm
             {
                 Id = p.Creditor.Id,
                 EndDate = p.Creditor.DueDate,
                 StartDate = p.Creditor.StartDate,
-                Amount = p.Creditor.Amount - p.Creditor.Payments.Sum(q => q.Amount)
+                Amount = p.PreviousCreditAmount
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetAdditionsViewModel> GetAdditionsAsync(GetAdditionsQuery query)
+    public async Task<GetAdditionsVm> GetAdditionsAsync(GetAdditionsQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetAdditionsViewModel
+            .Select(p => new GetAdditionsVm
             {
                 Id = p.Id,
-                Amount = p.Amount,
+                Amount = p.AdditionsAmount,
+                Description = p.AdditionsDescription
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetDeductionsViewModel> GetDeductionsAsync(GetDeductionsQuery query)
+    public async Task<GetDeductionsVm> GetDeductionsAsync(GetDeductionsQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetDeductionsViewModel
+            .Select(p => new GetDeductionsVm
             {
                 Id = p.Id,
-                Amount = p.Amount,
+                Amount = p.DeductionsAmount,
+                Description = p.DeductionsDescription
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetPurchaseTransactionsViewModel> GetPurchaseTransactionsAsync(GetPurchaseTransactionsQuery query)
+    public async Task<GetPurchaseTransactionsVm> GetPurchaseTransactionsAsync(GetPurchaseTransactionsQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetPurchaseTransactionsViewModel
+            .Select(p => new GetPurchaseTransactionsVm
             {
                 Id = p.Id,
+                ContractId = p.MainContractId,
                 Amount = p.PurchaseTransactionsAmount
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetRefundedTransactionsViewModel> GetRefundedTransactionsAsync(GetRefundedTransactionsQuery query)
+    public async Task<GetRefundedTransactionsVm> GetRefundedTransactionsAsync(GetRefundedTransactionsQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetRefundedTransactionsViewModel
+            .Select(p => new GetRefundedTransactionsVm
             {
                 Id = p.Id,
+                ContractId = p.MainContractId,
                 Amount = p.RefundedTransactionsAmount
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetPurchaseTransactionsCommissionViewModel> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query)
+    public async Task<GetPurchaseTransactionsCommissionVm> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query)
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetPurchaseTransactionsCommissionViewModel
+            .Select(p => new GetPurchaseTransactionsCommissionVm
             {
                 Id = p.Id,
-                Amount = p.Amount,
-                TransactionCount = 8058,
-                PurchaseTransactionsCommission = p.PurchaseTransactionsAmount,
-                CalculatedCommission = p.PurchaseTransactionsCalculatedCommission,
-                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.CreatedDateTime)
-                    .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractViewModel()
+                FinalAmount = p.PurchaseTransactionsCommission,
+                TransactionsAmount = p.PurchaseTransactionsAmount,
+                CalculatedAmount = p.PurchaseTransactionsCalculatedCommission,
+
+                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.EndDate)
+                    .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractVm()
                     {
                         Id = q.Id,
                         Status = q.Status,
                         EndDate = q.EndDate,
                         StartDate = q.StartDate,
+                        TieredCommissions = q.TieredCommissions,
                         FixedAmountCommission = q.FixedAmountCommission,
                         FixedPercentageCommission = q.FixedPercentageCommission,
                         PeriodMaxCommissionAmount = q.PeriodMaxCommissionAmount,
@@ -189,33 +196,51 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                         TransactionMinCommissionAmount = q.TransactionMinCommissionAmount,
                         CommissionCalculationType = q.CommissionCalculationType,
                         CommissionCalculationTypeTitle = q.CommissionCalculationType.GetEnumDescription(),
-                        TieredCommissions = q.TieredCommissions.Select(r => new TieredCommissionViewModel()
-                        {
-                            FromAmount = r.FromAmount,
-                            ToAmount = r.ToAmount,
-                            MaxAmount = r.MaxAmount,
-                            MinAmount = r.MinAmount,
-                            Percentage = r.Percentage
-                        })
-                    })
+                        Description = q.CommissionCalculationType == CommissionCalculationType.UniformTiered ? TenantMerchantConstants.UniformedTieredCommissionDescription :
+                            q.CommissionCalculationType == CommissionCalculationType.CumulativeTiered ? TenantMerchantConstants.CumulativeTieredCommissionDescription :
+                            q.CommissionCalculationType == CommissionCalculationType.FixedPercentage ? TenantMerchantConstants.FixedPercentageCommissionDescription :
+                            q.CommissionCalculationType == CommissionCalculationType.FixedAmount ? TenantMerchantConstants.FixedAmountCommissionDescription : string.Empty,
+
+                    }).ToList(),
+
+                TransactionsCount = dbContext.MerchantInstallments
+                    .Count(q => q.Type == InstallmentType.Purchase &&
+                                p.StartDate <= q.DueDate && q.DueDate < p.DueDate &&
+                                p.ContractIds.Contains(q.TenantMerchantContractId)),
+
+                Message = p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ?
+                    $".مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission} درنظر گرفته می شود" :
+                    string.Empty
+
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetRefundedTransactionsCommissionViewModel> GetRefundedTransactionsCommissionAsync(GetRefundedTransactionsCommissionQuery query)
+    public async Task<GetRefundedTransactionsCommissionVm> GetRefundedTransactionsCommissionAsync(GetRefundedTransactionsCommissionQuery query)
     {
+        var billing = await GetBillingPeriodAsync(query.Id, query.TenantId);
+
+        var contractIds = dbContext.FinancialDocuments
+            .Where(p => p.Type == FinancialDocumentType.Refund)
+            .Where(p => billing.ContractIds.Contains(p.TenantMerchantContractId.Value))
+            .Where(p => billing.StartDate <= p.CreatedDateTime && p.CreatedDateTime < billing.DueDate)
+            .Where(p => p.Parent.TenantMerchantContract.CommissionCalculationType == CommissionCalculationType.FixedAmount ||
+                        p.Parent.TenantMerchantContract.CommissionCalculationType == CommissionCalculationType.FixedPercentage)
+            .Select(p => p.Parent.TenantMerchantContractId);
+
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetRefundedTransactionsCommissionViewModel
+            .Select(p => new GetRefundedTransactionsCommissionVm
             {
                 Id = p.Id,
                 Amount = p.RefundedTransactionsCommission,
-                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.CreatedDateTime)
-                    .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractViewModel()
+                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.EndDate)
+                    .Where(q => contractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractVm()
                     {
                         Id = q.Id,
                         Status = q.Status,
                         EndDate = q.EndDate,
                         StartDate = q.StartDate,
+                        TieredCommissions = q.TieredCommissions,
                         FixedAmountCommission = q.FixedAmountCommission,
                         FixedPercentageCommission = q.FixedPercentageCommission,
                         PeriodMaxCommissionAmount = q.PeriodMaxCommissionAmount,
@@ -224,15 +249,10 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                         TransactionMinCommissionAmount = q.TransactionMinCommissionAmount,
                         CommissionCalculationType = q.CommissionCalculationType,
                         CommissionCalculationTypeTitle = q.CommissionCalculationType.GetEnumDescription(),
-                        TieredCommissions = q.TieredCommissions.Select(r => new TieredCommissionViewModel()
-                        {
-                            FromAmount = r.FromAmount,
-                            ToAmount = r.ToAmount,
-                            MaxAmount = r.MaxAmount,
-                            MinAmount = r.MinAmount,
-                            Percentage = r.Percentage
-                        })
-                    })
+                        Description = q.CommissionCalculationType == CommissionCalculationType.FixedAmount
+                            ? TenantMerchantConstants.FixedAmountCommissionDescription
+                            : TenantMerchantConstants.FixedPercentageCommissionDescription
+                    }).ToList()
             }).FirstOrDefaultAsync();
     }
 
@@ -243,11 +263,24 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
         return billing == null ? null : new GetMerchantBillingQueryModel
         {
             Id = billing.Id,
-            DueDate = billing.DueDate,
-            EndDate = billing.EndDate,
-            GracePeriod = billing.GracePeriod,
             Status = billing.Status,
+            DueDate = billing.DueDate,
+            PaymentDeadlineDate = billing.PaymentDeadlineDate,
+            GracePeriod = billing.GracePeriod,
             PayableAmount = billing.GetPayableAmount()
         };
     }
+
+    private async Task<GetBillingPeriodQueryModel> GetBillingPeriodAsync(long id, int tenantId)
+    {
+        return await dbContext.MerchantBillings
+            .Where(p => p.Id == id && p.FromBusinessIdentityId == tenantId)
+            .Select(p => new GetBillingPeriodQueryModel()
+            {
+                DueDate = p.DueDate,
+                StartDate = p.StartDate,
+                ContractIds = p.ContractIds
+            }).FirstOrDefaultAsync();
+    }
+
 }

@@ -1,12 +1,12 @@
-﻿using Domain.Base;
-using Domain.Core.Entities.BillingPaymentAggregate;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.Enums;
-using System;
-using System.Collections.Generic;
+﻿using System;
+using Domain.Base;
 using System.Linq;
+using Domain.Core.Enums;
+using System.Collections.Generic;
+using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.BillingPaymentAggregate;
 
 namespace Domain.Core.Entities.BillingAggregate;
 
@@ -52,9 +52,9 @@ public abstract class Billing : BaseEntity<long>
 
     public DateTime StartDate { get; protected set; }
 
-    public DateTime EndDate { get; protected set; }
-
     public DateTime DueDate { get; protected set; }
+
+    public DateTime PaymentDeadlineDate { get; set; }
 
     public long? DebtorId { get; protected set; }
 
@@ -112,7 +112,8 @@ public abstract class Billing : BaseEntity<long>
 
         GenerateCode();
         SetContractIds(contractIds);
-        SetBillingRanges(startDate, endDate);
+        SetBillingDates(startDate, endDate);
+        CalculatePaymentDeadlineDate();
     }
 
     public void Settle()
@@ -123,6 +124,11 @@ public abstract class Billing : BaseEntity<long>
     public void Overdue()
     {
         UpdateStatus(BillingStatus.Overdue);
+    }
+
+    public void PartialPay()
+    {
+        UpdateStatus(BillingStatus.PartiallyPaid);
     }
 
     public void Transfer()
@@ -163,7 +169,7 @@ public abstract class Billing : BaseEntity<long>
         ContractIds = contractIds;
     }
 
-    private void SetBillingRanges(DateTime startDate, DateTime endDate)
+    private void SetBillingDates(DateTime startDate, DateTime endDate)
     {
         if (startDate >= endDate)
         {
@@ -171,16 +177,19 @@ public abstract class Billing : BaseEntity<long>
         }
 
         StartDate = startDate;
-        EndDate = endDate;
         DueDate = endDate;
+    }
+
+    private void CalculatePaymentDeadlineDate()
+    {
+        PaymentDeadlineDate = DueDate.AddDays(GracePeriod);
     }
 
     protected void SetFinalStatus()
     {
         if (Amount > 0)
         {
-            Status = DueDate.AddDays(GracePeriod + 1) <= DateTime.Today ?
-                BillingStatus.Overdue : BillingStatus.Issued;
+            Status = PaymentDeadlineDate < DateTime.Today ? BillingStatus.Overdue : BillingStatus.Issued;
         }
         else
         {

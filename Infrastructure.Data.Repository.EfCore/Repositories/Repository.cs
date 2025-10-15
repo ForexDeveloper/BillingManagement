@@ -23,6 +23,11 @@ public abstract class Repository<TEntity, TKey>(ApplicationDbContext application
         await Entities.AddRangeAsync(entities, cancellationToken ?? CancellationToken.None);
     }
 
+    public void Update(TEntity entity)
+    {
+        Entities.Update(entity);
+    }
+
     public virtual void UpdatePartial(TEntity entity, string property)
     {
         Entities.Attach(entity);
