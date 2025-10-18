@@ -8,7 +8,7 @@ namespace Application.Query.ReadOnlyRepositoryContracts;
 
 public interface IMerchantBillingReadOnlyRepository
 {
-    Task<GetBillingsViewModel> GetBillingsAsync(GetMerchantBillingsQuery query);
+    Task<GetBillingsVm> GetBillingsAsync(GetMerchantBillingsQuery query);
 
     Task<GetMerchantBillingVm> GetBillingAsync(GetMerchantBillingQuery query);
 
@@ -24,7 +24,7 @@ public interface IMerchantBillingReadOnlyRepository
 
     Task<GetRefundedTransactionsVm> GetRefundedTransactionsAsync(GetRefundedTransactionsQuery query);
 
-    Task<GetPurchaseTransactionsCommissionVm> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query);
+    Task<GetPurchaseTransactionsCommissionQueryModel> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query);
 
     Task<GetRefundedTransactionsCommissionVm> GetRefundedTransactionsCommissionAsync(GetRefundedTransactionsCommissionQuery query);
 

@@ -30,50 +30,56 @@ public class A1BillingController(
     IMerchantInstallmentService merchantInstallmentService)
     : ControllerBase
 {
+    [HttpGet("setBillingDates")]
+    public async Task<ActionResult> SetBillingDates()
+    {
+        var today = DateTime.Today;
+
+        var pc = new PersianCalendar();
+
+        var year = pc.GetYear(today);
+        var month = pc.GetMonth(today);
+        var dayOfMonth = pc.GetDayOfMonth(today);
+
+        var newDateTimePc = new DateTime(year, month, dayOfMonth, pc);
+
+        var pcToDateTime = pc.ToDateTime(year, month, dayOfMonth, 0, 0, 0, 0);
+
+        var shiftDay = pc.AddDays(new DateTime(year, month, dayOfMonth, pc), 1);
+        var shiftWeek = pc.AddWeeks(new DateTime(year, month, dayOfMonth, pc), 1);
+        var shiftMonth = pc.AddMonths(new DateTime(year, month, dayOfMonth, pc), 1);
+
+        var shiftDay1 = pc.AddDays(today, 1);
+        var shiftWeek1 = pc.AddWeeks(today, 1);
+        var shiftMonth1 = pc.AddMonths(today, 1);
+
+        var originDate = new DateTime(2025, 9, 22).AddDays(-3000);
+        var startDate = new DateTime(2025, 10, 13);
+        var dueDate = new DateTime(2025, 10, 16);
+
+        var difference = (startDate.Date - originDate.Date).TotalDays;
+        var remaining = difference % 3;
+
+        difference = (dueDate.Date - originDate.Date).TotalDays;
+        remaining = difference % 3;
+
+        var (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(3,
+            TimeInterval.Day, originDate, today);
+
+        difference = (startOfPeriod.Date - originDate.Date).TotalDays;
+        remaining = difference % 3;
+
+        difference = (endOfPeriod.Date - originDate.Date).TotalDays;
+        remaining = difference % 3;
+
+        return Ok();
+    }
+
     [HttpPost("installment")]
-    public async Task<ActionResult<GetCategoryListVm>> SetMerchantInstallments(int tenantId, int merchantId, int financialDocumentId, int day)
+    public async Task<ActionResult> SetMerchantInstallments(int tenantId, int merchantId, int financialDocumentId, int day)
     {
         try
         {
-            var today = DateTime.Today.AddDays(1);
-
-            var pc = new PersianCalendar();
-
-            var year = pc.GetYear(today);
-            var month = pc.GetMonth(today);
-            var dayOfMonth = pc.GetDayOfMonth(today);
-
-            var newDateTimePc = new DateTime(year, month, dayOfMonth, pc);
-
-            var pcToDateTime = pc.ToDateTime(year, month, dayOfMonth, 0, 0, 0, 0);
-
-            var shiftDay = pc.AddDays(new DateTime(year, month, dayOfMonth, pc), 1);
-            var shiftWeek = pc.AddWeeks(new DateTime(year, month, dayOfMonth, pc), 1);
-            var shiftMonth = pc.AddMonths(new DateTime(year, month, dayOfMonth, pc), 1);
-
-            var shiftDay1 = pc.AddDays(today, 1);
-            var shiftWeek1 = pc.AddWeeks(today, 1);
-            var shiftMonth1 = pc.AddMonths(today, 1);
-
-            var originDate = new DateTime(2025, 9, 22).AddDays(-3000);
-            var startDate = new DateTime(2025, 10, 13);
-            var dueDate = new DateTime(2025, 10, 16);
-
-            var difference = (startDate.Date - originDate.Date).TotalDays;
-            var remaining = difference % 3;
-
-            difference = (dueDate.Date - originDate.Date).TotalDays;
-            remaining = difference % 3;
-
-            var (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(3,
-                TimeInterval.Day, originDate, today);
-
-            difference = (startOfPeriod.Date - originDate.Date).TotalDays;
-            remaining = difference % 3;
-
-            difference = (endOfPeriod.Date - originDate.Date).TotalDays;
-            remaining = difference % 3;
-
             var financialDocument = await financialDocumentRepository.GetByIdAsync(financialDocumentId);
 
             var contract = await tenantMerchantContractRepository.GetAsync(financialDocument.TenantMerchantContractId!.Value);

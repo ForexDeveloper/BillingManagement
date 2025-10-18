@@ -8,7 +8,7 @@ using Application.Query.ReadOnlyRepositoryContracts;
 
 namespace Application.Query.Queries.Billings;
 
-public sealed class GetBillingsQuery : BasePaginatedListRequest, IRequest<GetBillingsViewModel>
+public sealed class GetBillingsQuery : BasePaginatedListRequest, IRequest<GetBillingsVm>
 {
     public string Code { get; set; }
 
@@ -33,9 +33,9 @@ public sealed class GetBillingsQuery : BasePaginatedListRequest, IRequest<GetBil
 }
 
 public sealed class GetBillingsQueryHandler(IBillingReadOnlyRepository repository)
-    : BaseQueryHandler, IRequestHandler<GetBillingsQuery, GetBillingsViewModel>
+    : BaseQueryHandler, IRequestHandler<GetBillingsQuery, GetBillingsVm>
 {
-    public async Task<GetBillingsViewModel> Handle(GetBillingsQuery query, CancellationToken cancellationToken)
+    public async Task<GetBillingsVm> Handle(GetBillingsQuery query, CancellationToken cancellationToken)
     {
         return await repository.GetBillingsAsync(query);
     }

@@ -3,6 +3,7 @@ using Domain.Base;
 using System.Linq;
 using Domain.Core.Enums;
 using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
@@ -80,6 +81,8 @@ public abstract class Billing : BaseEntity<long>
 
     public ICollection<Billing> CreditorChildren { get; protected set; } = [];
 
+    public List<TieredCalculatedLevel> TieredCalculatedLevels { get; protected set; }
+
     protected decimal PayableAmount => Amount - PaidAmount;
 
     protected decimal PaidAmount => Payments.Sum(p => p.Amount);
@@ -92,7 +95,8 @@ public abstract class Billing : BaseEntity<long>
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
-        List<int> contractIds, Billing? debtor = null, Billing? creditor = null)
+        List<int> contractIds, List<TieredCalculatedLevel> tieredCalculatedLevels = null, Billing? debtor = null,
+        Billing? creditor = null)
     {
         Type = type;
         Debtor = debtor;
@@ -109,6 +113,7 @@ public abstract class Billing : BaseEntity<long>
         ToBusinessIdentityId = toBusinessIdentityId;
         PreviousPenaltyAmount = previousPenaltyAmount;
         FromBusinessIdentityId = fromBusinessIdentityId;
+        TieredCalculatedLevels = tieredCalculatedLevels;
 
         GenerateCode();
         SetContractIds(contractIds);

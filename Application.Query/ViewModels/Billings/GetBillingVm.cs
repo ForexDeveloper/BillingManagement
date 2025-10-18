@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Application.Query.ViewModels.Billings;
 
-public abstract record GetBillingViewModel
+public abstract record GetBillingVm
 {
     public long Id { get; set; }
 
@@ -46,5 +46,5 @@ public abstract record GetBillingViewModel
 
     public decimal TotalCreditAmount { get; set; }
 
-    public IEnumerable<GetBillingPaymentViewModel> Payments { get; set; }
+    public IEnumerable<GetBillingPaymentVm> Payments { get; set; }
 }

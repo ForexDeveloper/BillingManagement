@@ -82,14 +82,6 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<BackgroundJob> BackgroundJobs { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseSqlServer(
-            "Server=.;Initial Catalog=BillingManagement;Trusted_Connection=True;MultipleActiveResultSets=True;Encrypt=false");
-
-        base.OnConfiguring(optionsBuilder);
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("Bill");

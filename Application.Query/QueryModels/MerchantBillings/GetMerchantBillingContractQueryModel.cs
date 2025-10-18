@@ -1,10 +1,11 @@
 ﻿using System;
 using Domain.Core.Enums;
 using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
 
-namespace Application.Query.ViewModels.MerchantBillings;
+namespace Application.Query.QueryModels.MerchantBillings;
 
-public sealed record GetMerchantBillingContractVm
+public sealed record GetMerchantBillingContractQueryModel
 {
     public int Id { get; set; }
 
@@ -32,20 +33,5 @@ public sealed record GetMerchantBillingContractVm
 
     public CommissionCalculationType? CommissionCalculationType { get; set; }
 
-    public IEnumerable<TieredCommissionVm> TieredCommissions { get; set; }
-}
-
-public sealed record TieredCommissionVm
-{
-    public bool Selected { get; set; }
-
-    public decimal FromAmount { get; set; }
-
-    public decimal? ToAmount { get; set; }
-
-    public decimal Percentage { get; set; }
-
-    public decimal? MinAmount { get; set; }
-
-    public decimal? MaxAmount { get; set; }
+    public List<TieredCommission> TieredCommissions { get; set; }
 }

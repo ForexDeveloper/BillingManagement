@@ -2,6 +2,7 @@
 using Domain.Core.Enums;
 using Domain.Core.Helper;
 using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.BillingPaymentAggregate;
@@ -30,9 +31,10 @@ public sealed class MerchantBilling : Billing
         List<int> contractIds, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
         decimal purchaseTransactionsAmount, decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
         decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission,
-        Billing? debtor = null, Billing? creditor = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId,
-        type, periodType, previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate,
-        gracePeriod, mainContractId, contractIds, debtor, creditor)
+        List<TieredCalculatedLevel> calculatedTieredLevels, Billing? debtor = null, Billing? creditor = null) : base(
+        tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount,
+        previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, mainContractId, contractIds,
+        calculatedTieredLevels, debtor, creditor)
     {
         PurchaseTransactionsAmount = purchaseTransactionsAmount;
         RefundedTransactionsAmount = refundedTransactionsAmount;

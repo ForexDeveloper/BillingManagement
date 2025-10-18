@@ -62,7 +62,7 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
 
                 _stopwatch.Reset();
 
-                await Task.Delay(10000, stoppingToken);
+                await Task.Delay(1000000, stoppingToken);
             }
         }
     }

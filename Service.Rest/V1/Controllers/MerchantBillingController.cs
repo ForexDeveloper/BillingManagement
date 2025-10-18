@@ -12,7 +12,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Service.Rest.V1.Controllers;
 
-//[Authorize]
+[Authorize]
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/tenant-panel/merchant-billings")]
@@ -22,7 +22,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     [Route("/api/tenant-panel/merchants/{id}/merchant-billings")]
     [SwaggerOperation("Get merchant billing list")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "merchant billing list not found")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing list returned", typeof(GetBillingsViewModel))]
+    [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing list returned", typeof(GetBillingsVm))]
     public async Task<ActionResult> GetListAsync([FromRoute] int id, [FromQuery] GetBillingsRequest request)
     {
         var billings = await mediator.Send(new GetMerchantBillingsQuery(currentUserService.TenantId, id, request.Code,
@@ -137,7 +137,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing purchase transactions commission returned", typeof(GetPurchaseTransactionsCommissionVm))]
     public async Task<ActionResult> GetPurchaseTransactionsCommission(long id)
     {
-        var commission = await mediator.Send(new GetPurchaseTransactionsCommissionQuery(/*currentUserService.TenantId*/2, id));
+        var commission = await mediator.Send(new GetPurchaseTransactionsCommissionQuery(currentUserService.TenantId, id));
 
         return Ok(commission);
     }

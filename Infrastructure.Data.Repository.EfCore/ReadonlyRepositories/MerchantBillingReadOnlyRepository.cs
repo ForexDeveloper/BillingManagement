@@ -18,7 +18,7 @@ namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
 
 public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbContext dbContext) : IMerchantBillingReadOnlyRepository
 {
-    public async Task<GetBillingsViewModel> GetBillingsAsync(GetMerchantBillingsQuery query)
+    public async Task<GetBillingsVm> GetBillingsAsync(GetMerchantBillingsQuery query)
     {
         var billingQuery = dbContext.MerchantBillings.Where(p =>
             p.FromBusinessIdentityId == query.TenantId && p.ToBusinessIdentityId == query.MerchantId);
@@ -35,7 +35,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
 
         var totalCount = await billingQuery.CountAsync();
 
-        var billings = await billingQuery.Select(p => new GetBillingsItemViewModel
+        var billings = await billingQuery.Select(p => new GetBillingsItemVm
         {
             Id = p.Id,
             Code = p.Code,
@@ -51,7 +51,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
         .Take(query.PageSize)
         .ToListAsync();
 
-        return new GetBillingsViewModel
+        return new GetBillingsVm
         {
             Items = billings,
             TotalCount = totalCount,
@@ -90,7 +90,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 TotalDebitAmount = p.PreviousDebitAmount + p.PurchaseTransactionsAmount + p.RefundedTransactionsCommission + p.AdditionsAmount,
                 TotalCreditAmount = p.PreviousCreditAmount + p.PurchaseTransactionsCommission + p.RefundedTransactionsAmount + p.DeductionsAmount,
                 Title = $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}",
-                Payments = p.Payments.Select(q => new GetBillingPaymentViewModel()
+                Payments = p.Payments.Select(q => new GetBillingPaymentVm()
                 {
 
                 })
@@ -171,20 +171,21 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             }).FirstOrDefaultAsync();
     }
 
-    public async Task<GetPurchaseTransactionsCommissionVm> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query)
+    public async Task<GetPurchaseTransactionsCommissionQueryModel> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query)
     {
-        var billing = await dbContext.MerchantBillings
+        return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
-            .Select(p => new GetPurchaseTransactionsCommissionVm
+            .Select(p => new GetPurchaseTransactionsCommissionQueryModel
             {
-                Id = p.Id,
+                BillingId = p.Id,
                 MainContractId = p.MainContractId,
                 FinalAmount = p.PurchaseTransactionsCommission,
                 TransactionsAmount = p.PurchaseTransactionsAmount,
+                TieredCalculatedLevels = p.TieredCalculatedLevels,
                 CalculatedAmount = p.PurchaseTransactionsCalculatedCommission,
 
-                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.EndDate)
-                    .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractVm()
+                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.EndDate)
+                    .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractQueryModel()
                     {
                         Id = q.Id,
                         Status = q.Status,
@@ -216,14 +217,6 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                     string.Empty
 
             }).FirstOrDefaultAsync();
-
-        var mainContract = billing.Contracts.First(p => p.Id == billing.MainContractId);
-
-        var tieredCommissionLevels = GetCumulativeTieredCommissionLevels(mainContract.TieredCommissions, billing.TransactionsAmount);
-
-        billing.TieredCommissionLevels = tieredCommissionLevels;
-
-        return billing;
     }
 
     public async Task<GetRefundedTransactionsCommissionVm> GetRefundedTransactionsCommissionAsync(GetRefundedTransactionsCommissionQuery query)
@@ -244,14 +237,13 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             {
                 Id = p.Id,
                 Amount = p.RefundedTransactionsCommission,
-                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.EndDate)
+                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.EndDate)
                     .Where(q => contractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractVm()
                     {
                         Id = q.Id,
                         Status = q.Status,
                         EndDate = q.EndDate,
                         StartDate = q.StartDate,
-                        TieredCommissions = q.TieredCommissions,
                         FixedAmountCommission = q.FixedAmountCommission,
                         FixedPercentageCommission = q.FixedPercentageCommission,
                         PeriodMaxCommissionAmount = q.PeriodMaxCommissionAmount,
@@ -292,81 +284,5 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 StartDate = p.StartDate,
                 ContractIds = p.ContractIds
             }).FirstOrDefaultAsync();
-    }
-
-    private static List<TieredCommissionLevel> GetCumulativeTieredCommissionLevels(List<TieredCommission> tieredCommissions, decimal totalTransactionsAmount)
-    {
-        if (tieredCommissions == null) return [];
-
-        var number = 1;
-
-        List<TieredCommissionLevel> tieredCommissionLevels = [];
-
-        var remainingAmount = totalTransactionsAmount;
-
-        foreach (var tieredCommission in tieredCommissions.OrderBy(p => p.FromAmount))
-        {
-            decimal transactionsAmount;
-
-            decimal calculatedCommission;
-
-            if (tieredCommission.ToAmount == null)
-            {
-                transactionsAmount = remainingAmount;
-
-                calculatedCommission = transactionsAmount * (tieredCommission.Percentage / 100);
-
-                calculatedCommission = RoundHelper.RoundAmount(calculatedCommission);
-
-                if (calculatedCommission > tieredCommission.MaxAmount)
-                {
-                    calculatedCommission = tieredCommission.MaxAmount.Value;
-                }
-
-                if (calculatedCommission < tieredCommission.MinAmount)
-                {
-                    calculatedCommission = tieredCommission.MinAmount.Value;
-                }
-
-                tieredCommissionLevels.Add(new TieredCommissionLevel(number, calculatedCommission, transactionsAmount));
-
-                break;
-            }
-
-            var tieredTotalAmount = tieredCommission.ToAmount.Value - tieredCommission.FromAmount;
-
-            if (remainingAmount >= tieredTotalAmount)
-            {
-                transactionsAmount = tieredTotalAmount;
-            }
-            else
-            {
-                transactionsAmount = remainingAmount;
-            }
-
-            calculatedCommission = transactionsAmount * (tieredCommission.Percentage / 100);
-
-            calculatedCommission = RoundHelper.RoundAmount(calculatedCommission);
-
-            if (calculatedCommission > tieredCommission.MaxAmount)
-            {
-                calculatedCommission = tieredCommission.MaxAmount.Value;
-            }
-
-            if (calculatedCommission < tieredCommission.MinAmount)
-            {
-                calculatedCommission = tieredCommission.MinAmount.Value;
-            }
-
-            tieredCommissionLevels.Add(new TieredCommissionLevel(number, calculatedCommission, transactionsAmount));
-
-            remainingAmount -= tieredTotalAmount;
-
-            if (remainingAmount <= 0) break;
-
-            number++;
-        }
-
-        return tieredCommissionLevels;
     }
 }

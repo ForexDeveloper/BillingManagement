@@ -4,9 +4,9 @@ using Application.Query.Base;
 
 namespace Application.Query.ViewModels.Billings;
 
-public sealed class GetBillingsViewModel : BasePaginatedListQueryResult<GetBillingsItemViewModel>;
+public sealed class GetBillingsVm : BasePaginatedListQueryResult<GetBillingsItemVm>;
 
-public sealed class GetBillingsItemViewModel
+public sealed class GetBillingsItemVm
 {
     public long Id { get; set; }
 

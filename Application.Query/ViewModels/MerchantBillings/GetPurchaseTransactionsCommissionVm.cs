@@ -18,16 +18,16 @@ public sealed record GetPurchaseTransactionsCommissionVm
 
     public decimal TransactionsAmount { get; set; }
 
-    public List<TieredCommissionLevel> TieredCommissionLevels { get; set; }
+    public IEnumerable<TieredCalculatedLevelVm> TieredCalculatedLevels { get; set; }
 
     public IEnumerable<GetMerchantBillingContractVm> Contracts { get; set; }
 }
 
-public sealed record TieredCommissionLevel(int Number, decimal Amount, decimal TransactionsAmount)
+public sealed record TieredCalculatedLevelVm
 {
-    public int Number { get; set; } = Number;
+    public int Number { get; set; }
 
-    public decimal Amount { get; set; } = Amount;
+    public decimal Commission { get; set; }
 
-    public decimal TransactionsAmount { get; set; } = TransactionsAmount;
+    public decimal TransactionsAmount { get; set; }
 }

@@ -5,6 +5,7 @@ using Domain.Core.Enums;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Application.Service.Helper;
+using Domain.Core.Entities.Shared;
 using Application.Service.Contracts;
 using Domain.Core.UnitOfWorkContracts;
 using Application.Service.Dtos.Shared;
@@ -102,6 +103,7 @@ public sealed class MerchantBillingService(
                 decimal purchaseTransactionsCommission = 0;
                 decimal refundedTransactionsCommission = 0;
                 decimal purchaseTransactionsCalculatedCommission = 0;
+                List<TieredCalculatedLevel> tieredCalculatedLevels = null;
 
                 var billingDto = billingDtos[i];
 
@@ -127,7 +129,9 @@ public sealed class MerchantBillingService(
                     sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                    purchaseTransactionsCalculatedCommission = CalculateUniformedTieredCommission(contract, sumOfTieredTransactions);
+                    tieredCalculatedLevels = CalculateUniformedTieredLevels(contract.TieredCommissions, sumOfTieredTransactions);
+
+                    purchaseTransactionsCalculatedCommission = tieredCalculatedLevels.Sum(p => p.Commission);
                 }
 
                 else if (contract.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
@@ -135,7 +139,9 @@ public sealed class MerchantBillingService(
                     sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                    purchaseTransactionsCalculatedCommission = CalculateCumulativeTieredCommission(contract, sumOfTieredTransactions);
+                    tieredCalculatedLevels = CalculateCumulativeTieredLevels(contract.TieredCommissions, sumOfTieredTransactions);
+
+                    purchaseTransactionsCalculatedCommission = tieredCalculatedLevels.Sum(p => p.Commission);
                 }
 
                 MerchantBilling debtorBilling = null;
@@ -216,6 +222,7 @@ public sealed class MerchantBillingService(
                     purchaseTransactionsCommission,
                     refundedTransactionsCommission,
                     purchaseTransactionsCalculatedCommission,
+                    tieredCalculatedLevels,
                     debtorBilling,
                     creditorBilling);
 
@@ -404,54 +411,135 @@ public sealed class MerchantBillingService(
         return notSettledBillings;
     }
 
-    private static decimal CalculateFinalCommission(ContractGroup contract, decimal currentPeriodCalculatedCommission)
+    private static decimal CalculateFinalCommission(ContractGroup contract, decimal purchaseTransactionsCalculatedCommission)
     {
-        decimal currentPeriodFinalCommission;
+        decimal finalCommission;
 
-        if (currentPeriodCalculatedCommission > contract.PeriodMaxCommissionAmount)
+        if (purchaseTransactionsCalculatedCommission > contract.PeriodMaxCommissionAmount)
         {
-            currentPeriodFinalCommission = contract.PeriodMaxCommissionAmount.Value;
+            finalCommission = contract.PeriodMaxCommissionAmount.Value;
         }
 
-        else if (currentPeriodCalculatedCommission < contract.PeriodMinCommissionAmount)
+        else if (purchaseTransactionsCalculatedCommission < contract.PeriodMinCommissionAmount)
         {
-            currentPeriodFinalCommission = contract.PeriodMinCommissionAmount.Value;
+            finalCommission = contract.PeriodMinCommissionAmount.Value;
         }
         else
         {
-            currentPeriodFinalCommission = currentPeriodCalculatedCommission;
+            finalCommission = purchaseTransactionsCalculatedCommission;
         }
 
-        return currentPeriodFinalCommission;
+        return finalCommission;
     }
 
-    private static decimal CalculateUniformedTieredCommission(ContractGroup contract, decimal totalTransactionsAmount)
+    private static List<TieredCalculatedLevel> CalculateUniformedTieredLevels(List<TieredCommission> tieredCommissions, decimal totalTransactionsAmount)
     {
-        if (contract.TieredCommissions == null) return 0;
+        List<TieredCalculatedLevel> calculatedTieredLevels = [];
 
-        var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
+        if (tieredCommissions == null) return calculatedTieredLevels;
+
+        var tieredCommission = tieredCommissions.FirstOrDefault(p =>
             p.FromAmount < totalTransactionsAmount && totalTransactionsAmount <= p.ToAmount);
 
         if (tieredCommission == null)
         {
-            var minTieredCommission = contract.TieredCommissions.MinBy(p => p.ToAmount);
+            var minTieredCommission = tieredCommissions.MinBy(p => p.FromAmount);
 
-            var maxTieredCommission = contract.TieredCommissions.MaxBy(p => p.ToAmount);
+            var maxTieredCommission = tieredCommissions.MaxBy(p => p.FromAmount);
 
             if (totalTransactionsAmount <= minTieredCommission.FromAmount)
             {
                 tieredCommission = minTieredCommission;
             }
 
-            else if (totalTransactionsAmount > maxTieredCommission.ToAmount)
+            else if (totalTransactionsAmount > maxTieredCommission.FromAmount)
             {
                 tieredCommission = maxTieredCommission;
             }
         }
 
-        if (tieredCommission == null) return 0;
+        if (tieredCommission == null) return calculatedTieredLevels;
 
-        var commission = totalTransactionsAmount * (tieredCommission.Percentage / 100);
+        var commission = CalculateCommission(totalTransactionsAmount, tieredCommission);
+
+        calculatedTieredLevels.Add(new TieredCalculatedLevel()
+        {
+            Number = 1,
+            Commission = commission,
+            TieredCommission = tieredCommission,
+            TransactionsAmount = totalTransactionsAmount
+        });
+
+        return calculatedTieredLevels;
+    }
+
+    private static List<TieredCalculatedLevel> CalculateCumulativeTieredLevels(List<TieredCommission> tieredCommissions, decimal totalTransactionsAmount)
+    {
+        List<TieredCalculatedLevel> calculatedTieredLevels = [];
+
+        if (tieredCommissions == null) return calculatedTieredLevels;
+
+        var number = 1;
+
+        var remainingAmount = totalTransactionsAmount;
+
+        foreach (var tieredCommission in tieredCommissions.OrderBy(p => p.FromAmount))
+        {
+            decimal commission;
+
+            decimal transactionsAmount;
+
+            if (tieredCommission.ToAmount == null)
+            {
+                transactionsAmount = remainingAmount;
+
+                commission = CalculateCommission(transactionsAmount, tieredCommission);
+
+                calculatedTieredLevels.Add(new TieredCalculatedLevel()
+                {
+                    Number = number,
+                    Commission = commission,
+                    TieredCommission = tieredCommission,
+                    TransactionsAmount = transactionsAmount
+                });
+
+                break;
+            }
+
+            var tieredTotalAmount = tieredCommission.ToAmount.Value - tieredCommission.FromAmount;
+
+            if (remainingAmount >= tieredTotalAmount)
+            {
+                transactionsAmount = tieredTotalAmount;
+            }
+            else
+            {
+                transactionsAmount = remainingAmount;
+            }
+
+            commission = CalculateCommission(transactionsAmount, tieredCommission);
+
+            calculatedTieredLevels.Add(new TieredCalculatedLevel()
+            {
+                Number = number,
+                Commission = commission,
+                TieredCommission = tieredCommission,
+                TransactionsAmount = transactionsAmount
+            });
+
+            remainingAmount -= tieredTotalAmount;
+
+            if (remainingAmount <= 0) break;
+
+            number++;
+        }
+
+        return calculatedTieredLevels;
+    }
+
+    private static decimal CalculateCommission(decimal targetAmount, TieredCommission tieredCommission)
+    {
+        var commission = targetAmount * (tieredCommission.Percentage / 100);
 
         commission = RoundHelper.RoundAmount(commission);
 
@@ -463,78 +551,6 @@ public sealed class MerchantBillingService(
         if (commission < tieredCommission.MinAmount)
         {
             commission = tieredCommission.MinAmount.Value;
-        }
-
-        return commission;
-    }
-
-    private static decimal CalculateCumulativeTieredCommission(ContractGroup contract, decimal totalTransactionsAmount)
-    {
-        if (contract.TieredCommissions == null) return 0;
-
-        decimal commission = 0;
-
-        var remainingAmount = totalTransactionsAmount;
-
-        foreach (var tieredCommission in contract.TieredCommissions.OrderBy(p => p.FromAmount))
-        {
-            decimal targetAmount;
-
-            decimal calculatedCommission;
-
-            if (tieredCommission.ToAmount == null)
-            {
-                targetAmount = remainingAmount;
-
-                calculatedCommission = targetAmount * (tieredCommission.Percentage / 100);
-
-                calculatedCommission = RoundHelper.RoundAmount(calculatedCommission);
-
-                if (calculatedCommission > tieredCommission.MaxAmount)
-                {
-                    calculatedCommission = tieredCommission.MaxAmount.Value;
-                }
-
-                if (calculatedCommission < tieredCommission.MinAmount)
-                {
-                    calculatedCommission = tieredCommission.MinAmount.Value;
-                }
-
-                commission += calculatedCommission;
-
-                break;
-            }
-
-            var tieredTotalAmount = tieredCommission.ToAmount.Value - tieredCommission.FromAmount;
-
-            if (remainingAmount >= tieredTotalAmount)
-            {
-                targetAmount = tieredTotalAmount;
-            }
-            else
-            {
-                targetAmount = remainingAmount;
-            }
-
-            calculatedCommission = targetAmount * (tieredCommission.Percentage / 100);
-
-            calculatedCommission = RoundHelper.RoundAmount(calculatedCommission);
-
-            if (calculatedCommission > tieredCommission.MaxAmount)
-            {
-                calculatedCommission = tieredCommission.MaxAmount.Value;
-            }
-
-            if (calculatedCommission < tieredCommission.MinAmount)
-            {
-                calculatedCommission = tieredCommission.MinAmount.Value;
-            }
-
-            commission += calculatedCommission;
-
-            remainingAmount -= tieredTotalAmount;
-
-            if (remainingAmount <= 0) break;
         }
 
         return commission;

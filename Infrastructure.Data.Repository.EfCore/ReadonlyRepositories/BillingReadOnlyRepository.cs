@@ -11,7 +11,7 @@ namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
 
 public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbContext) : IBillingReadOnlyRepository
 {
-    public async Task<GetBillingsViewModel> GetBillingsAsync(GetBillingsQuery query)
+    public async Task<GetBillingsVm> GetBillingsAsync(GetBillingsQuery query)
     {
         var billingQuery = dbContext.Billings.Where(p => p.FromBusinessIdentityId == query.TenantId);
 
@@ -37,7 +37,7 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
 
         var totalCount = await billingQuery.CountAsync();
 
-        var billings = await billingQuery.Select(p => new GetBillingsItemViewModel
+        var billings = await billingQuery.Select(p => new GetBillingsItemVm
         {
             Id = p.Id,
             Code = p.Code,
@@ -55,7 +55,7 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
         .Take(query.PageSize)
         .ToListAsync();
 
-        return new GetBillingsViewModel
+        return new GetBillingsVm
         {
             Items = billings,
             TotalCount = totalCount,
