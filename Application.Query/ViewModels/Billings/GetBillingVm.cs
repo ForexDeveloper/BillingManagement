@@ -14,6 +14,10 @@ public abstract record GetBillingVm
 
     public string Title { get; set; }
 
+    public required BillingType Type { get; set; }
+
+    public required string TypeTitle { get; set; }
+
     public BillingStatus Status { get; set; }
 
     public string StatusTitle { get; set; }

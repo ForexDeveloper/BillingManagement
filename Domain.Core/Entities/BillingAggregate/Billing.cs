@@ -1,13 +1,15 @@
-﻿using System;
-using Domain.Base;
-using System.Linq;
-using Domain.Core.Enums;
-using System.Collections.Generic;
-using Domain.Core.Entities.Shared;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
+﻿using Domain.Base;
 using Domain.Core.Entities.BillingPaymentAggregate;
+using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.Shared;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Enums;
+using Domain.Core.Helper;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 namespace Domain.Core.Entities.BillingAggregate;
 
@@ -92,16 +94,14 @@ public abstract class Billing : BaseEntity<long>
 
     }
 
-    protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
+    protected Billing(int tenantId, TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
         List<int> contractIds, List<TieredCalculatedLevel> tieredCalculatedLevels = null, Billing? debtor = null,
         Billing? creditor = null)
     {
-        Type = type;
         Debtor = debtor;
-        Transferred = false;
         Creditor = creditor;
+        Transferred = false;
         TenantId = tenantId;
         AdditionsAmount = 0;
         DeductionsAmount = 0;
@@ -110,12 +110,9 @@ public abstract class Billing : BaseEntity<long>
         MainContractId = mainContractId;
         PreviousDebitAmount = previousDebitAmount;
         PreviousCreditAmount = previousCreditAmount;
-        ToBusinessIdentityId = toBusinessIdentityId;
         PreviousPenaltyAmount = previousPenaltyAmount;
-        FromBusinessIdentityId = fromBusinessIdentityId;
         TieredCalculatedLevels = tieredCalculatedLevels;
 
-        GenerateCode();
         SetContractIds(contractIds);
         SetBillingDates(startDate, endDate);
         CalculatePaymentDeadlineDate();
@@ -139,6 +136,8 @@ public abstract class Billing : BaseEntity<long>
     public void Transfer()
     {
         Transferred = true;
+        SetCheckSum();
+        SetEditDateTime(DateTime.Now);
     }
 
     public decimal GetPayableAmount()
@@ -146,12 +145,87 @@ public abstract class Billing : BaseEntity<long>
         return PayableAmount;
     }
 
-    public decimal CalculatePayableAmount()
+    public void SetAdditions(decimal additions, string? additionDescription)
     {
-        return Amount - Payments.Sum(p => p.Amount);
+        if (additions < 0)
+        {
+            throw new ArgumentValidationException(nameof(additions), "مبلغ اضافات نمی تواند از 0 کوچکتر باشد");
+        }
+
+        AdditionsAmount = additions;
+        AdditionsDescription = additionDescription;
+        CalculateAmount();
+        SetCheckSum();
     }
 
-    public void UpdateStatus(BillingStatus status)
+    public void SetDeductions(decimal deductions, string? deductionDescription)
+    {
+        if (deductions < 0)
+        {
+            throw new ArgumentValidationException(nameof(deductions), "مبلغ کسورات نمی تواند از 0 کوچکتر باشد");
+        }
+
+        Amount += DeductionsAmount;
+
+        if (Amount < deductions)
+        {
+            throw new ArgumentValidationException(nameof(deductions), "مبلغ کسورات نمی تواند از مبلغ کل صورتحساب بیشتر باشد");
+        }
+
+        DeductionsDescription = deductionDescription;
+        DeductionsAmount = deductions;
+        CalculateAmount();
+        SetFinalStatus();
+        SetCheckSum();
+    }
+
+    public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)
+    {
+        Payments.Add(new BillingPayment(billingId, paymentId, amount, paymentDate));
+    }
+
+    protected void Configure(int fromBusinessIdentityId, int toBusinessIdentityId)
+    {
+        CalculateAmount();
+        SetBillingType();
+        SetAbsoluteAmount();
+        SetFinalStatus();
+        var prefix = GenerateCodePrefix();
+        GenerateCode(prefix);
+        SetIdentity(fromBusinessIdentityId, toBusinessIdentityId);
+        SetCheckSum();
+    }
+
+    protected abstract void CalculateAmount();
+
+    protected abstract void SetBillingType();
+
+    protected abstract string GenerateCodePrefix();
+
+    protected abstract void SetCheckSum();
+
+    protected abstract void ValidateCheckSum();
+
+    protected abstract void SetIdentity(int fromBusinessIdentityId, int toBusinessIdentityId);
+
+    private void GenerateCode(string prefix)
+    {
+        var pc = new PersianCalendar();
+        var year2Digits = pc.GetYear(CreatedDateTime).GetLast2Digits();
+        var month2Digits = pc.GetMonth(CreatedDateTime).GetLast2Digits();
+        var georgianYear2Digits = CreatedDateTime.Year.GetLast2Digits();
+        var georgianMonth2Digits = CreatedDateTime.Month.GetLast2Digits();
+        var georgianDay2Digits = CreatedDateTime.Day.GetLast2Digits();
+        var georgianHour2Digits = CreatedDateTime.Hour.GetLast2Digits();
+        var georgianMinute2Digits = CreatedDateTime.Minute.GetLast2Digits();
+        var georgianSecond2Digits = CreatedDateTime.Second.GetLast2Digits();
+        var georgianMilliSecond2Digits = CreatedDateTime.Millisecond.GetLast2Digits();
+        var georgianMicroSecond2Digits = CreatedDateTime.Microsecond.GetLast2Digits();
+
+        Code = $"{prefix}{year2Digits}{month2Digits}{georgianYear2Digits}{georgianMonth2Digits}{georgianDay2Digits}{georgianHour2Digits}{georgianMinute2Digits}{georgianSecond2Digits}{georgianMilliSecond2Digits}{georgianMicroSecond2Digits}";
+    }
+
+    private void UpdateStatus(BillingStatus status)
     {
         ValidateCheckSum();
         Status = status;
@@ -159,9 +233,21 @@ public abstract class Billing : BaseEntity<long>
         SetEditDateTime(DateTime.Now);
     }
 
-    private void GenerateCode()
+    private void SetFinalStatus()
     {
-        Code = Guid.NewGuid().ToString();
+        if (Amount == 0)
+        {
+            Status = BillingStatus.Settled;
+        }
+        else
+        {
+            Status = PaymentDeadlineDate < DateTime.Today ? BillingStatus.Overdue : BillingStatus.Issued;
+        }
+    }
+
+    private void SetAbsoluteAmount()
+    {
+        Amount = Math.Abs(Amount);
     }
 
     private void SetContractIds(List<int> contractIds)
@@ -189,22 +275,4 @@ public abstract class Billing : BaseEntity<long>
     {
         PaymentDeadlineDate = DueDate.AddDays(GracePeriod);
     }
-
-    protected void SetFinalStatus()
-    {
-        if (Amount > 0)
-        {
-            Status = PaymentDeadlineDate < DateTime.Today ? BillingStatus.Overdue : BillingStatus.Issued;
-        }
-        else
-        {
-            Status = BillingStatus.Settled;
-        }
-    }
-
-    protected abstract void SetCheckSum();
-
-    protected abstract void ValidateCheckSum();
-
-    protected abstract string GenerateCheckSum();
 }

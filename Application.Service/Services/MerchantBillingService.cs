@@ -27,15 +27,15 @@ public sealed class MerchantBillingService(
 {
     public async Task IssueOrOverdueBilling(DateTime jobCreatedDateTime, CancellationToken cancellationToken)
     {
-        var overdueBillings = await OverdueExpiredBillings(cancellationToken);
+        var notSettledBillings = await merchantBillingRepository.GetOverdueOrNotSettledBillings(cancellationToken);
 
-        var negativeBillings = await merchantBillingRepository.GetNegativeSettledBillings(cancellationToken);
+        var overdueBillings = await OverdueExpiredBillings(notSettledBillings, cancellationToken);
 
         var groupContracts = await tenantMerchantContractRepository.GetAllGroupContractAsync(cancellationToken);
 
         var billingsDtoSets = await CreateBillingDtos(groupContracts, jobCreatedDateTime, cancellationToken);
 
-        await CreateMerchantBillings(billingsDtoSets, overdueBillings, negativeBillings, cancellationToken);
+        await CreateMerchantBillings(billingsDtoSets, overdueBillings, cancellationToken);
     }
 
     private async Task<Dictionary<TenantMerchantIdentifier, List<BillingDto>>> CreateBillingDtos(
@@ -81,8 +81,7 @@ public sealed class MerchantBillingService(
     }
 
     private async Task CreateMerchantBillings(Dictionary<TenantMerchantIdentifier, List<BillingDto>> billingDtoGroups,
-        List<NotSettledBilling> overdueBillings, List<NegativeSettledBilling> negativeBillings,
-        CancellationToken cancellationToken)
+        List<NotSettledBilling> overdueBillings, CancellationToken cancellationToken)
     {
         foreach (var (_, billingDtos) in billingDtoGroups)
         {
@@ -151,7 +150,7 @@ public sealed class MerchantBillingService(
 
                 var debtorBillings = GetDebtorBillings(overdueBillings, contract.ContractIds);
 
-                var creditorBillings = GetCreditorBillings(negativeBillings, contract.ContractIds);
+                var creditorBillings = GetCreditorBillings(overdueBillings, contract.ContractIds);
 
                 var replicateBilling = replicateBillings.LastOrDefault();
 
@@ -165,19 +164,19 @@ public sealed class MerchantBillingService(
 
                     if (contractIdentifier == previousContractIdentifier)
                     {
+                        replicateBilling.Overdue();
+                        replicateBilling.Transfer();
+
                         var payableAmount = replicateBilling.GetPayableAmount();
 
-                        switch (payableAmount)
+                        switch (replicateBilling.Type)
                         {
-                            case > 0:
-                                replicateBilling.Overdue();
-                                replicateBilling.Transfer();
+                            case BillingType.TenantToMerchant:
                                 debtorBilling = replicateBilling;
                                 previousDebitAmount = payableAmount;
                                 break;
 
-                            case < 0:
-                                replicateBilling.Settle();
+                            case BillingType.MerchantToTenant:
                                 creditorBilling = replicateBilling;
                                 previousCreditAmount = payableAmount;
                                 break;
@@ -205,9 +204,7 @@ public sealed class MerchantBillingService(
                 }
 
                 var billing = new MerchantBilling(contract.TenantId,
-                    contract.TenantId,
                     contract.MerchantId,
-                    BillingType.TenantToMerchant,
                     contract.BillingPeriodType,
                     billingDto.StartOfPeriod,
                     billingDto.EndOfPeriod,
@@ -363,10 +360,8 @@ public sealed class MerchantBillingService(
         billingDtos.Add(billingDto);
     }
 
-    private async Task<List<NotSettledBilling>> OverdueExpiredBillings(CancellationToken cancellationToken)
+    private async Task<List<NotSettledBilling>> OverdueExpiredBillings(List<NotSettledBilling> notSettledBillings, CancellationToken cancellationToken)
     {
-        var notSettledBillings = await merchantBillingRepository.GetOverdueOrNotSettledBillings(cancellationToken);
-
         for (var i = notSettledBillings.Count - 1; i >= 0; i--)
         {
             var notAssignedBilling = notSettledBillings[i];
@@ -389,7 +384,6 @@ public sealed class MerchantBillingService(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return notSettledBillings;
-
 
         var notPaidBillings = notSettledBillings.Where(p =>
             p.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid);
@@ -558,7 +552,9 @@ public sealed class MerchantBillingService(
 
     private static List<MerchantBilling> GetDebtorBillings(List<NotSettledBilling> overdueBillings, IEnumerable<int> contactIds)
     {
-        var debtorBillings = overdueBillings.Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)))
+        var debtorBillings = overdueBillings
+            .Where(p => p.Billing.Type == BillingType.TenantToMerchant)
+            .Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)))
             .Select(p => p.Billing).ToList();
 
         if (!debtorBillings.Any())
@@ -570,14 +566,16 @@ public sealed class MerchantBillingService(
         return debtorBillings;
     }
 
-    private static List<MerchantBilling> GetCreditorBillings(List<NegativeSettledBilling> negativeSettledBillings, IEnumerable<int> contactIds)
+    private static List<MerchantBilling> GetCreditorBillings(List<NotSettledBilling> overdueBillings, IEnumerable<int> contactIds)
     {
-        var creditorBillings = negativeSettledBillings.Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)))
+        var creditorBillings = overdueBillings
+            .Where(p => p.Billing.Type == BillingType.MerchantToTenant)
+            .Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)))
             .Select(p => p.Billing).ToList();
 
         if (!creditorBillings.Any())
         {
-            creditorBillings = negativeSettledBillings.Where(p => contactIds.Contains(p.ActiveContractId))
+            creditorBillings = overdueBillings.Where(p => contactIds.Contains(p.ActiveContractId))
                 .Select(p => p.Billing).ToList();
         }
 
