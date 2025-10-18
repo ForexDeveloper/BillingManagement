@@ -1,21 +1,17 @@
-﻿using System;
-using MassTransit;
-using System.Linq;
-using Domain.Core.Enums;
-using System.Diagnostics;
-using Shared.EventBus.Events;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-using Application.Service.Contracts;
-using Application.Service.Helper;
-using Microsoft.Extensions.Logging;
-using Domain.Core.UnitOfWorkContracts;
-using Shared.Logging.Abstraction.Models;
-using Shared.Logging.Abstraction.Extensions;
-using Domain.Core.Entities.Shared.Exceptions;
+﻿using Application.Service.Contracts;
 using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.MerchantInstallmentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Enums;
+using Domain.Core.UnitOfWorkContracts;
+using MassTransit;
+using Microsoft.Extensions.Logging;
+using Shared.EventBus.Events;
+using Shared.Logging.Abstraction.Extensions;
+using Shared.Logging.Abstraction.Models;
+using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Application.Service.EventConsumers;
 
@@ -38,7 +34,6 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
             if (financialDocument == null)
             {
                 //purchase and refund
-
                 financialDocument = await CreateFinancialDocument(context);
 
                 if (financialDocument.Type == FinancialDocumentType.Purchase)
@@ -47,12 +42,14 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                     financialDocument.SetCommission(commission);
                 }
-
+            }
+            else
+            {
                 //only reverse
                 await UpdateFinancialDocument(context, financialDocument);
-
-                await unitOfWork.SaveChangesAsync();
             }
+
+            await unitOfWork.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -144,6 +141,5 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
         financialDocument.SetState(FinancialDocumentState.Reverse);
 
         financialDocumentRepository.Update(financialDocument);
-        await unitOfWork.SaveChangesAsync();
     }
 }
