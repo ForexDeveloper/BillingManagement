@@ -5,13 +5,14 @@ using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Enums;
+using Domain.Core.UnitOfWorkContracts;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Infrastructure.Data.Repository.EfCore.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics.Contracts;
+using System.Drawing;
 using System.Globalization;
 using System.Text.Json;
-using Domain.Core.UnitOfWorkContracts;
 
 namespace Service.Rest.V1.Controllers;
 
@@ -25,34 +26,60 @@ public class A1BillingController(
     IMerchantInstallmentRepository merchantInstallmentRepository,
     IBackgroundJobService backgroundJobService,
     IApplicationDbContextUnitOfWork unitOfWork,
-    IMerchantBillingService merchantBillingService)
+    IMerchantBillingService merchantBillingService,
+    IMerchantInstallmentService merchantInstallmentService)
     : ControllerBase
 {
+    [HttpGet("setBillingDates")]
+    public async Task<ActionResult> SetBillingDates()
+    {
+        var today = DateTime.Today;
+
+        var pc = new PersianCalendar();
+
+        var year = pc.GetYear(today);
+        var month = pc.GetMonth(today);
+        var dayOfMonth = pc.GetDayOfMonth(today);
+
+        var newDateTimePc = new DateTime(year, month, dayOfMonth, pc);
+
+        var pcToDateTime = pc.ToDateTime(year, month, dayOfMonth, 0, 0, 0, 0);
+
+        var shiftDay = pc.AddDays(new DateTime(year, month, dayOfMonth, pc), 1);
+        var shiftWeek = pc.AddWeeks(new DateTime(year, month, dayOfMonth, pc), 1);
+        var shiftMonth = pc.AddMonths(new DateTime(year, month, dayOfMonth, pc), 1);
+
+        var shiftDay1 = pc.AddDays(today, 1);
+        var shiftWeek1 = pc.AddWeeks(today, 1);
+        var shiftMonth1 = pc.AddMonths(today, 1);
+
+        var originDate = new DateTime(2025, 9, 22).AddDays(-3000);
+        var startDate = new DateTime(2025, 10, 13);
+        var dueDate = new DateTime(2025, 10, 16);
+
+        var difference = (startDate.Date - originDate.Date).TotalDays;
+        var remaining = difference % 3;
+
+        difference = (dueDate.Date - originDate.Date).TotalDays;
+        remaining = difference % 3;
+
+        var (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(3,
+            TimeInterval.Day, originDate, today);
+
+        difference = (startOfPeriod.Date - originDate.Date).TotalDays;
+        remaining = difference % 3;
+
+        difference = (endOfPeriod.Date - originDate.Date).TotalDays;
+        remaining = difference % 3;
+
+        return Ok();
+    }
+
     [HttpPost("installment")]
-    public async Task<ActionResult<GetCategoryListVm>> SetMerchantInstallments(int tenantId, int merchantId, int financialDocumentId)
+    public async Task<ActionResult> SetMerchantInstallments(int tenantId, int merchantId, int financialDocumentId, int day)
     {
         try
         {
-            var today = DateTime.Today;
-
-            var pc = new PersianCalendar();
-
-            var year = pc.GetYear(today);
-            var month = pc.GetMonth(today);
-            var dayOfMonth = pc.GetDayOfMonth(today);
-
-            var newDateTimePc = new DateTime(year, month, dayOfMonth, pc);
-
-            var pcToDateTime = pc.ToDateTime(year, month, dayOfMonth, 0, 0, 0, 0);
-
-            var shiftDay = pc.AddDays(new DateTime(year, month, dayOfMonth, pc), 1);
-            var shiftWeek = pc.AddWeeks(new DateTime(year, month, dayOfMonth, pc), 1);
-            var shiftMonth = pc.AddMonths(new DateTime(year, month, dayOfMonth, pc), 1);
-
-            var shiftDay1 = pc.AddDays(today, 1);
-            var shiftWeek1 = pc.AddWeeks(today, 1);
-            var shiftMonth1 = pc.AddMonths(today, 1);
-
             var financialDocument = await financialDocumentRepository.GetByIdAsync(financialDocumentId);
 
             var contract = await tenantMerchantContractRepository.GetAsync(financialDocument.TenantMerchantContractId!.Value);
@@ -68,11 +95,17 @@ public class A1BillingController(
 
             //var contract = await tenantMerchantContractRepository.GetActiveContractAsync(contract.TenantId, contract.MerchantId);
 
-            var commission = await CreateMerchantInstallments(contract, financialDocument);
+            for (int i = 0; i < day; i++)
+            {
+                for (int j = 0; j < 400; j++)
+                {
+                    var commission = await CreateMerchantInstallments(contract, financialDocument, i);
 
-            financialDocument.SetCommission(commission);
+                    financialDocument.SetCommission(commission);
+                }
+            }
 
-            await unitOfWork.SaveChangesAsync();
+            //await unitOfWork.SaveChangesAsync();
 
             var wallets = new List<WalletDto>
             {
@@ -402,7 +435,7 @@ public class A1BillingController(
 
             await merchantBillingService.IssueOrOverdueBilling(jobCreatedDateTime, cancellationToken);
 
-            return Ok();
+            return Ok("Billings Created");
         }
         catch (Exception ex)
         {
@@ -410,14 +443,9 @@ public class A1BillingController(
         }
     }
 
-    private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
+    private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument, int day)
     {
-        var today = DateTime.Today;
-
-        List<MerchantInstallment> installments = [];
-
-        var installmentDates = DateHelper.CalculateInstallments(DateTime.Now, contract.InstallmentsCount,
-            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+        var today = DateTime.Today.AddDays(-day);
 
         var financialDocumentTargetAmount = financialDocument.Amount;
 
@@ -455,50 +483,7 @@ public class A1BillingController(
         switch (contract.CommissionCalculationType)
         {
             case CommissionCalculationType.UniformTiered:
-                break;
-
             case CommissionCalculationType.CumulativeTiered:
-
-                var (startOfPeriod, _) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
-                    contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
-
-                var sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
-                    startOfPeriod, today);
-
-                var tieredCommission = contract.TieredCommissions.FirstOrDefault(p =>
-                    p.FromAmount < sumOfTieredTransactions && sumOfTieredTransactions <= p.ToAmount);
-
-                if (tieredCommission == null)
-                {
-                    var minTieredCommission = contract.TieredCommissions.MinBy(p => p.ToAmount);
-
-                    var maxTieredCommission = contract.TieredCommissions.MaxBy(p => p.ToAmount);
-
-                    if (sumOfTieredTransactions <= minTieredCommission.FromAmount)
-                    {
-                        tieredCommission = minTieredCommission;
-                    }
-
-                    else if (sumOfTieredTransactions > maxTieredCommission.ToAmount)
-                    {
-                        tieredCommission = maxTieredCommission;
-                    }
-
-                    if (tieredCommission == null) break;
-
-                    financialDocumentCommission = financialDocumentTargetAmount * (tieredCommission.Percentage / 100);
-
-                    if (financialDocumentCommission > tieredCommission.MaxAmount)
-                    {
-                        financialDocumentCommission = tieredCommission.MaxAmount.Value;
-                    }
-
-                    if (financialDocumentCommission < tieredCommission.MinAmount)
-                    {
-                        financialDocumentCommission = tieredCommission.MinAmount.Value;
-                    }
-                }
-
                 break;
 
             case CommissionCalculationType.FixedPercentage:
@@ -506,6 +491,8 @@ public class A1BillingController(
                 if (!contract.FixedPercentageCommission.HasValue) break;
 
                 financialDocumentCommission = financialDocumentTargetAmount * (contract.FixedPercentageCommission.Value / 100);
+
+                financialDocumentCommission = RoundHelper.RoundAmount(financialDocumentCommission);
 
                 if (financialDocumentCommission > contract.TransactionMaxCommissionAmount)
                 {
@@ -531,6 +518,9 @@ public class A1BillingController(
 
         var installmentCount = contract.InstallmentsCount ?? 1;
 
+        var installmentDates = DateHelper.CalculateInstallments(today, installmentCount,
+            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+
         var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
         var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
 
@@ -545,6 +535,8 @@ public class A1BillingController(
 
         var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
         var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
+
+        List<MerchantInstallment> installments = [];
 
         for (var i = 0; i < installmentDates.Count; i++)
         {

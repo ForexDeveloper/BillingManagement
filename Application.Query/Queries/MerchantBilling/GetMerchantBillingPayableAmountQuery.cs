@@ -1,17 +1,19 @@
-﻿using Application.Query.ReadOnlyRepositoryContracts;
-using Application.Service.Contracts;
-using Application.Service.Dtos.MerchantBillings;
-using Domain.Core.Entities.BillingAggregate.Exceptions;
-using MediatR;
+﻿using MediatR;
 using System.Threading;
 using System.Threading.Tasks;
+using Application.Service.Contracts;
+using Application.Service.Dtos.MerchantBillings;
+using Application.Query.ReadOnlyRepositoryContracts;
+using Domain.Core.Entities.BillingAggregate.Exceptions;
 
 namespace Application.Query.Queries.MerchantBilling;
 
 public sealed record GetMerchantBillingPayableAmountQuery(int TenantId, long Id, decimal Amount) : IRequest<decimal>
 {
     public long Id { get; set; } = Id;
+
     public int TenantId { get; set; } = TenantId;
+
     public decimal Amount { get; set; } = Amount;
 }
 

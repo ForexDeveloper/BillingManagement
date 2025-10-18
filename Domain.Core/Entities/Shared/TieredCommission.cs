@@ -1,16 +1,23 @@
-﻿using Domain.Core.Entities.Shared.Exceptions;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
+using System.Collections.Generic;
+using Domain.Core.Entities.Shared.Exceptions;
 
 namespace Domain.Core.Entities.Shared;
 
-public class TieredCommission
+/// <summary>
+/// از رکورد به کلاس تبدیل نشود مپ کردن کارمزد های پلکان به مشکل می خورد
+/// </summary>
+public sealed record TieredCommission
 {
     public decimal FromAmount { get; private set; }
+
     public decimal? ToAmount { get; private set; }
+
     public decimal Percentage { get; private set; }
+
     public decimal? MinAmount { get; private set; }
+
     public decimal? MaxAmount { get; private set; }
 
     public TieredCommission(decimal fromAmount, decimal? toAmount, decimal percentage,

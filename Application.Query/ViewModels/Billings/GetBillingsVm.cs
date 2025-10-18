@@ -4,13 +4,15 @@ using Application.Query.Base;
 
 namespace Application.Query.ViewModels.Billings;
 
-public sealed class GetBillingsViewModel : BasePaginatedListQueryResult<GetBillingsItemViewModel>;
+public sealed class GetBillingsVm : BasePaginatedListQueryResult<GetBillingsItemVm>;
 
-public sealed class GetBillingsItemViewModel
+public sealed class GetBillingsItemVm
 {
     public long Id { get; set; }
 
     public string Code { get; set; }
+
+    public string MerchantTitle { get; set; }
 
     public BillingType Type { get; set; }
 
@@ -22,7 +24,7 @@ public sealed class GetBillingsItemViewModel
 
     public DateTime DueDate { get; set; }
 
-    public DateTime EndDate { get; set; }
+    public DateTime PaymentDeadlineDate { get; set; }
 
     public decimal PayableAmount { get; set; }
 }

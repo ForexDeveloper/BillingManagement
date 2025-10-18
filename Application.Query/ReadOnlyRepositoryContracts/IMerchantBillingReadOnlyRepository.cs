@@ -1,31 +1,32 @@
-﻿using Application.Query.Queries.MerchantBilling;
-using Application.Query.QueryModels.MerchantBillings;
+﻿using System.Threading.Tasks;
 using Application.Query.ViewModels.Billings;
+using Application.Query.Queries.MerchantBilling;
 using Application.Query.ViewModels.MerchantBillings;
-using System.Threading.Tasks;
+using Application.Query.QueryModels.MerchantBillings;
 
 namespace Application.Query.ReadOnlyRepositoryContracts;
 
 public interface IMerchantBillingReadOnlyRepository
 {
-    Task<GetBillingsViewModel> GetBillingsAsync(GetMerchantBillingsQuery query);
+    Task<GetBillingsVm> GetBillingsAsync(GetMerchantBillingsQuery query);
 
-    Task<GetMerchantBillingViewModel> GetBillingAsync(GetMerchantBillingQuery query);
+    Task<GetMerchantBillingVm> GetBillingAsync(GetMerchantBillingQuery query);
 
-    Task<GetPreviousDebitViewModel> GetPreviousDebitAsync(GetPreviousDebitQuery query);
+    Task<GetPreviousDebitVm> GetPreviousDebitAsync(GetPreviousDebitQuery query);
 
-    Task<GetPreviousCreditViewModel> GetPreviousCreditAsync(GetPreviousCreditQuery query);
+    Task<GetPreviousCreditVm> GetPreviousCreditAsync(GetPreviousCreditQuery query);
 
-    Task<GetAdditionsViewModel> GetAdditionsAsync(GetAdditionsQuery query);
+    Task<GetAdditionsVm> GetAdditionsAsync(GetAdditionsQuery query);
 
-    Task<GetDeductionsViewModel> GetDeductionsAsync(GetDeductionsQuery query);
+    Task<GetDeductionsVm> GetDeductionsAsync(GetDeductionsQuery query);
 
-    Task<GetPurchaseTransactionsViewModel> GetPurchaseTransactionsAsync(GetPurchaseTransactionsQuery query);
+    Task<GetPurchaseTransactionsVm> GetPurchaseTransactionsAsync(GetPurchaseTransactionsQuery query);
 
-    Task<GetRefundedTransactionsViewModel> GetRefundedTransactionsAsync(GetRefundedTransactionsQuery query);
+    Task<GetRefundedTransactionsVm> GetRefundedTransactionsAsync(GetRefundedTransactionsQuery query);
 
-    Task<GetPurchaseTransactionsCommissionViewModel> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query);
+    Task<GetPurchaseTransactionsCommissionQueryModel> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query);
 
-    Task<GetRefundedTransactionsCommissionViewModel> GetRefundedTransactionsCommissionAsync(GetRefundedTransactionsCommissionQuery query);
+    Task<GetRefundedTransactionsCommissionVm> GetRefundedTransactionsCommissionAsync(GetRefundedTransactionsCommissionQuery query);
+
     Task<GetMerchantBillingQueryModel> GetBillingByIdAsync(long id, int tenantId);
 }

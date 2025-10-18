@@ -7,7 +7,6 @@ using Microsoft.Extensions.Hosting;
 using Application.Service.Contracts;
 using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Serilog.Extensions;
-using Microsoft.Extensions.Configuration;
 using Shared.Logging.Abstraction.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -63,7 +62,7 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
 
                 _stopwatch.Reset();
 
-                await Task.Delay(10000, stoppingToken);
+                await Task.Delay(1000000, stoppingToken);
             }
         }
     }

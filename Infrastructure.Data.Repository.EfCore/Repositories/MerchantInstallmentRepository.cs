@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.InstallmentAggregate.Dtos;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
@@ -17,14 +16,6 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
     : Repository<MerchantInstallment, long>(applicationDbContext), IMerchantInstallmentRepository
 {
     private readonly ApplicationDbContext _applicationDbContext = applicationDbContext;
-
-    public IQueryable<MerchantInstallment> CreateJobInstallmentQuery(DateTime startOfPeriod,
-        DateTime endOfPeriod, IEnumerable<int> contractIds)
-    {
-        return _applicationDbContext.MerchantInstallments
-            .Where(p => contractIds.Contains(p.TenantMerchantContractId))
-            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod);
-    }
 
     public async Task<InstallmentRange?> GetInstallmentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate, CancellationToken cancellationToken)
     {
@@ -129,24 +120,6 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<decimal> GetSumOfTieredTransactionsInSpecificPeriod(TenantMerchantContract contract,
-        DateTime startOfPeriod, DateTime endOfPeriod)
-    {
-        var query = _applicationDbContext.MerchantInstallments
-            .Where(p => p.Type == InstallmentType.Purchase &&
-                        startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod &&
-                        p.TenantMerchantContract.TenantId == contract.TenantId &&
-                        p.TenantMerchantContract.MerchantId == contract.MerchantId &&
-                        p.TenantMerchantContract.BillingPeriod == contract.BillingPeriod &&
-                        p.TenantMerchantContract.BillingPeriodType == contract.BillingPeriodType &&
-                        p.TenantMerchantContract.DailyBillingOriginDate == contract.DailyBillingOriginDate &&
-                        p.TenantMerchantContract.CommissionCalculationType == contract.CommissionCalculationType);
-
-        var amountsQuery = GetSumOfTieredTransactionsQuery(contract.CommissionReferenceTypes, query);
-
-        return await amountsQuery.SumAsync(p => p);
-    }
-
     public async Task<decimal> GetSumOfTieredTransactionsInSpecificPeriod(ContractGroup contract,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
@@ -160,8 +133,8 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         return await amountsQuery.SumAsync(p => p, cancellationToken);
     }
 
-    public async Task<decimal> GetSumOfTransactionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
-        DateTime endOfPeriod, CancellationToken cancellationToken)
+    public async Task<decimal> GetSumOfTransactionsInSpecificPeriod(IEnumerable<int> contractIds,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await _applicationDbContext.MerchantInstallments
             .Where(p => p.Type == InstallmentType.Purchase)
@@ -195,8 +168,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
 
                         var cashAmountQuery = query.Select(p => p.CashAmount);
 
-                        amountsQuery = amountsQuery != null ?
-                            amountsQuery.Union(cashAmountQuery) : cashAmountQuery;
+                        amountsQuery = amountsQuery != null ? amountsQuery.Concat(cashAmountQuery) : cashAmountQuery;
 
                         break;
 
@@ -204,8 +176,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
 
                         var creditAmountQuery = query.Select(p => p.CreditAmount);
 
-                        amountsQuery = amountsQuery != null ?
-                            amountsQuery.Union(creditAmountQuery) : creditAmountQuery;
+                        amountsQuery = amountsQuery != null ? amountsQuery.Concat(creditAmountQuery) : creditAmountQuery;
 
                         break;
 
@@ -213,8 +184,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
 
                         var prePaymentAmountQuery = query.Select(p => p.PrepaymentAmount);
 
-                        amountsQuery = amountsQuery != null ?
-                            amountsQuery.Union(prePaymentAmountQuery) : prePaymentAmountQuery;
+                        amountsQuery = amountsQuery != null ? amountsQuery.Concat(prePaymentAmountQuery) : prePaymentAmountQuery;
 
                         break;
 

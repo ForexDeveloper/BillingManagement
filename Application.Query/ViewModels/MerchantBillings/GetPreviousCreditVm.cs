@@ -2,7 +2,7 @@
 
 namespace Application.Query.ViewModels.MerchantBillings;
 
-public sealed record GetPreviousCreditViewModel
+public sealed record GetPreviousCreditVm
 {
     public long Id { get; set; }
 

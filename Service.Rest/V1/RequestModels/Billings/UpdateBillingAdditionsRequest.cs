@@ -4,5 +4,5 @@ public sealed record UpdateBillingAdditionsRequest
 {
     public decimal Amount { get; set; }
 
-    public string? Description { get; set; }
+    public string Description { get; set; }
 }

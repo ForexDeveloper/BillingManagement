@@ -1,4 +1,8 @@
-﻿using Domain.Core.Enums;
+﻿using System.Text.Json;
+using Domain.Core.Enums;
+using System.Text.Encodings.Web;
+using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.BillingAggregate;
 using Infrastructure.Data.Repository.EfCore.Constants;
@@ -12,7 +16,6 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
     {
         builder.HasKey(p => p.Id);
         builder.Property(p => p.Id).IsRequired();
-        builder.Property(p => p.EndDate).IsRequired();
         builder.Property(p => p.DueDate).IsRequired();
         builder.Property(p => p.StartDate).IsRequired();
         builder.Property(p => p.TenantId).IsRequired();
@@ -20,6 +23,7 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.GracePeriod).IsRequired();
         builder.Property(p => p.DebtorId).IsRequired(false);
         builder.Property(p => p.CreditorId).IsRequired(false);
+        builder.Property(p => p.PaymentDeadlineDate).IsRequired();
         builder.Property(p => p.ToBusinessIdentityId).IsRequired();
         builder.Property(p => p.FromBusinessIdentityId).IsRequired();
         builder.Property(p => p.Code).HasMaxLength(100).IsRequired();
@@ -36,6 +40,18 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.PreviousPenaltyAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.CheckSum).HasMaxLength(500).IsRequired();
         builder.Property(e => e.RowVersion).IsRowVersion();
+
+        var options = new JsonSerializerOptions
+        {
+            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+
+        builder
+            .Property(b => b.TieredCalculatedLevels).HasMaxLength(4000).IsRequired(false)
+            .HasConversion(
+                x => JsonSerializer.Serialize(x, options),
+                x => JsonSerializer.Deserialize<List<TieredCalculatedLevel>>(x, options))
+            .IsUnicode();
 
         builder.HasOne(p => p.Debtor)
             .WithMany(p => p.DebtorChildren)

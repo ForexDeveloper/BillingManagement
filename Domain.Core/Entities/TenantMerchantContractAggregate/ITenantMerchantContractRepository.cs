@@ -1,16 +1,13 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.TenantMerchantContractAggregate;
 
-public interface ITenantMerchantContractRepository
+public interface ITenantMerchantContractRepository : IRepository<TenantMerchantContract, int>
 {
     Task AddAsync(TenantMerchantContract tenantMerchantContract);
-
-    void Update(TenantMerchantContract tenantMerchantContract);
 
     Task<TenantMerchantContract> GetAsync(int id);
 
@@ -27,6 +24,4 @@ public interface ITenantMerchantContractRepository
     Task<List<int>> GetContractIdsHasEndorsement(List<int> contractIds);
 
     Task<List<ContractGroup>> GetAllGroupContractAsync(CancellationToken cancellationToken);
-
-    DateTime GetActiveContractStartOfPeriod(TenantMerchantContract contract);
 }

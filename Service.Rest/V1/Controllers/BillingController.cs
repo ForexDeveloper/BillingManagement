@@ -19,7 +19,7 @@ public sealed class BillingController(IMediator mediator, ICurrentUserService cu
     [HttpGet]
     [SwaggerOperation("Get billing list")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "billing list not found")]
-    [SwaggerResponse((int)HttpStatusCode.OK, "billing list returned", typeof(GetBillingsViewModel))]
+    [SwaggerResponse((int)HttpStatusCode.OK, "billing list returned", typeof(GetBillingsVm))]
     public async Task<ActionResult> GetListAsync([FromQuery] GetBillingsRequest request)
     {
         var billings = await mediator.Send(new GetBillingsQuery(currentUserService.TenantId, request.MerchantId,

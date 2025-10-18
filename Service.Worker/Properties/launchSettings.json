@@ -6,6 +6,12 @@
         "DOTNET_ENVIRONMENT": "Development"
       }
     },
+    "Service.Worker.Local": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Local"
+      }
+    },
     "Docker": {
       "commandName": "Docker",
       "environmentVariables": {

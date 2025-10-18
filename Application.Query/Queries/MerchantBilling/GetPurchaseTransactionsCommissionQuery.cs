@@ -7,7 +7,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetPurchaseTransactionsCommissionQuery(int TenantId, long Id) : IRequest<GetPurchaseTransactionsCommissionViewModel>
+public sealed record GetPurchaseTransactionsCommissionQuery(int TenantId, long Id) : IRequest<GetPurchaseTransactionsCommissionVm>
 {
     public long Id { get; set; } = Id;
 
@@ -15,20 +15,58 @@ public sealed record GetPurchaseTransactionsCommissionQuery(int TenantId, long I
 }
 
 public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBillingReadOnlyRepository repository)
-    : IRequestHandler<GetPurchaseTransactionsCommissionQuery, GetPurchaseTransactionsCommissionViewModel>
+    : IRequestHandler<GetPurchaseTransactionsCommissionQuery, GetPurchaseTransactionsCommissionVm>
 {
-    public async Task<GetPurchaseTransactionsCommissionViewModel> Handle(GetPurchaseTransactionsCommissionQuery query,
+    public async Task<GetPurchaseTransactionsCommissionVm> Handle(GetPurchaseTransactionsCommissionQuery query,
         CancellationToken cancellationToken)
     {
         var commission = await repository.GetPurchaseTransactionsCommissionAsync(query);
 
-        var activeContract = commission.Contracts.FirstOrDefault();
-
-        if (commission.Amount < activeContract?.PeriodMinCommissionAmount)
+        return new GetPurchaseTransactionsCommissionVm()
         {
-            commission.Message = $"ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد {activeContract.PeriodMinCommissionAmount} درنظر گرفته می شود {commission.Amount} مجموع کارمزد شما";
-        }
+            Id = commission.BillingId,
+            Message = commission.Message,
+            FinalAmount = commission.FinalAmount,
+            MainContractId = commission.MainContractId,
+            CalculatedAmount = commission.CalculatedAmount,
+            TransactionsCount = commission.TransactionsCount,
+            TransactionsAmount = commission.TransactionsAmount,
+            TieredCalculatedLevels = commission.TieredCalculatedLevels?.Select(p => new TieredCalculatedLevelVm()
+            {
+                Number = p.Number,
+                Commission = p.Commission,
+                TransactionsAmount = p.TransactionsAmount
+            }),
+            Contracts = commission.Contracts.Select(p => new GetMerchantBillingContractVm()
+            {
+                Id = p.Id,
+                Status = p.Status,
+                EndDate = p.EndDate,
+                StartDate = p.StartDate,
+                Description = p.Description,
+                FixedAmountCommission = p.FixedAmountCommission,
+                FixedPercentageCommission = p.FixedPercentageCommission,
+                PeriodMaxCommissionAmount = p.PeriodMaxCommissionAmount,
+                PeriodMinCommissionAmount = p.PeriodMinCommissionAmount,
+                CommissionCalculationType = p.CommissionCalculationType,
+                CommissionCalculationTypeTitle = p.CommissionCalculationTypeTitle,
+                TransactionMaxCommissionAmount = p.TransactionMaxCommissionAmount,
+                TransactionMinCommissionAmount = p.TransactionMinCommissionAmount,
+                TieredCommissions = p.TieredCommissions?.Select(tieredCommission =>
+                {
+                    var selected = commission.TieredCalculatedLevels?.Any(r => r.TieredCommission == tieredCommission);
 
-        return commission;
+                    return new TieredCommissionVm()
+                    {
+                        Selected = selected ?? false,
+                        ToAmount = tieredCommission.ToAmount,
+                        MaxAmount = tieredCommission.MaxAmount,
+                        MinAmount = tieredCommission.MinAmount,
+                        Percentage = tieredCommission.Percentage,
+                        FromAmount = tieredCommission.FromAmount
+                    };
+                })
+            })
+        };
     }
 }

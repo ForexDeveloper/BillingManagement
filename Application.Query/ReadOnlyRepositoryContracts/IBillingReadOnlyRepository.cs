@@ -6,5 +6,5 @@ namespace Application.Query.ReadOnlyRepositoryContracts;
 
 public interface IBillingReadOnlyRepository
 {
-    Task<GetBillingsViewModel> GetBillingsAsync(GetBillingsQuery query);
+    Task<GetBillingsVm> GetBillingsAsync(GetBillingsQuery query);
 }

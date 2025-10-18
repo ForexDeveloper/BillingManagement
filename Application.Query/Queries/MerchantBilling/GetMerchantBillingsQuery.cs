@@ -8,7 +8,7 @@ using Application.Query.ReadOnlyRepositoryContracts;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed class GetMerchantBillingsQuery : BasePaginatedListRequest, IRequest<GetBillingsViewModel>
+public sealed class GetMerchantBillingsQuery : BasePaginatedListRequest, IRequest<GetBillingsVm>
 {
     public string Code { get; set; }
 
@@ -30,9 +30,9 @@ public sealed class GetMerchantBillingsQuery : BasePaginatedListRequest, IReques
 }
 
 public sealed class GetMerchantBillingsQueryHandler(IMerchantBillingReadOnlyRepository repository)
-    : BaseQueryHandler, IRequestHandler<GetMerchantBillingsQuery, GetBillingsViewModel>
+    : BaseQueryHandler, IRequestHandler<GetMerchantBillingsQuery, GetBillingsVm>
 {
-    public async Task<GetBillingsViewModel> Handle(GetMerchantBillingsQuery query, CancellationToken cancellationToken)
+    public async Task<GetBillingsVm> Handle(GetMerchantBillingsQuery query, CancellationToken cancellationToken)
     {
         return await repository.GetBillingsAsync(query);
     }

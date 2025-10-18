@@ -42,9 +42,9 @@ public static class ContractPeriodHelper
 
                 var totalDays = (specificDate.Date - originDate.Date).Days;
 
-                difference = billingPeriod - (totalDays % billingPeriod);
+                difference = totalDays % billingPeriod;
 
-                startOfPeriod = pc.AddDays(specificDate, -difference);
+                startOfPeriod = difference == billingPeriod ? specificDate : pc.AddDays(specificDate, -difference);
 
                 endOfPeriod = pc.AddDays(startOfPeriod, billingPeriod);
 

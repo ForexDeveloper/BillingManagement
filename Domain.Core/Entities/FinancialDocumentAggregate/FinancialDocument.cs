@@ -1,14 +1,14 @@
-﻿using Domain.Base;
+﻿using System;
+using Domain.Base;
+using Domain.Core.Enums;
+using Domain.Core.Helper;
+using System.Collections.Generic;
 using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
-using Domain.Core.Enums;
-using Domain.Core.Helper;
-using System;
-using System.Collections.Generic;
 
 namespace Domain.Core.Entities.FinancialDocumentAggregate;
 
@@ -77,11 +77,6 @@ public class FinancialDocument : BaseEntity<long>
     private FinancialDocument()
     {
 
-    }
-
-    public FinancialDocument(long id)
-    {
-        Id = id;
     }
 
     public FinancialDocument(long id, int fromBusinessIdentityId, int toBusinessIdentityId, int tenantId, decimal amount,

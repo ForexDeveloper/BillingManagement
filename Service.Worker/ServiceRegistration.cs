@@ -2,6 +2,7 @@
 using Application.Service.Contracts;
 using Application.Service.EventConsumers;
 using Application.Service.Services;
+using Domain.Core.Entities;
 using Domain.Core.Entities.BackgroundJobAggregate;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.FacilitatorAggregate;
@@ -152,7 +153,7 @@ namespace Service.Worker
         internal static void RegisterServices(this IServiceCollection services)
         {
             services.AddScoped<IBackgroundJobService, BackgroundJobService>();
-            //services.AddScoped<IMerchantBillingService, MerchantBillingService>();
+            services.AddScoped<IMerchantBillingService, MerchantBillingService>();
             services.AddScoped<IWalletContractService, WalletContractService>();
             services.AddScoped<IBillingPaymentService, BillingPaymentService>();
         }

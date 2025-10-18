@@ -6,7 +6,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Application.Query.Queries.MerchantBilling;
 
-public sealed record GetAdditionsQuery(int TenantId, long Id) : IRequest<GetAdditionsViewModel>
+public sealed record GetAdditionsQuery(int TenantId, long Id) : IRequest<GetAdditionsVm>
 {
     public long Id { get; set; } = Id;
 
@@ -14,9 +14,9 @@ public sealed record GetAdditionsQuery(int TenantId, long Id) : IRequest<GetAddi
 }
 
 public sealed class GetAdditionsQueryHandler(IMerchantBillingReadOnlyRepository repository)
-    : IRequestHandler<GetAdditionsQuery, GetAdditionsViewModel>
+    : IRequestHandler<GetAdditionsQuery, GetAdditionsVm>
 {
-    public async Task<GetAdditionsViewModel> Handle(GetAdditionsQuery query, CancellationToken cancellationToken)
+    public async Task<GetAdditionsVm> Handle(GetAdditionsQuery query, CancellationToken cancellationToken)
     {
         return await repository.GetAdditionsAsync(query);
     }

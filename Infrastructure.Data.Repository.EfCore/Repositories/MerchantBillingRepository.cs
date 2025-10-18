@@ -1,13 +1,13 @@
-﻿using Domain.Core.Entities.BillingAggregate.Dtos;
-using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Enums;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Enums;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.BillingAggregate.Dtos;
+using Domain.Core.Entities.MerchantBillingAggregate;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
@@ -25,7 +25,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
     {
         var billings = await _applicationDbContext.MerchantBillings
             .Where(p => (p.Status == BillingStatus.Overdue && p.Transferred == false) ||
-                        ((p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid) && p.DueDate.AddDays(1) < DateTime.Today))
+                        ((p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid) && p.PaymentDeadlineDate < DateTime.Today))
             .Select(p => new NotSettledBilling
             {
                 Billing = p,
@@ -35,7 +35,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
                     q.TenantId == p.FromBusinessIdentityId &&
                     q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
             })
-            .OrderByDescending(p => p.Billing.EndDate)
+            .OrderByDescending(p => p.Billing.DueDate)
             .ToListAsync(cancellationToken);
 
         return billings;
@@ -53,7 +53,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
                     q.TenantId == p.FromBusinessIdentityId &&
                     q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
             })
-            .OrderByDescending(p => p.Billing.EndDate)
+            .OrderByDescending(p => p.Billing.DueDate)
             .ToListAsync(cancellationToken);
     }
 
@@ -84,17 +84,11 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
             .AnyAsync(cancellationToken);
     }
 
-    public async Task<MerchantBilling> GetByBillingIdAsync(long billingId)
+    public override async Task<MerchantBilling> GetAsync(long id, CancellationToken? cancellationToken = null)
     {
-        var merchantBilling = await applicationDbContext.MerchantBillings.Include(mb => mb.Payments)
-            .FirstOrDefaultAsync(mb => mb.Id == billingId);
+        var merchantBilling = await _applicationDbContext.MerchantBillings.Include(mb => mb.Payments)
+            .FirstOrDefaultAsync(mb => mb.Id == id);
 
         return merchantBilling;
     }
-
-    public void Update(MerchantBilling billings)
-    {
-        applicationDbContext.MerchantBillings.Update(billings);
-    }
-
 }

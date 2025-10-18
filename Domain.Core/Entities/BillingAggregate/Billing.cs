@@ -1,12 +1,13 @@
-﻿using Domain.Base;
-using Domain.Core.Entities.BillingPaymentAggregate;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.Enums;
-using System;
-using System.Collections.Generic;
+﻿using System;
+using Domain.Base;
 using System.Linq;
+using Domain.Core.Enums;
+using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
+using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.BillingPaymentAggregate;
 
 namespace Domain.Core.Entities.BillingAggregate;
 
@@ -52,9 +53,9 @@ public abstract class Billing : BaseEntity<long>
 
     public DateTime StartDate { get; protected set; }
 
-    public DateTime EndDate { get; protected set; }
-
     public DateTime DueDate { get; protected set; }
+
+    public DateTime PaymentDeadlineDate { get; set; }
 
     public long? DebtorId { get; protected set; }
 
@@ -80,6 +81,8 @@ public abstract class Billing : BaseEntity<long>
 
     public ICollection<Billing> CreditorChildren { get; protected set; } = [];
 
+    public List<TieredCalculatedLevel> TieredCalculatedLevels { get; protected set; }
+
     protected decimal PayableAmount => Amount - PaidAmount;
 
     protected decimal PaidAmount => Payments.Sum(p => p.Amount);
@@ -92,7 +95,8 @@ public abstract class Billing : BaseEntity<long>
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
-        List<int> contractIds, Billing? debtor = null, Billing? creditor = null)
+        List<int> contractIds, List<TieredCalculatedLevel> tieredCalculatedLevels = null, Billing? debtor = null,
+        Billing? creditor = null)
     {
         Type = type;
         Debtor = debtor;
@@ -109,10 +113,12 @@ public abstract class Billing : BaseEntity<long>
         ToBusinessIdentityId = toBusinessIdentityId;
         PreviousPenaltyAmount = previousPenaltyAmount;
         FromBusinessIdentityId = fromBusinessIdentityId;
+        TieredCalculatedLevels = tieredCalculatedLevels;
 
         GenerateCode();
         SetContractIds(contractIds);
-        SetBillingRanges(startDate, endDate);
+        SetBillingDates(startDate, endDate);
+        CalculatePaymentDeadlineDate();
     }
 
     public void Settle()
@@ -123,6 +129,11 @@ public abstract class Billing : BaseEntity<long>
     public void Overdue()
     {
         UpdateStatus(BillingStatus.Overdue);
+    }
+
+    public void PartialPay()
+    {
+        UpdateStatus(BillingStatus.PartiallyPaid);
     }
 
     public void Transfer()
@@ -163,7 +174,7 @@ public abstract class Billing : BaseEntity<long>
         ContractIds = contractIds;
     }
 
-    private void SetBillingRanges(DateTime startDate, DateTime endDate)
+    private void SetBillingDates(DateTime startDate, DateTime endDate)
     {
         if (startDate >= endDate)
         {
@@ -171,13 +182,24 @@ public abstract class Billing : BaseEntity<long>
         }
 
         StartDate = startDate;
-        EndDate = endDate;
         DueDate = endDate;
     }
 
-    protected void SettleOrIssue()
+    private void CalculatePaymentDeadlineDate()
     {
-        Status = Amount <= 0 ? BillingStatus.Settled : BillingStatus.Issued;
+        PaymentDeadlineDate = DueDate.AddDays(GracePeriod);
+    }
+
+    protected void SetFinalStatus()
+    {
+        if (Amount > 0)
+        {
+            Status = PaymentDeadlineDate < DateTime.Today ? BillingStatus.Overdue : BillingStatus.Issued;
+        }
+        else
+        {
+            Status = BillingStatus.Settled;
+        }
     }
 
     protected abstract void SetCheckSum();

@@ -1,10 +1,11 @@
-﻿using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.BillingPaymentAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
+﻿using System;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
-using System;
 using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.BillingPaymentAggregate;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 
@@ -30,9 +31,10 @@ public sealed class MerchantBilling : Billing
         List<int> contractIds, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
         decimal purchaseTransactionsAmount, decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
         decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission,
-        Billing? debtor = null, Billing? creditor = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId,
-        type, periodType, previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate,
-        gracePeriod, mainContractId, contractIds, debtor, creditor)
+        List<TieredCalculatedLevel> calculatedTieredLevels, Billing? debtor = null, Billing? creditor = null) : base(
+        tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount,
+        previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, mainContractId, contractIds,
+        calculatedTieredLevels, debtor, creditor)
     {
         PurchaseTransactionsAmount = purchaseTransactionsAmount;
         RefundedTransactionsAmount = refundedTransactionsAmount;
@@ -40,7 +42,7 @@ public sealed class MerchantBilling : Billing
         RefundedTransactionsCommission = refundedTransactionsCommission;
         PurchaseTransactionsCalculatedCommission = purchaseTransactionsCalculatedCommission;
         CalculateAmount();
-        SettleOrIssue();
+        SetFinalStatus();
         SetCheckSum();
     }
 
@@ -106,7 +108,7 @@ public sealed class MerchantBilling : Billing
         return $"{FromBusinessIdentityId}{ToBusinessIdentityId}{TenantId}{Amount:F10}" +
                $"{PreviousDebitAmount:F10}{PurchaseTransactionsAmount:F10}{RefundedTransactionsCommission:F10}{AdditionsAmount:F10}" +
                $"{PreviousCreditAmount:F10}{PurchaseTransactionsCommission:F10}{RefundedTransactionsAmount:F10}{DeductionsAmount:F10}" +
-               $"{GracePeriod}{Status}{StartDate:yyyy-MM-ddTHH:mm:ss}{EndDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
+               $"{GracePeriod}{Status}{StartDate:yyyy-MM-ddTHH:mm:ss}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
     }
 
     public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)

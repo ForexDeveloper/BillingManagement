@@ -57,8 +57,7 @@ try
 
 
             services.AddHostedService<OutboxPublisherServiceWorker>();
-            //services.AddHostedService<MerchantBillingServiceWorker>();
-
+            services.AddHostedService<MerchantBillingServiceWorker>();
             //services.AddHostedService<CustomerWalletServiceWorker>();
             services.AddHealthChecks().AddCheck<DatabaseConnectionHealthCheck>("worker_database_health_check");
         })
