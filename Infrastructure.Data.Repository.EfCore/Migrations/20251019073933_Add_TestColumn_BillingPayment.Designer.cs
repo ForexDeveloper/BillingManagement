@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Data.Repository.EfCore.Migrations
+namespace Infrastructure.Data.Repository.EfCore.Migrations.BillingDb
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251018092925_add_calculatedTieredLevel_to_billing")]
-    partial class add_calculatedTieredLevel_to_billing
+    [Migration("20251019073933_Add_TestColumn_BillingPayment")]
+    partial class Add_TestColumn_BillingPayment
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -244,6 +244,9 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
                     b.Property<long>("PaymentId")
                         .HasColumnType("bigint");
+
+                    b.Property<DateTime?>("TestColumn")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 

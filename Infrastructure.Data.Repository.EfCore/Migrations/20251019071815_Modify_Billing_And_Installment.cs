@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Infrastructure.Data.Repository.EfCore.Migrations
+namespace Infrastructure.Data.Repository.EfCore.Migrations.BillingDb
 {
     /// <inheritdoc />
-    public partial class Initial_Database : Migration
+    public partial class Modify_Billing_And_Installment : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -31,13 +31,32 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     OriginalFileName = table.Column<string>(type: "nvarchar(400)", maxLength: 400, nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Attachment", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BackgroundJob",
+                schema: "Bill",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    JobId = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
+                    CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BackgroundJob", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -48,8 +67,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     Id = table.Column<int>(type: "int", nullable: false),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -89,8 +108,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     Description = table.Column<string>(type: "nvarchar(2500)", maxLength: 2500, nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -171,8 +190,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.MerchantId,
                         principalSchema: "Bill",
                         principalTable: "Merchant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -183,7 +201,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     TenantId = table.Column<int>(type: "int", nullable: false),
-                    ParentId = table.Column<long>(type: "bigint", nullable: true),
+                    DebtorId = table.Column<long>(type: "bigint", nullable: true),
                     FromBusinessIdentityId = table.Column<int>(type: "int", nullable: false),
                     ToBusinessIdentityId = table.Column<int>(type: "int", nullable: false),
                     Code = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
@@ -195,56 +213,58 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     PreviousCreditAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     PreviousPenaltyAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     GracePeriod = table.Column<int>(type: "int", nullable: false),
-                    ContractIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ContractIds = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     StartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
                     CheckSum = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    BillingId = table.Column<long>(type: "bigint", nullable: true),
+                    CreditorId = table.Column<long>(type: "bigint", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    AdditionsAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    AdditionsDescription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    DeductionsAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    DeductionsDescription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    MainContractId = table.Column<int>(type: "int", nullable: false),
+                    Transferred = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Billing", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Billing_Billing_BillingId",
-                        column: x => x.BillingId,
+                        name: "FK_Billing_Billing_CreditorId",
+                        column: x => x.CreditorId,
                         principalSchema: "Bill",
                         principalTable: "Billing",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Billing_Billing_ParentId",
-                        column: x => x.ParentId,
+                        name: "FK_Billing_Billing_DebtorId",
+                        column: x => x.DebtorId,
                         principalSchema: "Bill",
                         principalTable: "Billing",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Billing_BusinessIdentity_FromBusinessIdentityId",
                         column: x => x.FromBusinessIdentityId,
                         principalSchema: "Bill",
                         principalTable: "BusinessIdentity",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Billing_BusinessIdentity_ToBusinessIdentityId",
                         column: x => x.ToBusinessIdentityId,
                         principalSchema: "Bill",
                         principalTable: "BusinessIdentity",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Billing_Tenant_TenantId",
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -273,8 +293,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -303,8 +322,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -333,8 +351,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -368,8 +385,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -384,8 +400,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -396,8 +412,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -440,8 +455,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     ParentId = table.Column<int>(type: "int", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -452,8 +467,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.MerchantId,
                         principalSchema: "Bill",
                         principalTable: "Merchant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_TenantMerchantContract_TenantMerchantContract_ParentId",
                         column: x => x.ParentId,
@@ -465,8 +479,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -482,8 +495,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     CheckSum = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -494,8 +507,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.BillingId,
                         principalSchema: "Bill",
                         principalTable: "Billing",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -504,16 +516,11 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false),
-                    Additions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
-                    AdditionsDescription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    Deductions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
-                    DeductionsDescription = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    PurchaseTransactionsCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     RefundedTransactionsCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
-                    CurrentPeriodFinalCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
-                    CurrentPeriodCalculatedCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
-                    CurrentPeriodPurchaseTransactions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
-                    PreviousPeriodRefundedTransactions = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
-                    MerchantId = table.Column<int>(type: "int", nullable: true)
+                    PurchaseTransactionsAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    PurchaseTransactionsCalculatedCommission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    RefundedTransactionsAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -525,12 +532,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         principalTable: "Billing",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_MerchantBilling_Merchant_MerchantId",
-                        column: x => x.MerchantId,
-                        principalSchema: "Bill",
-                        principalTable: "Merchant",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -566,8 +567,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     ParentId = table.Column<int>(type: "int", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -578,15 +579,13 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantIpgSettingId,
                         principalSchema: "Bill",
                         principalTable: "TenantIpgSetting",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_TenantPlatformContract_Tenant_TenantId",
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -604,8 +603,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     TenantIpgSettingId = table.Column<int>(type: "int", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -622,8 +621,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -650,12 +648,12 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     CreditAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     CashAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     PrepaymentAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
-                    Commission = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Commission = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     ParentId = table.Column<long>(type: "bigint", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -666,15 +664,13 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.FromBusinessIdentityId,
                         principalSchema: "Bill",
                         principalTable: "BusinessIdentity",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_FinancialDocument_BusinessIdentity_ToBusinessIdentityId",
                         column: x => x.ToBusinessIdentityId,
                         principalSchema: "Bill",
                         principalTable: "BusinessIdentity",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_FinancialDocument_FinancialDocument_ParentId",
                         column: x => x.ParentId,
@@ -704,8 +700,7 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -722,8 +717,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     PaymentMethodType = table.Column<byte>(type: "tinyint", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -734,15 +729,13 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.FacilitatorId,
                         principalSchema: "Bill",
                         principalTable: "Facilitator",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_TenantPlatformContractFacilitator_TenantPlatformContract_TenantPlatformContractId",
                         column: x => x.TenantPlatformContractId,
                         principalSchema: "Bill",
                         principalTable: "TenantPlatformContract",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -757,8 +750,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     Amount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -769,15 +762,13 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.ProviderId,
                         principalSchema: "Bill",
                         principalTable: "Provider",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_TenantPlatformContractProvider_TenantPlatformContract_TenantPlatformContractId",
                         column: x => x.TenantPlatformContractId,
                         principalSchema: "Bill",
                         principalTable: "TenantPlatformContract",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -800,8 +791,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     PaymentMethodType = table.Column<byte>(type: "tinyint", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -812,15 +803,13 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.FacilitatorId,
                         principalSchema: "Bill",
                         principalTable: "Facilitator",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_WalletContractFacilitator_WalletContract_WalletContractId",
                         column: x => x.WalletContractId,
                         principalSchema: "Bill",
                         principalTable: "WalletContract",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -843,8 +832,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     PaymentMethodType = table.Column<byte>(type: "tinyint", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -855,15 +844,13 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.FinancierId,
                         principalSchema: "Bill",
                         principalTable: "Financier",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_WalletContractFinancier_WalletContract_WalletContractId",
                         column: x => x.WalletContractId,
                         principalSchema: "Bill",
                         principalTable: "WalletContract",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -886,8 +873,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     PaymentMethodType = table.Column<byte>(type: "tinyint", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
@@ -898,19 +885,17 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.GuarantorId,
                         principalSchema: "Bill",
                         principalTable: "Guarantor",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_WalletContractGuarantor_WalletContract_WalletContractId",
                         column: x => x.WalletContractId,
                         principalSchema: "Bill",
                         principalTable: "WalletContract",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
-                name: "Installments",
+                name: "Installment",
                 schema: "Bill",
                 columns: table => new
                 {
@@ -918,7 +903,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     TenantId = table.Column<int>(type: "int", nullable: false),
                     FinancialDocumentId = table.Column<long>(type: "bigint", nullable: false),
-                    BillingId = table.Column<long>(type: "bigint", nullable: true),
                     FromBusinessIdentityId = table.Column<int>(type: "int", nullable: false),
                     ToBusinessIdentityId = table.Column<int>(type: "int", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
@@ -929,56 +913,42 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     Status = table.Column<byte>(type: "tinyint", nullable: false),
                     CheckSum = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
-                    TenantMerchantContractId1 = table.Column<int>(type: "int", nullable: true),
                     CreatedDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EditDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorUserId = table.Column<string>(type: "VARCHAR(100)", maxLength: 100, nullable: true),
-                    ClientId = table.Column<string>(type: "VARCHAR(200)", maxLength: 200, nullable: true),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
+                    CreatorUserId = table.Column<string>(type: "varchar(100)", unicode: false, maxLength: 100, nullable: true),
+                    ClientId = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    CashAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    CreditAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false),
+                    PrepaymentAmount = table.Column<decimal>(type: "decimal(32,10)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Installments", x => x.Id);
+                    table.PrimaryKey("PK_Installment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Installments_Billing_BillingId",
-                        column: x => x.BillingId,
-                        principalSchema: "Bill",
-                        principalTable: "Billing",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Installments_BusinessIdentity_FromBusinessIdentityId",
+                        name: "FK_Installment_BusinessIdentity_FromBusinessIdentityId",
                         column: x => x.FromBusinessIdentityId,
                         principalSchema: "Bill",
                         principalTable: "BusinessIdentity",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Installments_BusinessIdentity_ToBusinessIdentityId",
+                        name: "FK_Installment_BusinessIdentity_ToBusinessIdentityId",
                         column: x => x.ToBusinessIdentityId,
                         principalSchema: "Bill",
                         principalTable: "BusinessIdentity",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Installments_FinancialDocument_FinancialDocumentId",
+                        name: "FK_Installment_FinancialDocument_FinancialDocumentId",
                         column: x => x.FinancialDocumentId,
                         principalSchema: "Bill",
                         principalTable: "FinancialDocument",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Installments_TenantMerchantContract_TenantMerchantContractId1",
-                        column: x => x.TenantMerchantContractId1,
-                        principalSchema: "Bill",
-                        principalTable: "TenantMerchantContract",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_Installments_Tenant_TenantId",
+                        name: "FK_Installment_Tenant_TenantId",
                         column: x => x.TenantId,
                         principalSchema: "Bill",
                         principalTable: "Tenant",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -993,10 +963,10 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 {
                     table.PrimaryKey("PK_MerchantInstallment", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_MerchantInstallment_Installments_Id",
+                        name: "FK_MerchantInstallment_Installment_Id",
                         column: x => x.Id,
                         principalSchema: "Bill",
-                        principalTable: "Installments",
+                        principalTable: "Installment",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
@@ -1004,29 +974,33 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         column: x => x.TenantMerchantContractId,
                         principalSchema: "Bill",
                         principalTable: "TenantMerchantContract",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Billing_BillingId",
+                name: "IX_BackgroundJob_JobId",
+                schema: "Bill",
+                table: "BackgroundJob",
+                column: "JobId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Billing_CreditorId",
                 schema: "Bill",
                 table: "Billing",
-                column: "BillingId");
+                column: "CreditorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Billing_DebtorId",
+                schema: "Bill",
+                table: "Billing",
+                column: "DebtorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Billing_FromBusinessIdentityId",
                 schema: "Bill",
                 table: "Billing",
                 column: "FromBusinessIdentityId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Billing_ParentId",
-                schema: "Bill",
-                table: "Billing",
-                column: "ParentId",
-                unique: true,
-                filter: "[ParentId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Billing_TenantId",
@@ -1107,46 +1081,28 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 column: "TenantId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Installments_BillingId",
+                name: "IX_Installment_FinancialDocumentId",
                 schema: "Bill",
-                table: "Installments",
-                column: "BillingId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Installments_FinancialDocumentId",
-                schema: "Bill",
-                table: "Installments",
+                table: "Installment",
                 column: "FinancialDocumentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Installments_FromBusinessIdentityId",
+                name: "IX_Installment_FromBusinessIdentityId",
                 schema: "Bill",
-                table: "Installments",
+                table: "Installment",
                 column: "FromBusinessIdentityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Installments_TenantId",
+                name: "IX_Installment_TenantId",
                 schema: "Bill",
-                table: "Installments",
+                table: "Installment",
                 column: "TenantId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Installments_TenantMerchantContractId1",
+                name: "IX_Installment_ToBusinessIdentityId",
                 schema: "Bill",
-                table: "Installments",
-                column: "TenantMerchantContractId1");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Installments_ToBusinessIdentityId",
-                schema: "Bill",
-                table: "Installments",
+                table: "Installment",
                 column: "ToBusinessIdentityId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MerchantBilling_MerchantId",
-                schema: "Bill",
-                table: "MerchantBilling",
-                column: "MerchantId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_MerchantBranch_MerchantId",
@@ -1289,6 +1245,10 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 schema: "Bill");
 
             migrationBuilder.DropTable(
+                name: "BackgroundJob",
+                schema: "Bill");
+
+            migrationBuilder.DropTable(
                 name: "BillingPayment",
                 schema: "Bill");
 
@@ -1329,7 +1289,11 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                 schema: "Bill");
 
             migrationBuilder.DropTable(
-                name: "Installments",
+                name: "Billing",
+                schema: "Bill");
+
+            migrationBuilder.DropTable(
+                name: "Installment",
                 schema: "Bill");
 
             migrationBuilder.DropTable(
@@ -1350,10 +1314,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
             migrationBuilder.DropTable(
                 name: "WalletContract",
-                schema: "Bill");
-
-            migrationBuilder.DropTable(
-                name: "Billing",
                 schema: "Bill");
 
             migrationBuilder.DropTable(
