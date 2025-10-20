@@ -25,8 +25,8 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.CreditorId).IsRequired(false);
         builder.Property(p => p.PaymentDeadlineDate).IsRequired();
         builder.Property(p => p.ToBusinessIdentityId).IsRequired();
+        builder.Property(p => p.Code).HasMaxLength(22).IsRequired();
         builder.Property(p => p.FromBusinessIdentityId).IsRequired();
-        builder.Property(p => p.Code).HasMaxLength(100).IsRequired();
         builder.Property(p => p.ContractIds).HasMaxLength(256).IsRequired();
         builder.Property(p => p.Transferred).HasDefaultValue(false).IsRequired();
         builder.Property(p => p.Status).HasDefaultValue(BillingStatus.Issued).IsRequired();
@@ -40,6 +40,7 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.PreviousPenaltyAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.CheckSum).HasMaxLength(500).IsRequired();
         builder.Property(e => e.RowVersion).IsRowVersion();
+        builder.HasIndex(p => p.Code).IsUnique();
 
         var options = new JsonSerializerOptions
         {

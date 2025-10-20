@@ -1,11 +1,11 @@
 ﻿using System;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
+using Domain.Core.Constants;
 using System.Collections.Generic;
 using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.BillingPaymentAggregate;
 
 namespace Domain.Core.Entities.MerchantBillingAggregate;
 
@@ -26,66 +26,50 @@ public sealed class MerchantBilling : Billing
 
     }
 
-    public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
-        TimeInterval periodType, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
-        List<int> contractIds, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
-        decimal purchaseTransactionsAmount, decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
+    public MerchantBilling(int tenantId, int merchantId, TimeInterval periodType, DateTime startDate, DateTime endDate,
+        int gracePeriod, int mainContractId, List<int> contractIds, decimal previousDebitAmount,
+        decimal previousCreditAmount, decimal previousPenaltyAmount, decimal purchaseTransactionsAmount,
+        decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
         decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission,
         List<TieredCalculatedLevel> calculatedTieredLevels, Billing? debtor = null, Billing? creditor = null) : base(
-        tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount,
-        previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, mainContractId, contractIds,
-        calculatedTieredLevels, debtor, creditor)
+        tenantId, periodType, previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate,
+        gracePeriod, mainContractId, contractIds, calculatedTieredLevels, debtor, creditor)
     {
         PurchaseTransactionsAmount = purchaseTransactionsAmount;
         RefundedTransactionsAmount = refundedTransactionsAmount;
         PurchaseTransactionsCommission = purchaseTransactionsCommission;
         RefundedTransactionsCommission = refundedTransactionsCommission;
         PurchaseTransactionsCalculatedCommission = purchaseTransactionsCalculatedCommission;
-        CalculateAmount();
-        SetFinalStatus();
-        SetCheckSum();
+        Configure(tenantId, merchantId);
     }
 
-    public void SetAdditions(decimal additions, string? additionDescription)
-    {
-        if (additions < 0)
-        {
-            throw new ArgumentValidationException(nameof(additions), "مبلغ اضافات نمی تواند از 0 کوچکتر باشد");
-        }
-
-        AdditionsAmount = additions;
-        AdditionsDescription = additionDescription;
-        CalculateAmount();
-    }
-
-    public void SetDeductions(decimal deductions, string? deductionDescription)
-    {
-        if (deductions < 0)
-        {
-            throw new ArgumentValidationException(nameof(deductions), "مبلغ کسورات نمی تواند از 0 کوچکتر باشد");
-        }
-
-        Amount += DeductionsAmount;
-
-        if (Amount < deductions)
-        {
-            throw new ArgumentValidationException(nameof(deductions), "مبلغ کسورات نمی تواند از مبلغ کل صورتحساب بیشتر باشد");
-        }
-
-        DeductionsDescription = deductionDescription;
-        DeductionsAmount = deductions;
-        CalculateAmount();
-    }
-
-    private void CalculateAmount()
+    protected override void CalculateAmount()
     {
         var totalDebit = PreviousDebitAmount + PurchaseTransactionsAmount + RefundedTransactionsCommission + AdditionsAmount;
 
         var totalCredit = PreviousCreditAmount + PurchaseTransactionsCommission + RefundedTransactionsAmount + DeductionsAmount;
 
         Amount = totalDebit - totalCredit;
+    }
 
-        SetCheckSum();
+    protected override void SetBillingType()
+    {
+        Type = Amount >= 0 ? BillingType.TenantToMerchant : BillingType.MerchantToTenant;
+    }
+
+    protected override string GenerateCodePrefix()
+    {
+        switch (Type)
+        {
+            case BillingType.TenantToMerchant:
+                return BillingConstants.TenantPrefix;
+
+            case BillingType.MerchantToTenant:
+                return BillingConstants.MerchantPrefix;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 
     protected override void SetCheckSum()
@@ -103,16 +87,30 @@ public sealed class MerchantBilling : Billing
         }
     }
 
-    protected override string GenerateCheckSum()
+    protected override void SetIdentity(int fromBusinessIdentityId, int toBusinessIdentityId)
+    {
+        switch (Type)
+        {
+            case BillingType.TenantToMerchant:
+                FromBusinessIdentityId = fromBusinessIdentityId;
+                ToBusinessIdentityId = toBusinessIdentityId;
+                break;
+
+            case BillingType.MerchantToTenant:
+                FromBusinessIdentityId = toBusinessIdentityId;
+                ToBusinessIdentityId = fromBusinessIdentityId;
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private string GenerateCheckSum()
     {
         return $"{FromBusinessIdentityId}{ToBusinessIdentityId}{TenantId}{Amount:F10}" +
                $"{PreviousDebitAmount:F10}{PurchaseTransactionsAmount:F10}{RefundedTransactionsCommission:F10}{AdditionsAmount:F10}" +
                $"{PreviousCreditAmount:F10}{PurchaseTransactionsCommission:F10}{RefundedTransactionsAmount:F10}{DeductionsAmount:F10}" +
-               $"{GracePeriod}{Status}{StartDate:yyyy-MM-ddTHH:mm:ss}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
-    }
-
-    public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)
-    {
-        Payments.Add(new BillingPayment(billingId, paymentId, amount, paymentDate));
+               $"{GracePeriod}{Status}{Transferred}{StartDate:yyyy-MM-ddTHH:mm:ss}{DueDate:yyyy-MM-ddTHH:mm:ss}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}";
     }
 }

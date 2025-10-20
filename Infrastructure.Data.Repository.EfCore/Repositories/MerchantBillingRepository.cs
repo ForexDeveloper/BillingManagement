@@ -41,22 +41,6 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
         return billings;
     }
 
-    public async Task<List<NegativeSettledBilling>> GetNegativeSettledBillings(CancellationToken cancellationToken)
-    {
-        return await _applicationDbContext.MerchantBillings
-            .Where(p => p.Status == BillingStatus.Settled && p.Amount < 0 && p.Transferred == false)
-            .Select(p => new NegativeSettledBilling
-            {
-                Billing = p,
-                ActiveContractId = _applicationDbContext.TenantMerchantContracts.Where(q =>
-                    q.Status &&
-                    q.TenantId == p.FromBusinessIdentityId &&
-                    q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
-            })
-            .OrderByDescending(p => p.Billing.DueDate)
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<DateTime?> GetLastBillingDueDate(IEnumerable<int> contractIds, CancellationToken cancellationToken)
     {
         //return await applicationDbContext.MerchantBillings.AsNoTracking()
