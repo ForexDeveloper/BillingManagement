@@ -24,1959 +24,1956 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("Domain.Core.Entities.BackgroundJobAggregate.BackgroundJob", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("JobId")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("JobId")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("JobId")
-                        .IsUnique();
+                b.HasIndex("JobId")
+                    .IsUnique();
 
-                    b.ToTable("BackgroundJob", "Bill");
-                });
+                b.ToTable("BackgroundJob", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.BillingAggregate.Billing", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<decimal>("AdditionsAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("AdditionsAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("AdditionsDescription")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                b.Property<string>("AdditionsDescription")
+                    .HasMaxLength(1000)
+                    .HasColumnType("nvarchar(1000)");
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("Amount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("CheckSum")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                b.Property<string>("CheckSum")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(22)
-                        .HasColumnType("nvarchar(22)");
+                b.Property<string>("Code")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("ContractIds")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("ContractIds")
+                    .IsRequired()
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<long?>("CreditorId")
-                        .HasColumnType("bigint");
+                b.Property<long?>("CreditorId")
+                    .HasColumnType("bigint");
 
-                    b.Property<long?>("DebtorId")
-                        .HasColumnType("bigint");
+                b.Property<long?>("DebtorId")
+                    .HasColumnType("bigint");
 
-                    b.Property<decimal>("DeductionsAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("DeductionsAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("DeductionsDescription")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                b.Property<string>("DeductionsDescription")
+                    .HasMaxLength(1000)
+                    .HasColumnType("nvarchar(1000)");
 
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("DueDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<int>("FromBusinessIdentityId")
-                        .HasColumnType("int");
+                b.Property<int>("FromBusinessIdentityId")
+                    .HasColumnType("int");
 
-                    b.Property<int>("GracePeriod")
-                        .HasColumnType("int");
+                b.Property<int>("GracePeriod")
+                    .HasColumnType("int");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<int>("MainContractId")
-                        .HasColumnType("int");
+                b.Property<int>("MainContractId")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("PaymentDeadlineDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("PaymentDeadlineDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<byte>("PeriodType")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("PeriodType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<decimal>("PreviousCreditAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("PreviousCreditAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("PreviousDebitAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("PreviousDebitAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("PreviousPenaltyAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("PreviousPenaltyAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
+                b.Property<byte[]>("RowVersion")
+                    .IsConcurrencyToken()
+                    .ValueGeneratedOnAddOrUpdate()
+                    .HasColumnType("rowversion");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<byte>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint")
-                        .HasDefaultValue((byte)1);
+                b.Property<byte>("Status")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("tinyint")
+                    .HasDefaultValue((byte)1);
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<string>("TieredCalculatedLevels")
-                        .HasMaxLength(4000)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(4000)");
+                b.Property<string>("TieredCalculatedLevels")
+                    .HasMaxLength(4000)
+                    .IsUnicode(true)
+                    .HasColumnType("nvarchar(4000)");
 
-                    b.Property<int>("ToBusinessIdentityId")
-                        .HasColumnType("int");
+                b.Property<int>("ToBusinessIdentityId")
+                    .HasColumnType("int");
 
-                    b.Property<bool>("Transferred")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                b.Property<bool>("Transferred")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bit")
+                    .HasDefaultValue(false);
 
-                    b.Property<byte>("Type")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Type")
+                    .HasColumnType("tinyint");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
+                b.HasIndex("CreditorId");
 
-                    b.HasIndex("CreditorId");
+                b.HasIndex("DebtorId");
 
-                    b.HasIndex("DebtorId");
+                b.HasIndex("FromBusinessIdentityId");
 
-                    b.HasIndex("FromBusinessIdentityId");
+                b.HasIndex("TenantId");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("ToBusinessIdentityId");
 
-                    b.HasIndex("ToBusinessIdentityId");
+                b.ToTable("Billing", "Bill");
 
-                    b.ToTable("Billing", "Bill");
-
-                    b.UseTptMappingStrategy();
-                });
+                b.UseTptMappingStrategy();
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.BillingPaymentAggregate.BillingPayment", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("Amount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<long>("BillingId")
-                        .HasColumnType("bigint");
+                b.Property<long>("BillingId")
+                    .HasColumnType("bigint");
 
-                    b.Property<string>("CheckSum")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                b.Property<string>("CheckSum")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<DateTime>("PaymentDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("PaymentDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<long>("PaymentId")
-                        .HasColumnType("bigint");
+                b.Property<long>("PaymentId")
+                    .HasColumnType("bigint");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("BillingId");
+                b.HasIndex("BillingId");
 
-                    b.HasIndex("PaymentId")
-                        .IsUnique();
+                b.HasIndex("PaymentId")
+                    .IsUnique();
 
-                    b.ToTable("BillingPayment", "Bill");
-                });
+                b.ToTable("BillingPayment", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.BusinessEntity.BusinessIdentity", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .HasColumnType("int");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("BusinessIdentity", "Bill");
+                b.ToTable("BusinessIdentity", "Bill");
 
-                    b.UseTptMappingStrategy();
-                });
+                b.UseTptMappingStrategy();
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.FinancialDocumentAggregate.FinancialDocument", b =>
-                {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint");
+            {
+                b.Property<long>("Id")
+                    .HasColumnType("bigint");
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("Amount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("CashAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("CashAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("CheckSum")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                b.Property<string>("CheckSum")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<decimal?>("Commission")
-                        .IsRequired()
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("Commission")
+                    .IsRequired()
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<decimal>("CreditAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("CreditAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("nvarchar(500)");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<int>("FromBusinessIdentityId")
-                        .HasColumnType("int");
+                b.Property<int>("FromBusinessIdentityId")
+                    .HasColumnType("int");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<int?>("MerchantBranchId")
-                        .HasColumnType("int");
+                b.Property<int?>("MerchantBranchId")
+                    .HasColumnType("int");
 
-                    b.Property<long?>("ParentId")
-                        .HasColumnType("bigint");
+                b.Property<long?>("ParentId")
+                    .HasColumnType("bigint");
 
-                    b.Property<byte?>("PaymentGatewayType")
-                        .HasColumnType("tinyint");
+                b.Property<byte?>("PaymentGatewayType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<decimal>("PrepaymentAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("PrepaymentAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("RefundDescription")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                b.Property<string>("RefundDescription")
+                    .HasMaxLength(1000)
+                    .HasColumnType("nvarchar(1000)");
 
-                    b.Property<byte?>("RefundReason")
-                        .HasColumnType("tinyint");
+                b.Property<byte?>("RefundReason")
+                    .HasColumnType("tinyint");
 
-                    b.Property<byte?>("RefundType")
-                        .HasColumnType("tinyint");
+                b.Property<byte?>("RefundType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<byte>("State")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("State")
+                    .HasColumnType("tinyint");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("TenantMerchantContractId")
-                        .HasColumnType("int");
+                b.Property<int?>("TenantMerchantContractId")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("TenantPlatformContractId")
-                        .HasColumnType("int");
+                b.Property<int?>("TenantPlatformContractId")
+                    .HasColumnType("int");
 
-                    b.Property<int>("ToBusinessIdentityId")
-                        .HasColumnType("int");
+                b.Property<int>("ToBusinessIdentityId")
+                    .HasColumnType("int");
 
-                    b.Property<byte>("Type")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Type")
+                    .HasColumnType("tinyint");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("FromBusinessIdentityId");
+                b.HasIndex("FromBusinessIdentityId");
 
-                    b.HasIndex("MerchantBranchId");
+                b.HasIndex("MerchantBranchId");
 
-                    b.HasIndex("ParentId");
+                b.HasIndex("ParentId");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.HasIndex("TenantMerchantContractId");
+                b.HasIndex("TenantMerchantContractId");
 
-                    b.HasIndex("TenantPlatformContractId");
+                b.HasIndex("TenantPlatformContractId");
 
-                    b.HasIndex("ToBusinessIdentityId");
+                b.HasIndex("ToBusinessIdentityId");
 
-                    b.ToTable("FinancialDocument", "Bill");
-                });
+                b.ToTable("FinancialDocument", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.InstallmentAggregate.Installment", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("Amount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("CashAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("CashAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("CheckSum")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                b.Property<string>("CheckSum")
+                    .IsRequired()
+                    .HasMaxLength(500)
+                    .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<decimal>("Commission")
-                        .HasColumnType("decimal(18,2)");
+                b.Property<decimal>("Commission")
+                    .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<decimal>("CreditAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("CreditAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<DateTime>("DueDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("DueDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<long>("FinancialDocumentId")
-                        .HasColumnType("bigint");
+                b.Property<long>("FinancialDocumentId")
+                    .HasColumnType("bigint");
 
-                    b.Property<int>("FromBusinessIdentityId")
-                        .HasColumnType("int");
+                b.Property<int>("FromBusinessIdentityId")
+                    .HasColumnType("int");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<int>("Number")
-                        .HasColumnType("int");
+                b.Property<int>("Number")
+                    .HasColumnType("int");
 
-                    b.Property<decimal>("PrepaymentAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("PrepaymentAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
+                b.Property<byte[]>("RowVersion")
+                    .IsConcurrencyToken()
+                    .ValueGeneratedOnAddOrUpdate()
+                    .HasColumnType("rowversion");
 
-                    b.Property<byte>("Status")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Status")
+                    .HasColumnType("tinyint");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<int>("ToBusinessIdentityId")
-                        .HasColumnType("int");
+                b.Property<int>("ToBusinessIdentityId")
+                    .HasColumnType("int");
 
-                    b.Property<byte>("Type")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Type")
+                    .HasColumnType("tinyint");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("FinancialDocumentId");
+                b.HasIndex("FinancialDocumentId");
 
-                    b.HasIndex("FromBusinessIdentityId");
+                b.HasIndex("FromBusinessIdentityId");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.HasIndex("ToBusinessIdentityId");
+                b.HasIndex("ToBusinessIdentityId");
 
-                    b.ToTable("Installment", "Bill");
+                b.ToTable("Installment", "Bill");
 
-                    b.UseTptMappingStrategy();
-                });
+                b.UseTptMappingStrategy();
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.Providers.Provider", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(2500)
-                        .HasColumnType("nvarchar(2500)");
+                b.Property<string>("Description")
+                    .HasMaxLength(2500)
+                    .HasColumnType("nvarchar(2500)");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("EnglishName")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("EnglishName")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<byte>("ProviderType")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("ProviderType")
+                    .HasColumnType("tinyint");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("Provider", "Bill");
-                });
+                b.ToTable("Provider", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantAggregate.TenantIpgSetting", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .HasColumnType("int");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<byte>("IpgType")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("IpgType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("bit");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.ToTable("TenantIpgSetting", "Bill");
-                });
+                b.ToTable("TenantIpgSetting", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("BillingBreak")
-                        .HasColumnType("int");
+                b.Property<int?>("BillingBreak")
+                    .HasColumnType("int");
 
-                    b.Property<int>("BillingPeriod")
-                        .HasColumnType("int");
+                b.Property<int>("BillingPeriod")
+                    .HasColumnType("int");
 
-                    b.Property<byte>("BillingPeriodType")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("BillingPeriodType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<int>("CommissionCalculationType")
-                        .HasColumnType("int");
+                b.Property<int>("CommissionCalculationType")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("CommissionDeductionMethodType")
-                        .HasColumnType("int");
+                b.Property<int?>("CommissionDeductionMethodType")
+                    .HasColumnType("int");
 
-                    b.Property<string>("CommissionReferenceTypes")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                b.Property<string>("CommissionReferenceTypes")
+                    .HasMaxLength(100)
+                    .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("ContractNumber")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                b.Property<string>("ContractNumber")
+                    .IsRequired()
+                    .HasMaxLength(30)
+                    .HasColumnType("nvarchar(30)");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime?>("DailyBillingOriginDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime?>("DailyBillingOriginDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("EnamadLink")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("EnamadLink")
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EndDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<decimal?>("FixedAmountCommission")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("FixedAmountCommission")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("FixedPercentageCommission")
-                        .HasColumnType("decimal(6, 3)");
+                b.Property<decimal?>("FixedPercentageCommission")
+                    .HasColumnType("decimal(6, 3)");
 
-                    b.Property<string>("GuaranteeDescription")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                b.Property<string>("GuaranteeDescription")
+                    .HasMaxLength(500)
+                    .HasColumnType("nvarchar(500)");
 
-                    b.Property<byte?>("GuaranteeType")
-                        .HasColumnType("tinyint");
+                b.Property<byte?>("GuaranteeType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<int?>("InstallmentsCount")
-                        .HasColumnType("int");
+                b.Property<int?>("InstallmentsCount")
+                    .HasColumnType("int");
 
-                    b.Property<decimal?>("InterestPercentage")
-                        .HasColumnType("decimal(6, 3)");
+                b.Property<decimal?>("InterestPercentage")
+                    .HasColumnType("decimal(6, 3)");
 
-                    b.Property<string>("InterestReferenceTypes")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                b.Property<string>("InterestReferenceTypes")
+                    .HasMaxLength(100)
+                    .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("InternetBusinessLicenseLink")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("InternetBusinessLicenseLink")
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<bool>("IsCommissionExchanged")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsCommissionExchanged")
+                    .HasColumnType("bit");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<int>("MerchantId")
-                        .HasColumnType("int");
+                b.Property<int>("MerchantId")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("int");
+                b.Property<int?>("ParentId")
+                    .HasColumnType("int");
 
-                    b.Property<byte>("PaymentMethodType")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("PaymentMethodType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<decimal?>("PeriodMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("PeriodMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<byte>("SettlementType")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("SettlementType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<bool>("Status")
-                        .HasColumnType("bit");
+                b.Property<bool>("Status")
+                    .HasColumnType("bit");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<string>("TieredCommissions")
-                        .HasMaxLength(4000)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(4000)");
+                b.Property<string>("TieredCommissions")
+                    .HasMaxLength(4000)
+                    .IsUnicode(true)
+                    .HasColumnType("nvarchar(4000)");
 
-                    b.Property<decimal?>("TransactionMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("TransactionMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("MerchantId");
+                b.HasIndex("MerchantId");
 
-                    b.HasIndex("ParentId");
+                b.HasIndex("ParentId");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.ToTable("TenantMerchantContract", "Bill");
-                });
+                b.ToTable("TenantMerchantContract", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("BillingPeriod")
-                        .HasColumnType("int");
+                b.Property<int>("BillingPeriod")
+                    .HasColumnType("int");
 
-                    b.Property<byte>("BillingPeriodType")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("BillingPeriodType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<int>("CommissionCalculationType")
-                        .HasColumnType("int");
+                b.Property<int>("CommissionCalculationType")
+                    .HasColumnType("int");
 
-                    b.Property<string>("CommissionReferenceTypes")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                b.Property<string>("CommissionReferenceTypes")
+                    .HasMaxLength(100)
+                    .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("ContractNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("ContractNumber")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime?>("DailyBillingOriginDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime?>("DailyBillingOriginDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                b.Property<string>("Description")
+                    .HasMaxLength(500)
+                    .HasColumnType("nvarchar(500)");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EndDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<byte>("FeeCalculationType")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("FeeCalculationType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<decimal?>("FixedAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("FixedAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("FixedAmountCommission")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("FixedAmountCommission")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("FixedPercentageCommission")
-                        .HasColumnType("decimal(6, 3)");
+                b.Property<decimal?>("FixedPercentageCommission")
+                    .HasColumnType("decimal(6, 3)");
 
-                    b.Property<int?>("GracePeriod")
-                        .HasColumnType("int");
+                b.Property<int?>("GracePeriod")
+                    .HasColumnType("int");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("int");
+                b.Property<int?>("ParentId")
+                    .HasColumnType("int");
 
-                    b.Property<decimal?>("PenaltyPercent")
-                        .HasColumnType("decimal(6, 3)");
+                b.Property<decimal?>("PenaltyPercent")
+                    .HasColumnType("decimal(6, 3)");
 
-                    b.Property<decimal?>("PeriodMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("PeriodMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<bool>("Status")
-                        .HasColumnType("bit");
+                b.Property<bool>("Status")
+                    .HasColumnType("bit");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<int>("TenantIpgSettingId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantIpgSettingId")
+                    .HasColumnType("int");
 
-                    b.Property<string>("TieredCommissions")
-                        .HasMaxLength(4000)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(4000)");
+                b.Property<string>("TieredCommissions")
+                    .HasMaxLength(4000)
+                    .IsUnicode(true)
+                    .HasColumnType("nvarchar(4000)");
 
-                    b.Property<decimal?>("TransactionMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("TransactionMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.HasIndex("TenantIpgSettingId");
+                b.HasIndex("TenantIpgSettingId");
 
-                    b.ToTable("TenantPlatformContract", "Bill");
-                });
+                b.ToTable("TenantPlatformContract", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContractFacilitator", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<int>("FacilitatorId")
-                        .HasColumnType("int");
+                b.Property<int>("FacilitatorId")
+                    .HasColumnType("int");
 
-                    b.Property<decimal?>("FixedAmountCommissionPercentage")
-                        .HasColumnType("decimal(6, 3)");
+                b.Property<decimal?>("FixedAmountCommissionPercentage")
+                    .HasColumnType("decimal(6, 3)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<byte?>("PaymentMethodType")
-                        .HasColumnType("tinyint");
+                b.Property<byte?>("PaymentMethodType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<int>("TenantPlatformContractId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantPlatformContractId")
+                    .HasColumnType("int");
 
-                    b.Property<decimal?>("TransactionsCommissionPercentage")
-                        .HasColumnType("decimal(6, 3)");
+                b.Property<decimal?>("TransactionsCommissionPercentage")
+                    .HasColumnType("decimal(6, 3)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("FacilitatorId");
+                b.HasIndex("FacilitatorId");
 
-                    b.HasIndex("TenantPlatformContractId");
+                b.HasIndex("TenantPlatformContractId");
 
-                    b.ToTable("TenantPlatformContractFacilitator", "Bill");
-                });
+                b.ToTable("TenantPlatformContractFacilitator", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContractProvider", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("Amount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<int>("ProviderId")
-                        .HasColumnType("int");
+                b.Property<int>("ProviderId")
+                    .HasColumnType("int");
 
-                    b.Property<int>("TenantPlatformContractId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantPlatformContractId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("ProviderId");
+                b.HasIndex("ProviderId");
 
-                    b.HasIndex("TenantPlatformContractId");
+                b.HasIndex("TenantPlatformContractId");
 
-                    b.ToTable("TenantPlatformContractProvider", "Bill");
-                });
+                b.ToTable("TenantPlatformContractProvider", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.WalletContractAggregate.WalletContract", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .HasColumnType("int");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime?>("EndDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("int");
+                b.Property<int?>("ParentId")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("RootParentId")
-                        .HasColumnType("int");
+                b.Property<int?>("RootParentId")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("StartDate")
+                    .HasColumnType("datetime2");
 
-                    b.Property<byte>("Status")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Status")
+                    .HasColumnType("tinyint");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("TenantIpgSettingId")
-                        .HasColumnType("int");
+                b.Property<int?>("TenantIpgSettingId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.HasIndex("TenantIpgSettingId");
+                b.HasIndex("TenantIpgSettingId");
 
-                    b.ToTable("WalletContract", "Bill");
-                });
+                b.ToTable("WalletContract", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.WalletContractAggregate.WalletContractFacilitator", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .HasColumnType("int");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<int?>("CommissionCalculationType")
-                        .HasColumnType("int");
+                b.Property<int?>("CommissionCalculationType")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<int>("FacilitatorId")
-                        .HasColumnType("int");
+                b.Property<int>("FacilitatorId")
+                    .HasColumnType("int");
 
-                    b.Property<decimal?>("FixedAmountCommission")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("FixedAmountCommission")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("FixedPercentageCommission")
-                        .HasColumnType("decimal(6, 3)");
+                b.Property<decimal?>("FixedPercentageCommission")
+                    .HasColumnType("decimal(6, 3)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<byte?>("PaymentMethodType")
-                        .HasColumnType("tinyint");
+                b.Property<byte?>("PaymentMethodType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<decimal?>("PeriodMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("PeriodMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("PortionTypes")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                b.Property<string>("PortionTypes")
+                    .HasMaxLength(100)
+                    .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("TieredCommissions")
-                        .HasMaxLength(4000)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(4000)");
+                b.Property<string>("TieredCommissions")
+                    .HasMaxLength(4000)
+                    .IsUnicode(true)
+                    .HasColumnType("nvarchar(4000)");
 
-                    b.Property<decimal?>("TransactionMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("TransactionMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<int>("WalletContractId")
-                        .HasColumnType("int");
+                b.Property<int>("WalletContractId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("FacilitatorId");
+                b.HasIndex("FacilitatorId");
 
-                    b.HasIndex("WalletContractId");
+                b.HasIndex("WalletContractId");
 
-                    b.ToTable("WalletContractFacilitator", "Bill");
-                });
+                b.ToTable("WalletContractFacilitator", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.WalletContractAggregate.WalletContractFinancier", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .HasColumnType("int");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<int?>("CommissionCalculationType")
-                        .HasColumnType("int");
+                b.Property<int?>("CommissionCalculationType")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<int>("FinancierId")
-                        .HasColumnType("int");
+                b.Property<int>("FinancierId")
+                    .HasColumnType("int");
 
-                    b.Property<decimal?>("FixedAmountCommission")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("FixedAmountCommission")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("FixedPercentageCommission")
-                        .HasColumnType("decimal(6, 3)");
+                b.Property<decimal?>("FixedPercentageCommission")
+                    .HasColumnType("decimal(6, 3)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<byte?>("PaymentMethodType")
-                        .HasColumnType("tinyint");
+                b.Property<byte?>("PaymentMethodType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<decimal?>("PeriodMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("PeriodMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("PortionTypes")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                b.Property<string>("PortionTypes")
+                    .HasMaxLength(100)
+                    .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("TieredCommissions")
-                        .HasMaxLength(4000)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(4000)");
+                b.Property<string>("TieredCommissions")
+                    .HasMaxLength(4000)
+                    .IsUnicode(true)
+                    .HasColumnType("nvarchar(4000)");
 
-                    b.Property<decimal?>("TransactionMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("TransactionMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<int>("WalletContractId")
-                        .HasColumnType("int");
+                b.Property<int>("WalletContractId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("FinancierId");
+                b.HasIndex("FinancierId");
 
-                    b.HasIndex("WalletContractId");
+                b.HasIndex("WalletContractId");
 
-                    b.ToTable("WalletContractFinancier", "Bill");
-                });
+                b.ToTable("WalletContractFinancier", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.WalletContractAggregate.WalletContractGuarantor", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
+            {
+                b.Property<int>("Id")
+                    .HasColumnType("int");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(200)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(200)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<int?>("CommissionCalculationType")
-                        .HasColumnType("int");
+                b.Property<int?>("CommissionCalculationType")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<decimal?>("FixedAmountCommission")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("FixedAmountCommission")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("FixedPercentageCommission")
-                        .HasColumnType("decimal(6, 3)");
+                b.Property<decimal?>("FixedPercentageCommission")
+                    .HasColumnType("decimal(6, 3)");
 
-                    b.Property<int>("GuarantorId")
-                        .HasColumnType("int");
+                b.Property<int>("GuarantorId")
+                    .HasColumnType("int");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<byte?>("PaymentMethodType")
-                        .HasColumnType("tinyint");
+                b.Property<byte?>("PaymentMethodType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<decimal?>("PeriodMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("PeriodMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("PeriodMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<string>("PortionTypes")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                b.Property<string>("PortionTypes")
+                    .HasMaxLength(100)
+                    .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("TieredCommissions")
-                        .HasMaxLength(4000)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(4000)");
+                b.Property<string>("TieredCommissions")
+                    .HasMaxLength(4000)
+                    .IsUnicode(true)
+                    .HasColumnType("nvarchar(4000)");
 
-                    b.Property<decimal?>("TransactionMaxCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMaxCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal?>("TransactionMinCommissionAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal?>("TransactionMinCommissionAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<int>("WalletContractId")
-                        .HasColumnType("int");
+                b.Property<int>("WalletContractId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("GuarantorId");
+                b.HasIndex("GuarantorId");
 
-                    b.HasIndex("WalletContractId");
+                b.HasIndex("WalletContractId");
 
-                    b.ToTable("WalletContractGuarantor", "Bill");
-                });
+                b.ToTable("WalletContractGuarantor", "Bill");
+            });
 
             modelBuilder.Entity("Shared.EventBus.Entities.OutboxEntity", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTime>("CreateDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreateDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("EventName")
-                        .IsRequired()
-                        .HasMaxLength(1000)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(1000)");
+                b.Property<string>("EventName")
+                    .IsRequired()
+                    .HasMaxLength(1000)
+                    .IsUnicode(false)
+                    .HasColumnType("varchar(1000)");
 
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Message")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PublishTryCount")
-                        .HasColumnType("int");
+                b.Property<int>("PublishTryCount")
+                    .HasColumnType("int");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                b.Property<int>("Status")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("Outbox", "Bill");
-                });
+                b.ToTable("Outbox", "Bill");
+            });
 
             modelBuilder.Entity("Shared.MinIO.Entities.Attachment", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<int>("AttachmentCategory")
-                        .HasColumnType("int");
+                b.Property<int>("AttachmentCategory")
+                    .HasColumnType("int");
 
-                    b.Property<string>("ClientId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("ClientId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(256)");
+                b.Property<string>("ContentType")
+                    .IsRequired()
+                    .HasMaxLength(256)
+                    .IsUnicode(false)
+                    .HasColumnType("varchar(256)");
 
-                    b.Property<DateTime>("CreatedDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("CreatedDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("CreatorUserId")
-                        .HasMaxLength(100)
-                        .HasColumnType("VARCHAR");
+                b.Property<string>("CreatorUserId")
+                    .HasMaxLength(100)
+                    .HasColumnType("VARCHAR");
 
-                    b.Property<DateTime>("EditDateTime")
-                        .HasColumnType("datetime2");
+                b.Property<DateTime>("EditDateTime")
+                    .HasColumnType("datetime2");
 
-                    b.Property<string>("EntityId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                b.Property<string>("EntityId")
+                    .IsRequired()
+                    .HasMaxLength(50)
+                    .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("EntityType")
-                        .HasColumnType("int");
+                b.Property<int>("EntityType")
+                    .HasColumnType("int");
 
-                    b.Property<string>("FileExtension")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(10)");
+                b.Property<string>("FileExtension")
+                    .IsRequired()
+                    .HasMaxLength(10)
+                    .IsUnicode(false)
+                    .HasColumnType("varchar(10)");
 
-                    b.Property<string>("FileReference")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(256)");
+                b.Property<string>("FileReference")
+                    .IsRequired()
+                    .HasMaxLength(256)
+                    .IsUnicode(false)
+                    .HasColumnType("varchar(256)");
 
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint");
+                b.Property<long>("FileSize")
+                    .HasColumnType("bigint");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsDeleted")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("OriginalFileName")
-                        .HasMaxLength(400)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(400)");
+                b.Property<string>("OriginalFileName")
+                    .HasMaxLength(400)
+                    .IsUnicode(true)
+                    .HasColumnType("nvarchar(400)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("Attachment", "Bill");
-                });
+                b.ToTable("Attachment", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantBillingAggregate.MerchantBilling", b =>
-                {
-                    b.HasBaseType("Domain.Core.Entities.BillingAggregate.Billing");
+            {
+                b.HasBaseType("Domain.Core.Entities.BillingAggregate.Billing");
 
-                    b.Property<decimal>("PurchaseTransactionsAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("PurchaseTransactionsAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("PurchaseTransactionsCalculatedCommission")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("PurchaseTransactionsCalculatedCommission")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("PurchaseTransactionsCommission")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("PurchaseTransactionsCommission")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("RefundedTransactionsAmount")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("RefundedTransactionsAmount")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.Property<decimal>("RefundedTransactionsCommission")
-                        .HasColumnType("decimal(32, 10)");
+                b.Property<decimal>("RefundedTransactionsCommission")
+                    .HasColumnType("decimal(32, 10)");
 
-                    b.ToTable("MerchantBilling", "Bill");
-                });
+                b.ToTable("MerchantBilling", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.FacilitatorAggregate.Facilitator", b =>
-                {
-                    b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
+            {
+                b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
 
-                    b.Property<bool>("IsTenant")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsTenant")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<byte>("Type")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Type")
+                    .HasColumnType("tinyint");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.ToTable("Facilitator", "Bill");
-                });
+                b.ToTable("Facilitator", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.FinancierAggregate.Financier", b =>
-                {
-                    b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
+            {
+                b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
 
-                    b.Property<bool>("IsTenant")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsTenant")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<byte>("Type")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Type")
+                    .HasColumnType("tinyint");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.ToTable("Financier", "Bill");
-                });
+                b.ToTable("Financier", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.GuarantorAggregate.Guarantor", b =>
-                {
-                    b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
+            {
+                b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
 
-                    b.Property<bool>("IsTenant")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsTenant")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<byte>("Type")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Type")
+                    .HasColumnType("tinyint");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.ToTable("Guarantor", "Bill");
-                });
+                b.ToTable("Guarantor", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantAggregate.Merchant", b =>
-                {
-                    b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
+            {
+                b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
 
-                    b.Property<byte>("SaleType")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("SaleType")
+                    .HasColumnType("tinyint");
 
-                    b.Property<byte>("Status")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Status")
+                    .HasColumnType("tinyint");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<byte>("Type")
-                        .HasColumnType("tinyint");
+                b.Property<byte>("Type")
+                    .HasColumnType("tinyint");
 
-                    b.ToTable("Merchant", "Bill");
-                });
+                b.ToTable("Merchant", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantAggregate.MerchantBranch", b =>
-                {
-                    b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
+            {
+                b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
 
-                    b.Property<bool>("IsMerchant")
-                        .HasColumnType("bit");
+                b.Property<bool>("IsMerchant")
+                    .HasColumnType("bit");
 
-                    b.Property<int>("MerchantId")
-                        .HasColumnType("int");
+                b.Property<int>("MerchantId")
+                    .HasColumnType("int");
 
-                    b.Property<long>("TerminalId")
-                        .HasColumnType("bigint");
+                b.Property<long>("TerminalId")
+                    .HasColumnType("bigint");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.HasIndex("MerchantId");
+                b.HasIndex("MerchantId");
 
-                    b.ToTable("MerchantBranch", "Bill");
-                });
+                b.ToTable("MerchantBranch", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.OrganizationAggregate.Organization", b =>
-                {
-                    b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
+            {
+                b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
 
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("int");
+                b.Property<int?>("ParentId")
+                    .HasColumnType("int");
 
-                    b.Property<int>("TenantId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantId")
+                    .HasColumnType("int");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.HasIndex("ParentId");
+                b.HasIndex("ParentId");
 
-                    b.HasIndex("TenantId");
+                b.HasIndex("TenantId");
 
-                    b.ToTable("Organization", "Bill");
-                });
+                b.ToTable("Organization", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantAggregate.Tenant", b =>
-                {
-                    b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
+            {
+                b.HasBaseType("Domain.Core.Entities.BusinessEntity.BusinessIdentity");
 
-                    b.Property<string>("BrandName")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("BrandName")
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<string>("CreditProjectName")
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("CreditProjectName")
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.Property<string>("InternalProjectManagerName")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                b.Property<string>("InternalProjectManagerName")
+                    .HasMaxLength(500)
+                    .HasColumnType("nvarchar(500)");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(250)
+                    .HasColumnType("nvarchar(250)");
 
-                    b.ToTable("Tenant", "Bill");
-                });
+                b.ToTable("Tenant", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantInstallmentAggregate.MerchantInstallment", b =>
-                {
-                    b.HasBaseType("Domain.Core.Entities.InstallmentAggregate.Installment");
+            {
+                b.HasBaseType("Domain.Core.Entities.InstallmentAggregate.Installment");
 
-                    b.Property<int>("TenantMerchantContractId")
-                        .HasColumnType("int");
+                b.Property<int>("TenantMerchantContractId")
+                    .HasColumnType("int");
 
-                    b.HasIndex("TenantMerchantContractId");
+                b.HasIndex("TenantMerchantContractId");
 
-                    b.ToTable("MerchantInstallment", "Bill");
-                });
+                b.ToTable("MerchantInstallment", "Bill");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.BillingAggregate.Billing", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Creditor")
-                        .WithMany("CreditorChildren")
-                        .HasForeignKey("CreditorId")
-                        .OnDelete(DeleteBehavior.Restrict);
+            {
+                b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Creditor")
+                    .WithMany("CreditorChildren")
+                    .HasForeignKey("CreditorId")
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Debtor")
-                        .WithMany("DebtorChildren")
-                        .HasForeignKey("DebtorId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Debtor")
+                    .WithMany("DebtorChildren")
+                    .HasForeignKey("DebtorId")
+                    .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "FromBusinessIdentity")
-                        .WithMany()
-                        .HasForeignKey("FromBusinessIdentityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "FromBusinessIdentity")
+                    .WithMany()
+                    .HasForeignKey("FromBusinessIdentityId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "ToBusinessIdentity")
-                        .WithMany()
-                        .HasForeignKey("ToBusinessIdentityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "ToBusinessIdentity")
+                    .WithMany()
+                    .HasForeignKey("ToBusinessIdentityId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Creditor");
+                b.Navigation("Creditor");
 
-                    b.Navigation("Debtor");
+                b.Navigation("Debtor");
 
-                    b.Navigation("FromBusinessIdentity");
+                b.Navigation("FromBusinessIdentity");
 
-                    b.Navigation("Tenant");
+                b.Navigation("Tenant");
 
-                    b.Navigation("ToBusinessIdentity");
-                });
+                b.Navigation("ToBusinessIdentity");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.BillingPaymentAggregate.BillingPayment", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Billing")
-                        .WithMany("Payments")
-                        .HasForeignKey("BillingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", "Billing")
+                    .WithMany("Payments")
+                    .HasForeignKey("BillingId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Billing");
-                });
+                b.Navigation("Billing");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.FinancialDocumentAggregate.FinancialDocument", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "FromBusinessIdentity")
-                        .WithMany()
-                        .HasForeignKey("FromBusinessIdentityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "FromBusinessIdentity")
+                    .WithMany()
+                    .HasForeignKey("FromBusinessIdentityId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.MerchantAggregate.MerchantBranch", "MerchantBranch")
-                        .WithMany()
-                        .HasForeignKey("MerchantBranchId");
+                b.HasOne("Domain.Core.Entities.MerchantAggregate.MerchantBranch", "MerchantBranch")
+                    .WithMany()
+                    .HasForeignKey("MerchantBranchId");
 
-                    b.HasOne("Domain.Core.Entities.FinancialDocumentAggregate.FinancialDocument", "Parent")
-                        .WithMany("ChildFinancialDocuments")
-                        .HasForeignKey("ParentId");
+                b.HasOne("Domain.Core.Entities.FinancialDocumentAggregate.FinancialDocument", "Parent")
+                    .WithMany("ChildFinancialDocuments")
+                    .HasForeignKey("ParentId");
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", "TenantMerchantContract")
-                        .WithMany("FinancialDocuments")
-                        .HasForeignKey("TenantMerchantContractId");
+                b.HasOne("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", "TenantMerchantContract")
+                    .WithMany("FinancialDocuments")
+                    .HasForeignKey("TenantMerchantContractId");
 
-                    b.HasOne("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", "TenantPlatformContract")
-                        .WithMany()
-                        .HasForeignKey("TenantPlatformContractId");
+                b.HasOne("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", "TenantPlatformContract")
+                    .WithMany()
+                    .HasForeignKey("TenantPlatformContractId");
 
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "ToBusinessIdentity")
-                        .WithMany()
-                        .HasForeignKey("ToBusinessIdentityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "ToBusinessIdentity")
+                    .WithMany()
+                    .HasForeignKey("ToBusinessIdentityId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("FromBusinessIdentity");
+                b.Navigation("FromBusinessIdentity");
 
-                    b.Navigation("MerchantBranch");
+                b.Navigation("MerchantBranch");
 
-                    b.Navigation("Parent");
+                b.Navigation("Parent");
 
-                    b.Navigation("Tenant");
+                b.Navigation("Tenant");
 
-                    b.Navigation("TenantMerchantContract");
+                b.Navigation("TenantMerchantContract");
 
-                    b.Navigation("TenantPlatformContract");
+                b.Navigation("TenantPlatformContract");
 
-                    b.Navigation("ToBusinessIdentity");
-                });
+                b.Navigation("ToBusinessIdentity");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.InstallmentAggregate.Installment", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.FinancialDocumentAggregate.FinancialDocument", "FinancialDocument")
-                        .WithMany()
-                        .HasForeignKey("FinancialDocumentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.FinancialDocumentAggregate.FinancialDocument", "FinancialDocument")
+                    .WithMany()
+                    .HasForeignKey("FinancialDocumentId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "FromBusinessIdentity")
-                        .WithMany()
-                        .HasForeignKey("FromBusinessIdentityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "FromBusinessIdentity")
+                    .WithMany()
+                    .HasForeignKey("FromBusinessIdentityId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "ToBusinessIdentity")
-                        .WithMany()
-                        .HasForeignKey("ToBusinessIdentityId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", "ToBusinessIdentity")
+                    .WithMany()
+                    .HasForeignKey("ToBusinessIdentityId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("FinancialDocument");
+                b.Navigation("FinancialDocument");
 
-                    b.Navigation("FromBusinessIdentity");
+                b.Navigation("FromBusinessIdentity");
 
-                    b.Navigation("Tenant");
+                b.Navigation("Tenant");
 
-                    b.Navigation("ToBusinessIdentity");
-                });
+                b.Navigation("ToBusinessIdentity");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantAggregate.TenantIpgSetting", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Tenant");
-                });
+                b.Navigation("Tenant");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.MerchantAggregate.Merchant", "Merchant")
-                        .WithMany()
-                        .HasForeignKey("MerchantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.MerchantAggregate.Merchant", "Merchant")
+                    .WithMany()
+                    .HasForeignKey("MerchantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", "Parent")
-                        .WithMany("Children")
-                        .HasForeignKey("ParentId");
+                b.HasOne("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", "Parent")
+                    .WithMany("Children")
+                    .HasForeignKey("ParentId");
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Merchant");
+                b.Navigation("Merchant");
 
-                    b.Navigation("Parent");
+                b.Navigation("Parent");
 
-                    b.Navigation("Tenant");
-                });
+                b.Navigation("Tenant");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.TenantIpgSetting", "TenantIpgSettings")
-                        .WithMany("TenantPlatformContracts")
-                        .HasForeignKey("TenantIpgSettingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantAggregate.TenantIpgSetting", "TenantIpgSettings")
+                    .WithMany("TenantPlatformContracts")
+                    .HasForeignKey("TenantIpgSettingId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Tenant");
+                b.Navigation("Tenant");
 
-                    b.Navigation("TenantIpgSettings");
-                });
+                b.Navigation("TenantIpgSettings");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContractFacilitator", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.FacilitatorAggregate.Facilitator", "Facilitator")
-                        .WithMany()
-                        .HasForeignKey("FacilitatorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.FacilitatorAggregate.Facilitator", "Facilitator")
+                    .WithMany()
+                    .HasForeignKey("FacilitatorId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", "TenantPlatformContract")
-                        .WithMany("Facilitators")
-                        .HasForeignKey("TenantPlatformContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", "TenantPlatformContract")
+                    .WithMany("Facilitators")
+                    .HasForeignKey("TenantPlatformContractId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Facilitator");
+                b.Navigation("Facilitator");
 
-                    b.Navigation("TenantPlatformContract");
-                });
+                b.Navigation("TenantPlatformContract");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContractProvider", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.Providers.Provider", "Provider")
-                        .WithMany("TenantPlatformContractProviders")
-                        .HasForeignKey("ProviderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.Providers.Provider", "Provider")
+                    .WithMany("TenantPlatformContractProviders")
+                    .HasForeignKey("ProviderId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", "TenantPlatformContract")
-                        .WithMany("Providers")
-                        .HasForeignKey("TenantPlatformContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", "TenantPlatformContract")
+                    .WithMany("Providers")
+                    .HasForeignKey("TenantPlatformContractId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Provider");
+                b.Navigation("Provider");
 
-                    b.Navigation("TenantPlatformContract");
-                });
+                b.Navigation("TenantPlatformContract");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.WalletContractAggregate.WalletContract", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.TenantIpgSetting", "TenantIpgSetting")
-                        .WithMany()
-                        .HasForeignKey("TenantIpgSettingId");
+                b.HasOne("Domain.Core.Entities.TenantAggregate.TenantIpgSetting", "TenantIpgSetting")
+                    .WithMany()
+                    .HasForeignKey("TenantIpgSettingId");
 
-                    b.Navigation("Tenant");
+                b.Navigation("Tenant");
 
-                    b.Navigation("TenantIpgSetting");
-                });
+                b.Navigation("TenantIpgSetting");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.WalletContractAggregate.WalletContractFacilitator", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.FacilitatorAggregate.Facilitator", "Facilitator")
-                        .WithMany("WalletContractFacilitator")
-                        .HasForeignKey("FacilitatorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.FacilitatorAggregate.Facilitator", "Facilitator")
+                    .WithMany("WalletContractFacilitator")
+                    .HasForeignKey("FacilitatorId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.WalletContractAggregate.WalletContract", "WalletContract")
-                        .WithMany("WalletContractFacilitators")
-                        .HasForeignKey("WalletContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.WalletContractAggregate.WalletContract", "WalletContract")
+                    .WithMany("WalletContractFacilitators")
+                    .HasForeignKey("WalletContractId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Facilitator");
+                b.Navigation("Facilitator");
 
-                    b.Navigation("WalletContract");
-                });
+                b.Navigation("WalletContract");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.WalletContractAggregate.WalletContractFinancier", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.FinancierAggregate.Financier", "Financier")
-                        .WithMany("WalletContractFinancier")
-                        .HasForeignKey("FinancierId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.FinancierAggregate.Financier", "Financier")
+                    .WithMany("WalletContractFinancier")
+                    .HasForeignKey("FinancierId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.WalletContractAggregate.WalletContract", "WalletContract")
-                        .WithMany("WalletContractFinanciers")
-                        .HasForeignKey("WalletContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.WalletContractAggregate.WalletContract", "WalletContract")
+                    .WithMany("WalletContractFinanciers")
+                    .HasForeignKey("WalletContractId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Financier");
+                b.Navigation("Financier");
 
-                    b.Navigation("WalletContract");
-                });
+                b.Navigation("WalletContract");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.WalletContractAggregate.WalletContractGuarantor", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.GuarantorAggregate.Guarantor", "Guarantor")
-                        .WithMany("WalletContractGuarantor")
-                        .HasForeignKey("GuarantorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.GuarantorAggregate.Guarantor", "Guarantor")
+                    .WithMany("WalletContractGuarantor")
+                    .HasForeignKey("GuarantorId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.WalletContractAggregate.WalletContract", "WalletContract")
-                        .WithMany("WalletContractGuarantors")
-                        .HasForeignKey("WalletContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.WalletContractAggregate.WalletContract", "WalletContract")
+                    .WithMany("WalletContractGuarantors")
+                    .HasForeignKey("WalletContractId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Guarantor");
+                b.Navigation("Guarantor");
 
-                    b.Navigation("WalletContract");
-                });
+                b.Navigation("WalletContract");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantBillingAggregate.MerchantBilling", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", null)
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.MerchantBillingAggregate.MerchantBilling", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+            {
+                b.HasOne("Domain.Core.Entities.BillingAggregate.Billing", null)
+                    .WithOne()
+                    .HasForeignKey("Domain.Core.Entities.MerchantBillingAggregate.MerchantBilling", "Id")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.FacilitatorAggregate.Facilitator", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.FacilitatorAggregate.Facilitator", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
+                    .WithOne()
+                    .HasForeignKey("Domain.Core.Entities.FacilitatorAggregate.Facilitator", "Id")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Tenant");
-                });
+                b.Navigation("Tenant");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.FinancierAggregate.Financier", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.FinancierAggregate.Financier", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
+                    .WithOne()
+                    .HasForeignKey("Domain.Core.Entities.FinancierAggregate.Financier", "Id")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Tenant");
-                });
+                b.Navigation("Tenant");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.GuarantorAggregate.Guarantor", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.GuarantorAggregate.Guarantor", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
+                    .WithOne()
+                    .HasForeignKey("Domain.Core.Entities.GuarantorAggregate.Guarantor", "Id")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Tenant");
-                });
+                b.Navigation("Tenant");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantAggregate.Merchant", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.MerchantAggregate.Merchant", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+            {
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
+                    .WithOne()
+                    .HasForeignKey("Domain.Core.Entities.MerchantAggregate.Merchant", "Id")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantAggregate.MerchantBranch", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.MerchantAggregate.MerchantBranch", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
+                    .WithOne()
+                    .HasForeignKey("Domain.Core.Entities.MerchantAggregate.MerchantBranch", "Id")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.MerchantAggregate.Merchant", "Merchant")
-                        .WithMany("MerchantBranches")
-                        .HasForeignKey("MerchantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.MerchantAggregate.Merchant", "Merchant")
+                    .WithMany("MerchantBranches")
+                    .HasForeignKey("MerchantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Merchant");
-                });
+                b.Navigation("Merchant");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.OrganizationAggregate.Organization", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.OrganizationAggregate.Organization", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
+                    .WithOne()
+                    .HasForeignKey("Domain.Core.Entities.OrganizationAggregate.Organization", "Id")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.OrganizationAggregate.Organization", "Parent")
-                        .WithMany()
-                        .HasForeignKey("ParentId");
+                b.HasOne("Domain.Core.Entities.OrganizationAggregate.Organization", "Parent")
+                    .WithMany()
+                    .HasForeignKey("ParentId");
 
-                    b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantAggregate.Tenant", "Tenant")
+                    .WithMany()
+                    .HasForeignKey("TenantId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("Parent");
+                b.Navigation("Parent");
 
-                    b.Navigation("Tenant");
-                });
+                b.Navigation("Tenant");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantAggregate.Tenant", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.TenantAggregate.Tenant", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+            {
+                b.HasOne("Domain.Core.Entities.BusinessEntity.BusinessIdentity", null)
+                    .WithOne()
+                    .HasForeignKey("Domain.Core.Entities.TenantAggregate.Tenant", "Id")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantInstallmentAggregate.MerchantInstallment", b =>
-                {
-                    b.HasOne("Domain.Core.Entities.InstallmentAggregate.Installment", null)
-                        .WithOne()
-                        .HasForeignKey("Domain.Core.Entities.MerchantInstallmentAggregate.MerchantInstallment", "Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+            {
+                b.HasOne("Domain.Core.Entities.InstallmentAggregate.Installment", null)
+                    .WithOne()
+                    .HasForeignKey("Domain.Core.Entities.MerchantInstallmentAggregate.MerchantInstallment", "Id")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", "TenantMerchantContract")
-                        .WithMany()
-                        .HasForeignKey("TenantMerchantContractId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", "TenantMerchantContract")
+                    .WithMany()
+                    .HasForeignKey("TenantMerchantContractId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.Navigation("TenantMerchantContract");
-                });
+                b.Navigation("TenantMerchantContract");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.BillingAggregate.Billing", b =>
-                {
-                    b.Navigation("CreditorChildren");
+            {
+                b.Navigation("CreditorChildren");
 
-                    b.Navigation("DebtorChildren");
+                b.Navigation("DebtorChildren");
 
-                    b.Navigation("Payments");
-                });
+                b.Navigation("Payments");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.FinancialDocumentAggregate.FinancialDocument", b =>
-                {
-                    b.Navigation("ChildFinancialDocuments");
-                });
+            {
+                b.Navigation("ChildFinancialDocuments");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.Providers.Provider", b =>
-                {
-                    b.Navigation("TenantPlatformContractProviders");
-                });
+            {
+                b.Navigation("TenantPlatformContractProviders");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantAggregate.TenantIpgSetting", b =>
-                {
-                    b.Navigation("TenantPlatformContracts");
-                });
+            {
+                b.Navigation("TenantPlatformContracts");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantMerchantContractAggregate.TenantMerchantContract", b =>
-                {
-                    b.Navigation("Children");
+            {
+                b.Navigation("Children");
 
-                    b.Navigation("FinancialDocuments");
-                });
+                b.Navigation("FinancialDocuments");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.TenantPlatformContractAggregate.TenantPlatformContract", b =>
-                {
-                    b.Navigation("Facilitators");
+            {
+                b.Navigation("Facilitators");
 
-                    b.Navigation("Providers");
-                });
+                b.Navigation("Providers");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.WalletContractAggregate.WalletContract", b =>
-                {
-                    b.Navigation("WalletContractFacilitators");
+            {
+                b.Navigation("WalletContractFacilitators");
 
-                    b.Navigation("WalletContractFinanciers");
+                b.Navigation("WalletContractFinanciers");
 
-                    b.Navigation("WalletContractGuarantors");
-                });
+                b.Navigation("WalletContractGuarantors");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.FacilitatorAggregate.Facilitator", b =>
-                {
-                    b.Navigation("WalletContractFacilitator");
-                });
+            {
+                b.Navigation("WalletContractFacilitator");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.FinancierAggregate.Financier", b =>
-                {
-                    b.Navigation("WalletContractFinancier");
-                });
+            {
+                b.Navigation("WalletContractFinancier");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.GuarantorAggregate.Guarantor", b =>
-                {
-                    b.Navigation("WalletContractGuarantor");
-                });
+            {
+                b.Navigation("WalletContractGuarantor");
+            });
 
             modelBuilder.Entity("Domain.Core.Entities.MerchantAggregate.Merchant", b =>
-                {
-                    b.Navigation("MerchantBranches");
-                });
+            {
+                b.Navigation("MerchantBranches");
+            });
 #pragma warning restore 612, 618
         }
     }
