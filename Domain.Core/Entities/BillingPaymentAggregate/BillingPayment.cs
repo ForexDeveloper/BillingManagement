@@ -6,7 +6,7 @@ using Domain.Core.Entities.Shared.Exceptions;
 
 namespace Domain.Core.Entities.BillingPaymentAggregate;
 
-public class BillingPayment : BaseEntity<long>
+public sealed class BillingPayment : BaseEntity<long>
 {
     public long BillingId { get; protected set; }
 
@@ -29,7 +29,7 @@ public class BillingPayment : BaseEntity<long>
     {
         BillingId = billingId;
         PaymentId = paymentId;
-        Amount = amount;
+        SetAmount(amount);
         PaymentDate = paymentDate;
         SetCheckSum();
     }

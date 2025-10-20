@@ -90,8 +90,8 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(22)
+                        .HasColumnType("nvarchar(22)");
 
                     b.Property<string>("ContractIds")
                         .IsRequired()
@@ -184,6 +184,9 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                         .HasColumnType("tinyint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
 
                     b.HasIndex("CreditorId");
 

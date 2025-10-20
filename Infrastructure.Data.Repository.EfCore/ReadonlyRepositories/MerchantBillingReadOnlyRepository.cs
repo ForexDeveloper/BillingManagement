@@ -68,6 +68,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             {
                 Id = p.Id,
                 Code = p.Code,
+                Type = p.Type,
                 Status = p.Status,
                 DueDate = p.DueDate,
                 StartDate = p.StartDate,
@@ -77,6 +78,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 Deductions = p.DeductionsAmount,
                 MerchantId = p.ToBusinessIdentityId,
                 PaidAmount = p.Payments.Sum(q => q.Amount),
+                TypeTitle = p.Type.GetEnumDescription(),
                 StatusTitle = p.Status.GetEnumDescription(),
                 PreviousDebitAmount = p.PreviousDebitAmount,
                 PreviousCreditAmount = p.PreviousCreditAmount,
