@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Data.Repository.EfCore.Migrations
+namespace Infrastructure.Data.Repository.EfCore.Migrations.BillingDb
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251011143011_modify_billing_installment")]
-    partial class modify_billing_installment
+    [Migration("20251019075724_Remove_TestColumn_BillingPayment")]
+    partial class Remove_TestColumn_BillingPayment
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -127,9 +127,6 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<DateTime>("EditDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<int>("FromBusinessIdentityId")
                         .HasColumnType("int");
 
@@ -141,6 +138,9 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
                     b.Property<int>("MainContractId")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("PaymentDeadlineDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<byte>("PeriodType")
                         .HasColumnType("tinyint");
@@ -169,6 +169,11 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
 
                     b.Property<int>("TenantId")
                         .HasColumnType("int");
+
+                    b.Property<string>("TieredCalculatedLevels")
+                        .HasMaxLength(4000)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<int>("ToBusinessIdentityId")
                         .HasColumnType("int");
@@ -237,9 +242,15 @@ namespace Infrastructure.Data.Repository.EfCore.Migrations
                     b.Property<DateTime>("PaymentDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<long>("PaymentId")
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BillingId");
+
+                    b.HasIndex("PaymentId")
+                        .IsUnique();
 
                     b.ToTable("BillingPayment", "Bill");
                 });

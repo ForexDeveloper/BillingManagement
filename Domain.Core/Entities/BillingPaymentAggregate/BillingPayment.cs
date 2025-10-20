@@ -1,8 +1,8 @@
-﻿using System;
-using Domain.Base;
-using Domain.Core.Helper;
+﻿using Domain.Base;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Helper;
+using System;
 
 namespace Domain.Core.Entities.BillingPaymentAggregate;
 
