@@ -94,11 +94,13 @@ public abstract class Billing : BaseEntity<long>
 
     }
 
-    protected Billing(int tenantId, TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
+    protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
+        TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
         List<int> contractIds, List<TieredCalculatedLevel> tieredCalculatedLevels = null, Billing? debtor = null,
         Billing? creditor = null)
     {
+        Type = type;
         Debtor = debtor;
         Creditor = creditor;
         Transferred = false;
@@ -110,8 +112,10 @@ public abstract class Billing : BaseEntity<long>
         MainContractId = mainContractId;
         PreviousDebitAmount = previousDebitAmount;
         PreviousCreditAmount = previousCreditAmount;
+        ToBusinessIdentityId = toBusinessIdentityId;
         PreviousPenaltyAmount = previousPenaltyAmount;
         TieredCalculatedLevels = tieredCalculatedLevels;
+        FromBusinessIdentityId = fromBusinessIdentityId;
 
         SetContractIds(contractIds);
         SetBillingDates(startDate, endDate);
@@ -145,38 +149,42 @@ public abstract class Billing : BaseEntity<long>
         return PayableAmount;
     }
 
-    public void SetAdditions(decimal additions, string? additionDescription)
+    public void SetAdditions(decimal additionsAmount, string? additionDescription)
     {
-        if (additions < 0)
+        if (additionsAmount < 0)
         {
-            throw new ArgumentValidationException(nameof(additions), "مبلغ اضافات نمی تواند از 0 کوچکتر باشد");
+            throw new ArgumentValidationException(nameof(additionsAmount), "مبلغ اضافات نمی تواند از 0 کوچکتر باشد");
         }
 
-        AdditionsAmount = additions;
+        ValidateCheckSum();
+        AdditionsAmount = additionsAmount;
         AdditionsDescription = additionDescription;
         CalculateAmount();
         SetCheckSum();
+        SetEditDateTime(DateTime.Now);
     }
 
-    public void SetDeductions(decimal deductions, string? deductionDescription)
+    public void SetDeductions(decimal deductionsAmount, string? deductionDescription)
     {
-        if (deductions < 0)
+        if (deductionsAmount < 0)
         {
-            throw new ArgumentValidationException(nameof(deductions), "مبلغ کسورات نمی تواند از 0 کوچکتر باشد");
+            throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از 0 کوچکتر باشد");
         }
 
         Amount += DeductionsAmount;
 
-        if (Amount < deductions)
+        if (Amount < deductionsAmount)
         {
-            throw new ArgumentValidationException(nameof(deductions), "مبلغ کسورات نمی تواند از مبلغ کل صورتحساب بیشتر باشد");
+            throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از مبلغ کل صورتحساب بیشتر باشد");
         }
 
+        ValidateCheckSum();
+        DeductionsAmount = deductionsAmount;
         DeductionsDescription = deductionDescription;
-        DeductionsAmount = deductions;
         CalculateAmount();
         SetFinalStatus();
         SetCheckSum();
+        SetEditDateTime(DateTime.Now);
     }
 
     public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)
@@ -184,21 +192,15 @@ public abstract class Billing : BaseEntity<long>
         Payments.Add(new BillingPayment(billingId, paymentId, amount, paymentDate));
     }
 
-    protected void Configure(int fromBusinessIdentityId, int toBusinessIdentityId)
+    protected void Configure()
     {
         CalculateAmount();
-        SetBillingType();
-        SetAbsoluteAmount();
         SetFinalStatus();
-        var prefix = GenerateCodePrefix();
-        GenerateCode(prefix);
-        SetIdentity(fromBusinessIdentityId, toBusinessIdentityId);
+        GenerateCode();
         SetCheckSum();
     }
 
     protected abstract void CalculateAmount();
-
-    protected abstract void SetBillingType();
 
     protected abstract string GenerateCodePrefix();
 
@@ -206,10 +208,10 @@ public abstract class Billing : BaseEntity<long>
 
     protected abstract void ValidateCheckSum();
 
-    protected abstract void SetIdentity(int fromBusinessIdentityId, int toBusinessIdentityId);
-
-    private void GenerateCode(string prefix)
+    private void GenerateCode()
     {
+        var prefix = GenerateCodePrefix();
+
         var pc = new PersianCalendar();
         var year2Digits = pc.GetYear(CreatedDateTime).GetLast2Digits();
         var month2Digits = pc.GetMonth(CreatedDateTime).GetLast2Digits();
@@ -235,19 +237,14 @@ public abstract class Billing : BaseEntity<long>
 
     private void SetFinalStatus()
     {
-        if (Amount == 0)
-        {
-            Status = BillingStatus.Settled;
-        }
-        else
+        if (Amount > 0)
         {
             Status = PaymentDeadlineDate < DateTime.Today ? BillingStatus.Overdue : BillingStatus.Issued;
         }
-    }
-
-    private void SetAbsoluteAmount()
-    {
-        Amount = Math.Abs(Amount);
+        else
+        {
+            Status = BillingStatus.Settled;
+        }
     }
 
     private void SetContractIds(List<int> contractIds)

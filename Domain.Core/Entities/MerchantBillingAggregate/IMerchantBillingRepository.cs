@@ -12,6 +12,8 @@ public interface IMerchantBillingRepository : IRepository<MerchantBilling, long>
 
     Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken);
 
+    Task<List<NegativeSettledBilling>> GetNegativeSettledBillings(CancellationToken cancellationToken);
+
     Task<DateTime?> GetLastBillingDueDate(IEnumerable<int> contractIds, CancellationToken cancellationToken);
 
     Task<bool> FindAnotherBillingOnEndOfPeriod(int tenantId, int merchantId, DateTime endOfPeriod, CancellationToken cancellationToken);

@@ -26,21 +26,22 @@ public sealed class MerchantBilling : Billing
 
     }
 
-    public MerchantBilling(int tenantId, int merchantId, TimeInterval periodType, DateTime startDate, DateTime endDate,
-        int gracePeriod, int mainContractId, List<int> contractIds, decimal previousDebitAmount,
-        decimal previousCreditAmount, decimal previousPenaltyAmount, decimal purchaseTransactionsAmount,
-        decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
+    public MerchantBilling(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
+        TimeInterval periodType, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
+        List<int> contractIds, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
+        decimal purchaseTransactionsAmount, decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
         decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission,
         List<TieredCalculatedLevel> calculatedTieredLevels, Billing? debtor = null, Billing? creditor = null) : base(
-        tenantId, periodType, previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate,
-        gracePeriod, mainContractId, contractIds, calculatedTieredLevels, debtor, creditor)
+        tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount,
+        previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, mainContractId, contractIds,
+        calculatedTieredLevels, debtor, creditor)
     {
         PurchaseTransactionsAmount = purchaseTransactionsAmount;
         RefundedTransactionsAmount = refundedTransactionsAmount;
         PurchaseTransactionsCommission = purchaseTransactionsCommission;
         RefundedTransactionsCommission = refundedTransactionsCommission;
         PurchaseTransactionsCalculatedCommission = purchaseTransactionsCalculatedCommission;
-        Configure(tenantId, merchantId);
+        Configure();
     }
 
     protected override void CalculateAmount()
@@ -50,11 +51,6 @@ public sealed class MerchantBilling : Billing
         var totalCredit = PreviousCreditAmount + PurchaseTransactionsCommission + RefundedTransactionsAmount + DeductionsAmount;
 
         Amount = totalDebit - totalCredit;
-    }
-
-    protected override void SetBillingType()
-    {
-        Type = Amount >= 0 ? BillingType.TenantToMerchant : BillingType.MerchantToTenant;
     }
 
     protected override string GenerateCodePrefix()
@@ -84,25 +80,6 @@ public sealed class MerchantBilling : Billing
         if (!comperedTo.Validate(CheckSum))
         {
             throw new ArgumentValidationException("InconsistentData", "اطلاعات موجود در دیتابیس صحیح نمی باشد.");
-        }
-    }
-
-    protected override void SetIdentity(int fromBusinessIdentityId, int toBusinessIdentityId)
-    {
-        switch (Type)
-        {
-            case BillingType.TenantToMerchant:
-                FromBusinessIdentityId = fromBusinessIdentityId;
-                ToBusinessIdentityId = toBusinessIdentityId;
-                break;
-
-            case BillingType.MerchantToTenant:
-                FromBusinessIdentityId = toBusinessIdentityId;
-                ToBusinessIdentityId = fromBusinessIdentityId;
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException();
         }
     }
 
