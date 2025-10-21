@@ -11,17 +11,19 @@ public sealed record ContractGroup
 
     public int MerchantId { get; set; }
 
+    public bool Status { get; set; }
+
+    public int MainContractId { get; set; }
+
+    public List<int> ContractIds { get; set; }
+
     public int BillingPeriod { get; set; }
+
+    public bool IsCommissionExchanged { get; set; }
 
     public TimeInterval BillingPeriodType { get; set; }
 
     public DateTime? DailyBillingOriginDate { get; set; }
-
-    public required bool Status { get; set; }
-
-    public required int MainContractId { get; set; }
-
-    public List<int> ContractIds { get; set; }
 
     public decimal? PeriodMinCommissionAmount { get; set; }
 
@@ -31,7 +33,7 @@ public sealed record ContractGroup
 
     public CommissionCalculationType CommissionCalculationType { get; set; }
 
-    public required List<CommissionReferenceType> CommissionReferenceTypes { get; set; }
+    public List<CommissionReferenceType> CommissionReferenceTypes { get; set; }
 
     public ContractIdentifier CreateIdentifier()
     {

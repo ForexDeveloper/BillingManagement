@@ -32,6 +32,8 @@ public abstract record GetBillingVm
 
     public bool IsPayable { get; set; }
 
+    public decimal Amount { get; set; }
+
     public decimal PaidAmount { get; set; }
 
     public decimal PayableAmount { get; set; }

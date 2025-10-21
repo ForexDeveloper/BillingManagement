@@ -27,6 +27,8 @@ public sealed class MerchantBillingService(
 {
     public async Task IssueOrOverdueBilling(DateTime jobCreatedDateTime, CancellationToken cancellationToken)
     {
+        var negativeBillings = await merchantBillingRepository.GetNegativeSettledBillings(cancellationToken);
+
         var notSettledBillings = await merchantBillingRepository.GetOverdueOrNotSettledBillings(cancellationToken);
 
         var overdueBillings = await OverdueExpiredBillings(notSettledBillings, cancellationToken);
@@ -35,7 +37,7 @@ public sealed class MerchantBillingService(
 
         var billingsDtoSets = await CreateBillingDtos(groupContracts, jobCreatedDateTime, cancellationToken);
 
-        await CreateMerchantBillings(billingsDtoSets, overdueBillings, cancellationToken);
+        await CreateMerchantBillings(billingsDtoSets, overdueBillings, negativeBillings, cancellationToken);
     }
 
     private async Task<Dictionary<TenantMerchantIdentifier, List<BillingDto>>> CreateBillingDtos(
@@ -81,7 +83,8 @@ public sealed class MerchantBillingService(
     }
 
     private async Task CreateMerchantBillings(Dictionary<TenantMerchantIdentifier, List<BillingDto>> billingDtoGroups,
-        List<NotSettledBilling> overdueBillings, CancellationToken cancellationToken)
+        List<NotSettledBilling> overdueBillings, List<NegativeSettledBilling> negativeBillings,
+        CancellationToken cancellationToken)
     {
         foreach (var (_, billingDtos) in billingDtoGroups)
         {
@@ -143,14 +146,10 @@ public sealed class MerchantBillingService(
                     purchaseTransactionsCalculatedCommission = tieredCalculatedLevels.Sum(p => p.Commission);
                 }
 
-                MerchantBilling debtorBilling = null;
-                MerchantBilling creditorBilling = null;
-
                 purchaseTransactionsCommission = CalculateFinalCommission(contract, purchaseTransactionsCalculatedCommission);
 
-                var debtorBillings = GetDebtorBillings(overdueBillings, contract.ContractIds);
-
-                var creditorBillings = GetCreditorBillings(overdueBillings, contract.ContractIds);
+                MerchantBilling debtorBilling = null;
+                MerchantBilling creditorBilling = null;
 
                 var replicateBilling = replicateBillings.LastOrDefault();
 
@@ -164,21 +163,22 @@ public sealed class MerchantBillingService(
 
                     if (contractIdentifier == previousContractIdentifier)
                     {
-                        replicateBilling.Overdue();
-                        replicateBilling.Transfer();
-
                         var payableAmount = replicateBilling.GetPayableAmount();
 
-                        switch (replicateBilling.Type)
+                        switch (payableAmount)
                         {
-                            case BillingType.TenantToMerchant:
+                            case > 0:
+                                replicateBilling.Overdue();
+                                replicateBilling.Transfer();
                                 debtorBilling = replicateBilling;
                                 previousDebitAmount = payableAmount;
                                 break;
 
-                            case BillingType.MerchantToTenant:
+                            case < 0:
+                                replicateBilling.Settle();
+                                replicateBilling.Transfer();
                                 creditorBilling = replicateBilling;
-                                previousCreditAmount = payableAmount;
+                                previousCreditAmount = Math.Abs(payableAmount);
                                 break;
                         }
                     }
@@ -190,6 +190,10 @@ public sealed class MerchantBillingService(
 
                 if (replicateBillings.Count == 0)
                 {
+                    var debtorBillings = GetDebtorBillings(overdueBillings, contract.ContractIds);
+
+                    var creditorBillings = GetCreditorBillings(negativeBillings, contract.ContractIds);
+
                     debtorBillings.ForEach(p => p.Transfer());
 
                     creditorBillings.ForEach(p => p.Transfer());
@@ -200,11 +204,18 @@ public sealed class MerchantBillingService(
 
                     previousDebitAmount = debtorBillings.Sum(p => p.GetPayableAmount());
 
-                    previousCreditAmount = creditorBillings.Sum(p => p.GetPayableAmount());
+                    previousCreditAmount = creditorBillings.Sum(p => Math.Abs(p.GetPayableAmount()));
+                }
+
+                if (contract.IsCommissionExchanged)
+                {
+
                 }
 
                 var billing = new MerchantBilling(contract.TenantId,
+                    contract.TenantId,
                     contract.MerchantId,
+                    BillingType.TenantToMerchant,
                     contract.BillingPeriodType,
                     billingDto.StartOfPeriod,
                     billingDto.EndOfPeriod,
@@ -364,15 +375,15 @@ public sealed class MerchantBillingService(
     {
         for (var i = notSettledBillings.Count - 1; i >= 0; i--)
         {
-            var notAssignedBilling = notSettledBillings[i];
+            var billing = notSettledBillings[i].Billing;
 
-            if (notAssignedBilling.Billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid)
+            if (billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid)
             {
-                var payableAmount = notAssignedBilling.CalculatePayableAmount();
+                var payableAmount = billing.GetPayableAmount();
 
-                if (payableAmount != 0)
+                if (payableAmount > 0)
                 {
-                    notAssignedBilling.Billing.Overdue();
+                    billing.Overdue();
                 }
                 else
                 {
@@ -559,23 +570,27 @@ public sealed class MerchantBillingService(
 
         if (!debtorBillings.Any())
         {
-            debtorBillings = overdueBillings.Where(p => contactIds.Contains(p.ActiveContractId))
+            debtorBillings = overdueBillings
+                .Where(p => p.Billing.Type == BillingType.TenantToMerchant)
+                .Where(p => contactIds.Contains(p.ActiveContractId))
                 .Select(p => p.Billing).ToList();
         }
 
         return debtorBillings;
     }
 
-    private static List<MerchantBilling> GetCreditorBillings(List<NotSettledBilling> overdueBillings, IEnumerable<int> contactIds)
+    private static List<MerchantBilling> GetCreditorBillings(List<NegativeSettledBilling> negativeBillings, IEnumerable<int> contactIds)
     {
-        var creditorBillings = overdueBillings
-            .Where(p => p.Billing.Type == BillingType.MerchantToTenant)
+        var creditorBillings = negativeBillings
+            .Where(p => p.Billing.Type == BillingType.TenantToMerchant)
             .Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)))
             .Select(p => p.Billing).ToList();
 
         if (!creditorBillings.Any())
         {
-            creditorBillings = overdueBillings.Where(p => contactIds.Contains(p.ActiveContractId))
+            creditorBillings = negativeBillings
+                .Where(p => p.Billing.Type == BillingType.TenantToMerchant)
+                .Where(p => contactIds.Contains(p.ActiveContractId))
                 .Select(p => p.Billing).ToList();
         }
 
