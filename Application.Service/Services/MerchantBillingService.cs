@@ -111,14 +111,17 @@ public sealed class MerchantBillingService(
 
                 var contract = billingDto.ContractGroup;
 
-                purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(contract.ContractIds,
+                if (billingDto.Type == BillingType.TenantToMerchant)
+                {
+                    purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(contract.ContractIds,
                         billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(contract.ContractIds,
-                    billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+                    refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(contract.ContractIds,
+                        billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(contract.ContractIds,
-                    billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+                    refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(contract.ContractIds,
+                        billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+                }
 
                 if (contract.CommissionCalculationType is CommissionCalculationType.FixedPercentage or CommissionCalculationType.FixedAmount)
                 {
@@ -207,15 +210,10 @@ public sealed class MerchantBillingService(
                     previousCreditAmount = creditorBillings.Sum(p => Math.Abs(p.GetPayableAmount()));
                 }
 
-                if (contract.IsCommissionExchanged)
-                {
-
-                }
-
                 var billing = new MerchantBilling(contract.TenantId,
                     contract.TenantId,
                     contract.MerchantId,
-                    BillingType.TenantToMerchant,
+                    billingDto.Type,
                     contract.BillingPeriodType,
                     billingDto.StartOfPeriod,
                     billingDto.EndOfPeriod,
@@ -238,26 +236,25 @@ public sealed class MerchantBillingService(
 
                 if (billing.Amount == 0)
                 {
-                    if (!contract.Status) continue;
+                    if (!contract.Status) break;
 
-                    if (contract.Status && !billingDto.CurrentPeriod) continue;
+                    if (contract.Status && !billingDto.CurrentPeriod) break;
 
-                    if (contract.Status && billingDto.CurrentPeriod && oneDeactiveContractHasBilling) continue;
+                    if (contract.Status && billingDto.CurrentPeriod && oneDeactiveContractHasBilling) break;
+
+                    billings.Add(billing);
                 }
                 else
                 {
-                    if (!contract.Status && billingDto.CurrentPeriod)
-                    {
-                        oneDeactiveContractHasBilling = true;
-                    }
-                }
+                    billings.Add(billing);
 
-                billings.Add(billing);
+                    if (!contract.Status && billingDto.CurrentPeriod) oneDeactiveContractHasBilling = true;
+                }
             }
 
             await merchantBillingRepository.AddRangeAsync(billings, cancellationToken);
 
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+            //await unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 
@@ -365,10 +362,25 @@ public sealed class MerchantBillingService(
             ContractGroup = contract,
             EndOfPeriod = endOfPeriod,
             StartOfPeriod = startOfPeriod,
-            CurrentPeriod = currentPeriod
+            CurrentPeriod = currentPeriod,
+            Type = BillingType.TenantToMerchant
         };
 
         billingDtos.Add(billingDto);
+
+        if (contract.IsCommissionExchanged)
+        {
+            billingDto = new BillingDto
+            {
+                ContractGroup = contract,
+                EndOfPeriod = endOfPeriod,
+                StartOfPeriod = startOfPeriod,
+                CurrentPeriod = currentPeriod,
+                Type = BillingType.MerchantToTenant
+            };
+
+            billingDtos.Add(billingDto);
+        }
     }
 
     private async Task<List<NotSettledBilling>> OverdueExpiredBillings(List<NotSettledBilling> notSettledBillings, CancellationToken cancellationToken)
