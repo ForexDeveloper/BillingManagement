@@ -24,6 +24,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
     public async Task<List<NotSettledBilling>> GetOverdueOrNotSettledBillings(CancellationToken cancellationToken)
     {
         var billings = await _applicationDbContext.MerchantBillings
+            .Include(p => p.Payments)
             .Where(p => (p.Status == BillingStatus.Overdue && p.Transferred == false) ||
                         ((p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid) && p.PaymentDeadlineDate < DateTime.Today))
             .Select(p => new NotSettledBilling
@@ -32,6 +33,26 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
                 PaidAmount = p.Payments.Sum(q => q.Amount),
                 ActiveContractId = _applicationDbContext.TenantMerchantContracts.Where(q =>
                     q.Status &&
+                    p.Type == BillingType.TenantToMerchant &&
+                    q.TenantId == p.FromBusinessIdentityId &&
+                    q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
+            })
+            .OrderByDescending(p => p.Billing.DueDate)
+            .ToListAsync(cancellationToken);
+
+        return billings;
+    }
+
+    public async Task<List<NegativeSettledBilling>> GetNegativeSettledBillings(CancellationToken cancellationToken)
+    {
+        var billings = await _applicationDbContext.MerchantBillings
+            .Where(p => p.Status == BillingStatus.Settled && p.Amount < 0 && p.Transferred == false)
+            .Select(p => new NegativeSettledBilling
+            {
+                Billing = p,
+                ActiveContractId = _applicationDbContext.TenantMerchantContracts.Where(q =>
+                    q.Status &&
+                    p.Type == BillingType.TenantToMerchant &&
                     q.TenantId == p.FromBusinessIdentityId &&
                     q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
             })

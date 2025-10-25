@@ -69,6 +69,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 Id = p.Id,
                 Code = p.Code,
                 Type = p.Type,
+                Amount = p.Amount,
                 Status = p.Status,
                 DueDate = p.DueDate,
                 StartDate = p.StartDate,
