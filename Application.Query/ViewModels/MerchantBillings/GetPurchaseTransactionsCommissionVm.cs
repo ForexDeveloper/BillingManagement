@@ -6,6 +6,8 @@ public sealed record GetPurchaseTransactionsCommissionVm
 {
     public long Id { get; set; }
 
+    public int MerchantId { get; set; }
+
     public string Message { get; set; }
 
     public int MainContractId { get; set; }

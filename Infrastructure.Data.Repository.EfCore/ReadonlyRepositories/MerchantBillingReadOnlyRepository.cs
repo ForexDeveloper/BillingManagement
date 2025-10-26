@@ -9,6 +9,7 @@ using Application.Query.Queries.MerchantBilling;
 using Application.Query.ReadOnlyRepositoryContracts;
 using Application.Query.ViewModels.MerchantBillings;
 using Application.Query.QueryModels.MerchantBillings;
+using Domain.Core.Entities.BillingAggregate.Exceptions;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
@@ -98,6 +99,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
+            .Where(p => p.DebtorId.HasValue)
             .Select(p => new GetPreviousDebitVm
             {
                 Id = p.Debtor.Id,
@@ -111,6 +113,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     {
         return await dbContext.MerchantBillings
             .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
+            .Where(p => p.CreditorId.HasValue)
             .Select(p => new GetPreviousCreditVm
             {
                 Id = p.Creditor.Id,
@@ -152,6 +155,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             {
                 Id = p.Id,
                 ContractId = p.MainContractId,
+                MerchantId = p.ToBusinessIdentityId,
                 Amount = p.PurchaseTransactionsAmount
             }).FirstOrDefaultAsync();
     }
@@ -164,6 +168,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             {
                 Id = p.Id,
                 ContractId = p.MainContractId,
+                MerchantId = p.ToBusinessIdentityId,
                 Amount = p.RefundedTransactionsAmount
             }).FirstOrDefaultAsync();
     }
@@ -180,6 +185,8 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 TransactionsAmount = p.PurchaseTransactionsAmount,
                 TieredCalculatedLevels = p.TieredCalculatedLevels,
                 CalculatedAmount = p.PurchaseTransactionsCalculatedCommission,
+                MerchantId = p.Type == BillingType.TenantToMerchant ? p.ToBusinessIdentityId :
+                             p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0,
 
                 Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.EndDate)
                     .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractQueryModel()
@@ -229,7 +236,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             .Select(p => p.Parent.TenantMerchantContractId);
 
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
             .Select(p => new GetRefundedTransactionsCommissionVm
             {
                 Id = p.Id,
@@ -273,7 +280,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
 
     private async Task<GetBillingPeriodQueryModel> GetBillingPeriodAsync(long id, int tenantId)
     {
-        return await dbContext.MerchantBillings
+        var billing = await dbContext.MerchantBillings
             .Where(p => p.Id == id && p.TenantId == tenantId)
             .Select(p => new GetBillingPeriodQueryModel()
             {
@@ -281,5 +288,12 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 StartDate = p.StartDate,
                 ContractIds = p.ContractIds
             }).FirstOrDefaultAsync();
+
+        if (billing == null)
+        {
+            throw new BillingNotFoundException(BillingConstants.NotFoundMessage);
+        }
+
+        return billing;
     }
 }

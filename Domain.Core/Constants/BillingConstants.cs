@@ -7,4 +7,6 @@ public static class BillingConstants
     public static string MerchantPrefix => "MR";
 
     public static string PlatformPrefix => "PL";
+
+    public static string NotFoundMessage => "صورتحساب مورد نظر یافت نشد";
 }

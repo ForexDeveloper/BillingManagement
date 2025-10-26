@@ -1,8 +1,10 @@
 ﻿using MediatR;
 using System.Threading;
+using Domain.Core.Constants;
 using System.Threading.Tasks;
 using Application.Query.ReadOnlyRepositoryContracts;
 using Application.Query.ViewModels.MerchantBillings;
+using Domain.Core.Entities.BillingAggregate.Exceptions;
 
 namespace Application.Query.Queries.MerchantBilling;
 
@@ -19,6 +21,13 @@ public sealed class GetPreviousCreditQueryHandler(IMerchantBillingReadOnlyReposi
     public async Task<GetPreviousCreditVm> Handle(GetPreviousCreditQuery query,
         CancellationToken cancellationToken)
     {
-        return await repository.GetPreviousCreditAsync(query);
+        var previousCredit = await repository.GetPreviousCreditAsync(query);
+
+        if (previousCredit == null)
+        {
+            throw new BillingNotFoundException(BillingConstants.NotFoundMessage);
+        }
+
+        return previousCredit;
     }
 }

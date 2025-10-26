@@ -4,6 +4,8 @@ public sealed record GetPurchaseTransactionsVm
 {
      public long Id { get; set; }
 
+     public int MerchantId { get; set; }
+
     public int ContractId { get; set; }
 
     public decimal Amount { get; set; }

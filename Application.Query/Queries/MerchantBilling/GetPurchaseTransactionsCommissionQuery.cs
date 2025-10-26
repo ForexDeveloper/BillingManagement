@@ -1,9 +1,11 @@
 ﻿using MediatR;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Constants;
 using System.Threading.Tasks;
 using Application.Query.ReadOnlyRepositoryContracts;
 using Application.Query.ViewModels.MerchantBillings;
+using Domain.Core.Entities.BillingAggregate.Exceptions;
 
 namespace Application.Query.Queries.MerchantBilling;
 
@@ -22,10 +24,16 @@ public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBill
     {
         var commission = await repository.GetPurchaseTransactionsCommissionAsync(query);
 
+        if (commission == null)
+        {
+            throw new BillingNotFoundException(BillingConstants.NotFoundMessage);
+        }
+
         return new GetPurchaseTransactionsCommissionVm()
         {
             Id = commission.BillingId,
             Message = commission.Message,
+            MerchantId = commission.MerchantId,
             FinalAmount = commission.FinalAmount,
             MainContractId = commission.MainContractId,
             CalculatedAmount = commission.CalculatedAmount,
