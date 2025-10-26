@@ -32,10 +32,14 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
                 Billing = p,
                 PaidAmount = p.Payments.Sum(q => q.Amount),
                 ActiveContractId = _applicationDbContext.TenantMerchantContracts.Where(q =>
-                    q.Status &&
-                    p.Type == BillingType.TenantToMerchant &&
-                    q.TenantId == p.FromBusinessIdentityId &&
-                    q.MerchantId == p.ToBusinessIdentityId).Select(q => q.Id).FirstOrDefault()
+                    (q.Status &&
+                     p.Type == BillingType.TenantToMerchant &&
+                     q.TenantId == p.FromBusinessIdentityId &&
+                     q.MerchantId == p.ToBusinessIdentityId) ||
+                    (q.Status &&
+                     p.Type == BillingType.MerchantToTenant &&
+                     q.TenantId == p.ToBusinessIdentityId &&
+                     q.MerchantId == p.FromBusinessIdentityId)).Select(q => q.Id).FirstOrDefault()
             })
             .OrderByDescending(p => p.Billing.DueDate)
             .ToListAsync(cancellationToken);

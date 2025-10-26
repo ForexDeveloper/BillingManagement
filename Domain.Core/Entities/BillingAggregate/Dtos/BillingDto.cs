@@ -14,5 +14,9 @@ public sealed record BillingDto
 
     public DateTime EndOfPeriod { get; set; }
 
+    public required int ToBusinessIdentityId { get; set; }
+
+    public required int FromBusinessIdentityId { get; set; }
+
     public ContractGroup ContractGroup { get; set; }
 }

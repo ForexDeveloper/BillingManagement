@@ -1,21 +1,20 @@
-﻿using Application.Service.Contracts;
-using Application.Service.Dtos.Shared;
-using Application.Service.Helper;
-using Domain.Core.Entities.BillingAggregate.Dtos;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Entities.MerchantInstallmentAggregate;
-using Domain.Core.Entities.Shared;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.Contracts;
+﻿using System;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Enums;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Application.Service.Helper;
+using Domain.Core.Entities.Shared;
+using Application.Service.Contracts;
+using Application.Service.Dtos.Shared;
+using Domain.Core.UnitOfWorkContracts;
+using Domain.Core.Entities.BillingAggregate.Dtos;
+using Domain.Core.Entities.MerchantBillingAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Application.Service.Services;
 
@@ -135,34 +134,31 @@ public sealed class MerchantBillingService(
                     {
                         var payableAmount = replicateBilling.GetPayableAmount();
 
-                        switch (billingDto.Type)
+                        if (billingDto.Type == BillingType.TenantToMerchant)
                         {
-                            case BillingType.TenantToMerchant:
+                            switch (payableAmount)
+                            {
+                                case > 0:
+                                    replicateBilling.Overdue();
+                                    replicateBilling.Transfer();
+                                    debtorBilling = replicateBilling;
+                                    previousDebitAmount = payableAmount;
+                                    break;
 
-                                switch (payableAmount)
-                                {
-                                    case > 0:
-                                        replicateBilling.Overdue();
-                                        replicateBilling.Transfer();
-                                        debtorBilling = replicateBilling;
-                                        previousDebitAmount = payableAmount;
-                                        break;
-
-                                    case < 0:
-                                        replicateBilling.Settle();
-                                        replicateBilling.Transfer();
-                                        creditorBilling = replicateBilling;
-                                        previousCreditAmount = Math.Abs(payableAmount);
-                                        break;
-                                }
-                                break;
-
-                            case BillingType.MerchantToTenant:
-                                replicateBilling.Overdue();
-                                replicateBilling.Transfer();
-                                debtorBilling = replicateBilling;
-                                previousDebitAmount = payableAmount;
-                                break;
+                                case < 0:
+                                    replicateBilling.Settle();
+                                    replicateBilling.Transfer();
+                                    creditorBilling = replicateBilling;
+                                    previousCreditAmount = Math.Abs(payableAmount);
+                                    break;
+                            }
+                        }
+                        else if (billingDto.Type == BillingType.MerchantToTenant)
+                        {
+                            replicateBilling.Overdue();
+                            replicateBilling.Transfer();
+                            debtorBilling = replicateBilling;
+                            previousDebitAmount = payableAmount;
                         }
                     }
                     else
@@ -221,8 +217,8 @@ public sealed class MerchantBillingService(
                 var purchaseTransactionsCalculatedCommission = commission.PurchaseTransactionsCalculatedCommission;
 
                 var billing = new MerchantBilling(contract.TenantId,
-                    contract.TenantId,
-                    contract.MerchantId,
+                    billingDto.FromBusinessIdentityId,
+                    billingDto.ToBusinessIdentityId,
                     billingDto.Type,
                     contract.BillingPeriodType,
                     billingDto.StartOfPeriod,
@@ -374,7 +370,9 @@ public sealed class MerchantBillingService(
             EndOfPeriod = endOfPeriod,
             StartOfPeriod = startOfPeriod,
             CurrentPeriod = currentPeriod,
-            Type = BillingType.TenantToMerchant
+            Type = BillingType.TenantToMerchant,
+            FromBusinessIdentityId = contract.TenantId,
+            ToBusinessIdentityId = contract.MerchantId
         };
 
         billingDtos.Add(billingDto);
@@ -387,7 +385,9 @@ public sealed class MerchantBillingService(
                 EndOfPeriod = endOfPeriod,
                 StartOfPeriod = startOfPeriod,
                 CurrentPeriod = currentPeriod,
-                Type = BillingType.MerchantToTenant
+                Type = BillingType.MerchantToTenant,
+                FromBusinessIdentityId = contract.MerchantId,
+                ToBusinessIdentityId = contract.TenantId
             };
 
             billingDtos.Add(billingDto);
