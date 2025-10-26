@@ -1,8 +1,10 @@
 ﻿using MediatR;
 using System.Threading;
+using Domain.Core.Constants;
 using System.Threading.Tasks;
 using Application.Query.ReadOnlyRepositoryContracts;
 using Application.Query.ViewModels.MerchantBillings;
+using Domain.Core.Entities.BillingAggregate.Exceptions;
 
 namespace Application.Query.Queries.MerchantBilling;
 
@@ -18,6 +20,13 @@ public sealed class GetDeductionsQueryHandler(IMerchantBillingReadOnlyRepository
 {
     public async Task<GetDeductionsVm> Handle(GetDeductionsQuery query, CancellationToken cancellationToken)
     {
-        return await repository.GetDeductionsAsync(query);
+        var deductions = await repository.GetDeductionsAsync(query);
+
+        if (deductions == null)
+        {
+            throw new BillingNotFoundException(BillingConstants.NotFoundMessage);
+        }
+
+        return deductions;
     }
 }

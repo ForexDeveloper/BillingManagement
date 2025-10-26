@@ -1,8 +1,10 @@
 ﻿using MediatR;
 using System.Threading;
+using Domain.Core.Constants;
 using System.Threading.Tasks;
 using Application.Query.ReadOnlyRepositoryContracts;
 using Application.Query.ViewModels.MerchantBillings;
+using Domain.Core.Entities.BillingAggregate.Exceptions;
 
 namespace Application.Query.Queries.MerchantBilling;
 
@@ -19,6 +21,13 @@ public sealed class GetRefundedTransactionsCommissionQueryHandler(IMerchantBilli
     public async Task<GetRefundedTransactionsCommissionVm> Handle(GetRefundedTransactionsCommissionQuery query,
         CancellationToken cancellationToken)
     {
-        return await repository.GetRefundedTransactionsCommissionAsync(query);
+        var commission = await repository.GetRefundedTransactionsCommissionAsync(query);
+
+        if (commission == null)
+        {
+            throw new BillingNotFoundException(BillingConstants.NotFoundMessage);
+        }
+
+        return commission;
     }
 }
