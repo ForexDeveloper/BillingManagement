@@ -13,7 +13,7 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
 {
     public async Task<GetBillingsVm> GetBillingsAsync(GetBillingsQuery query)
     {
-        var billingQuery = dbContext.Billings.Where(p => p.FromBusinessIdentityId == query.TenantId);
+        var billingQuery = dbContext.Billings.Where(p => p.TenantId == query.TenantId);
 
         if (query.Type.HasValue)
         {

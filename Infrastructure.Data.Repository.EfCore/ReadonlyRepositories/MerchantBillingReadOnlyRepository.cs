@@ -2,9 +2,6 @@
 using Domain.Core.Enums;
 using Domain.Core.Constants;
 using System.Threading.Tasks;
-using Application.Service.Helper;
-using System.Collections.Generic;
-using Domain.Core.Entities.Shared;
 using Shared.Utilities.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Application.Query.ViewModels.Billings;
@@ -63,7 +60,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     public async Task<GetMerchantBillingVm> GetBillingAsync(GetMerchantBillingQuery query)
     {
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
             .Select(p => new GetMerchantBillingVm
             {
                 Id = p.Id,
@@ -90,20 +87,17 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 RefundedTransactionsAmount = p.RefundedTransactionsAmount,
                 PurchaseTransactionsCommission = p.PurchaseTransactionsCommission,
                 RefundedTransactionsCommission = p.RefundedTransactionsCommission,
+                IsCommissionExchanged = dbContext.TenantMerchantContracts.FirstOrDefault(q => q.Id == p.MainContractId).IsCommissionExchanged,
                 TotalDebitAmount = p.PreviousDebitAmount + p.PurchaseTransactionsAmount + p.RefundedTransactionsCommission + p.AdditionsAmount,
                 TotalCreditAmount = p.PreviousCreditAmount + p.PurchaseTransactionsCommission + p.RefundedTransactionsAmount + p.DeductionsAmount,
-                Title = $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}",
-                Payments = p.Payments.Select(q => new GetBillingPaymentVm()
-                {
-
-                })
+                Title = $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}"
             }).FirstOrDefaultAsync();
     }
 
     public async Task<GetPreviousDebitVm> GetPreviousDebitAsync(GetPreviousDebitQuery query)
     {
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
             .Select(p => new GetPreviousDebitVm
             {
                 Id = p.Debtor.Id,
@@ -116,7 +110,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     public async Task<GetPreviousCreditVm> GetPreviousCreditAsync(GetPreviousCreditQuery query)
     {
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
             .Select(p => new GetPreviousCreditVm
             {
                 Id = p.Creditor.Id,
@@ -129,7 +123,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     public async Task<GetAdditionsVm> GetAdditionsAsync(GetAdditionsQuery query)
     {
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
             .Select(p => new GetAdditionsVm
             {
                 Id = p.Id,
@@ -141,7 +135,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     public async Task<GetDeductionsVm> GetDeductionsAsync(GetDeductionsQuery query)
     {
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
             .Select(p => new GetDeductionsVm
             {
                 Id = p.Id,
@@ -153,7 +147,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     public async Task<GetPurchaseTransactionsVm> GetPurchaseTransactionsAsync(GetPurchaseTransactionsQuery query)
     {
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
             .Select(p => new GetPurchaseTransactionsVm
             {
                 Id = p.Id,
@@ -165,7 +159,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     public async Task<GetRefundedTransactionsVm> GetRefundedTransactionsAsync(GetRefundedTransactionsQuery query)
     {
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
             .Select(p => new GetRefundedTransactionsVm
             {
                 Id = p.Id,
@@ -177,7 +171,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     public async Task<GetPurchaseTransactionsCommissionQueryModel> GetPurchaseTransactionsCommissionAsync(GetPurchaseTransactionsCommissionQuery query)
     {
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == query.Id && p.FromBusinessIdentityId == query.TenantId)
+            .Where(p => p.Id == query.Id && p.TenantId == query.TenantId)
             .Select(p => new GetPurchaseTransactionsCommissionQueryModel
             {
                 BillingId = p.Id,
@@ -280,7 +274,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     private async Task<GetBillingPeriodQueryModel> GetBillingPeriodAsync(long id, int tenantId)
     {
         return await dbContext.MerchantBillings
-            .Where(p => p.Id == id && p.FromBusinessIdentityId == tenantId)
+            .Where(p => p.Id == id && p.TenantId == tenantId)
             .Select(p => new GetBillingPeriodQueryModel()
             {
                 DueDate = p.DueDate,

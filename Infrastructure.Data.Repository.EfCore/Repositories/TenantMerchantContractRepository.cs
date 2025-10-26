@@ -87,11 +87,12 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
             p.CreatedDateTime,
             p.BillingPeriodType,
             p.TieredCommissions,
+            p.IsCommissionExchanged,
             p.DailyBillingOriginDate,
             p.CommissionReferenceTypes,
             p.CommissionCalculationType,
             p.PeriodMinCommissionAmount,
-            p.PeriodMaxCommissionAmount
+            p.PeriodMaxCommissionAmount,
         })
         .ToListAsync(cancellationToken);
 
@@ -125,6 +126,10 @@ public sealed class TenantMerchantContractRepository(ApplicationDbContext applic
             TieredCommissions = p.Any(q => q.Status)
                  ? p.First(q => q.Status).TieredCommissions
                  : p.OrderByDescending(q => q.CreatedDateTime).First().TieredCommissions,
+
+            IsCommissionExchanged = p.Any(q => q.Status)
+                ? p.First(q => q.Status).IsCommissionExchanged
+                : p.OrderByDescending(q => q.CreatedDateTime).First().IsCommissionExchanged,
 
             CommissionReferenceTypes = p.Any(q => q.Status)
                  ? p.First(q => q.Status).CommissionReferenceTypes

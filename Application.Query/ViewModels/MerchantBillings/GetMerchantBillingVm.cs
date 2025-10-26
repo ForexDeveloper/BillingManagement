@@ -4,6 +4,8 @@ namespace Application.Query.ViewModels.MerchantBillings;
 
 public sealed record GetMerchantBillingVm : GetBillingVm
 {
+    public int MerchantId { get; set; }
+
     public decimal PurchaseTransactionsAmount { get; set; }
 
     public decimal RefundedTransactionsAmount { get; set; }

@@ -19,6 +19,8 @@ public sealed record ContractGroup
 
     public int BillingPeriod { get; set; }
 
+    public bool IsCommissionExchanged { get; set; }
+
     public TimeInterval BillingPeriodType { get; set; }
 
     public DateTime? DailyBillingOriginDate { get; set; }

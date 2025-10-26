@@ -46,11 +46,19 @@ public sealed class MerchantBilling : Billing
 
     protected override void CalculateAmount()
     {
-        var totalDebit = PreviousDebitAmount + PurchaseTransactionsAmount + RefundedTransactionsCommission + AdditionsAmount;
+        if (Type == BillingType.TenantToMerchant)
+        {
+            var totalDebit = PreviousDebitAmount + PurchaseTransactionsAmount + RefundedTransactionsCommission + AdditionsAmount;
 
-        var totalCredit = PreviousCreditAmount + PurchaseTransactionsCommission + RefundedTransactionsAmount + DeductionsAmount;
+            var totalCredit = PreviousCreditAmount + PurchaseTransactionsCommission + RefundedTransactionsAmount + DeductionsAmount;
 
-        Amount = totalDebit - totalCredit;
+            Amount = totalDebit - totalCredit;
+        }
+
+        else if (Type == BillingType.MerchantToTenant)
+        {
+            Amount = PreviousDebitAmount + PurchaseTransactionsCommission;
+        }
     }
 
     protected override string GenerateCodePrefix()

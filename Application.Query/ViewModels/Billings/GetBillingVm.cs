@@ -1,14 +1,11 @@
 ﻿using System;
 using Domain.Core.Enums;
-using System.Collections.Generic;
 
 namespace Application.Query.ViewModels.Billings;
 
 public abstract record GetBillingVm
 {
     public long Id { get; set; }
-
-    public int MerchantId { get; set; }
 
     public string Code { get; set; }
 
@@ -25,6 +22,8 @@ public abstract record GetBillingVm
     public TimeInterval PeriodType { get; set; }
 
     public string PeriodTypeTitle { get; set; }
+
+    public bool IsCommissionExchanged { get; set; }
 
     public DateTime StartDate { get; set; }
 
@@ -51,6 +50,4 @@ public abstract record GetBillingVm
     public decimal TotalDebitAmount { get; set; }
 
     public decimal TotalCreditAmount { get; set; }
-
-    public IEnumerable<GetBillingPaymentVm> Payments { get; set; }
 }
