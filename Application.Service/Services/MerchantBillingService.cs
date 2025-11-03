@@ -584,38 +584,32 @@ public sealed class MerchantBillingService(
         return commission;
     }
 
-    private static List<MerchantBilling> GetDebtorBillings(List<NotSettledBilling> overdueBillings, BillingType type, IEnumerable<int> contactIds)
+    private static List<MerchantBilling> GetDebtorBillings(List<NotSettledBilling> overdueBillings, BillingType type, List<int> contactIds)
     {
-        var debtorBillings = overdueBillings
+        var directDebtors = overdueBillings
             .Where(p => p.Billing.Type == type)
-            .Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)))
-            .Select(p => p.Billing).ToList();
+            .Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)));
 
-        if (!debtorBillings.Any())
-        {
-            debtorBillings = overdueBillings
-                .Where(p => p.Billing.Type == type)
-                .Where(p => contactIds.Contains(p.ActiveContractId))
-                .Select(p => p.Billing).ToList();
-        }
+        var indirectDebtors = overdueBillings
+            .Where(p => p.Billing.Type == type)
+            .Where(p => contactIds.Any(q => q == p.ActiveContractId));
+
+        var debtorBillings = directDebtors.Union(indirectDebtors).Select(p => p.Billing).ToList();
 
         return debtorBillings;
     }
 
-    private static List<MerchantBilling> GetCreditorBillings(List<NegativeSettledBilling> negativeBillings, BillingType type, IEnumerable<int> contactIds)
+    private static List<MerchantBilling> GetCreditorBillings(List<NegativeSettledBilling> negativeBillings, BillingType type, List<int> contactIds)
     {
-        var creditorBillings = negativeBillings
+        var directCreditors = negativeBillings
             .Where(p => p.Billing.Type == type)
-            .Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)))
-            .Select(p => p.Billing).ToList();
+            .Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)));
 
-        if (!creditorBillings.Any())
-        {
-            creditorBillings = negativeBillings
-                .Where(p => p.Billing.Type == type)
-                .Where(p => contactIds.Contains(p.ActiveContractId))
-                .Select(p => p.Billing).ToList();
-        }
+        var indirectCreditors = negativeBillings
+            .Where(p => p.Billing.Type == type)
+            .Where(p => contactIds.Any(q => q == p.ActiveContractId));
+
+        var creditorBillings = directCreditors.Union(indirectCreditors).Select(p => p.Billing).ToList();
 
         return creditorBillings;
     }
