@@ -1,17 +1,16 @@
-﻿using Application.Service.Contracts;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
+using Domain.Core.Enums;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Shared.EventBus.Events;
+using Microsoft.Extensions.Logging;
+using Application.Service.Contracts;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 
 namespace Application.Service.EventConsumers;
 
@@ -19,7 +18,6 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     IApplicationDbContextUnitOfWork unitOfWork,
     IMerchantInstallmentService merchantInstallmentService,
     IFinancialDocumentRepository financialDocumentRepository,
-    ITenantMerchantContractRepository tenantMerchantContractRepository,
     ILogger<FinancialDocumentAddedOrUpdatedEventConsumer> logger) : IConsumer<FcmFinancialDocumentAddedOrUpdatedEvent>
 {
     public async Task Consume(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context)
@@ -101,7 +99,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 context.Message.PrepaymentAmount,
                 type,
                 (FinancialDocumentState)context.Message.State,
-                (PaymentGatewayType)context.Message.PaymentGatewayType,
+                context.Message.PaymentGatewayType.HasValue ? (PaymentGatewayType)context.Message.PaymentGatewayType : null,
                 context.Message.Description,
                 context.Message.MerchantBranchId,
                 context.Message.TenantMerchantContractId,

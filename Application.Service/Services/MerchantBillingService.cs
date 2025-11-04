@@ -169,21 +169,15 @@ public sealed class MerchantBillingService(
 
                 if (replicateBillings.Count == 0)
                 {
-                    var debtorBillings = GetDebtorBillings(overdueBillings, billingDto.Type, contract.ContractIds);
+                    debtorBilling = TransferDebtorBillings(overdueBillings,
+                        billingDto.Type,
+                        contract.ContractIds,
+                        out previousDebitAmount);
 
-                    var creditorBillings = GetCreditorBillings(negativeBillings, billingDto.Type, contract.ContractIds);
-
-                    debtorBillings.ForEach(p => p.Transfer());
-
-                    creditorBillings.ForEach(p => p.Transfer());
-
-                    debtorBilling = debtorBillings.FirstOrDefault();
-
-                    creditorBilling = creditorBillings.FirstOrDefault();
-
-                    previousDebitAmount = debtorBillings.Sum(p => p.GetPayableAmount());
-
-                    previousCreditAmount = creditorBillings.Sum(p => Math.Abs(p.GetPayableAmount()));
+                    creditorBilling = TransferCreditorBillings(negativeBillings,
+                        billingDto.Type,
+                        contract.ContractIds,
+                        out previousCreditAmount);
                 }
 
                 Commission commission = new();
@@ -584,40 +578,66 @@ public sealed class MerchantBillingService(
         return commission;
     }
 
-    private static List<MerchantBilling> GetDebtorBillings(List<NotSettledBilling> overdueBillings, BillingType type, IEnumerable<int> contactIds)
+    private static MerchantBilling TransferDebtorBillings(List<NotSettledBilling> overdueBillings, BillingType type, List<int> contractIds, out decimal previousDebitAmount)
     {
-        var debtorBillings = overdueBillings
-            .Where(p => p.Billing.Type == type)
-            .Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)))
-            .Select(p => p.Billing).ToList();
+        previousDebitAmount = 0;
+        MerchantBilling debtorBilling = null;
 
-        if (!debtorBillings.Any())
+        foreach (var overdueBilling in overdueBillings.Where(p => p.Billing.Type == type))
         {
-            debtorBillings = overdueBillings
-                .Where(p => p.Billing.Type == type)
-                .Where(p => contactIds.Contains(p.ActiveContractId))
-                .Select(p => p.Billing).ToList();
+            var billing = overdueBilling.Billing;
+
+            if (billing.ContractIds.Any(contractIds.Contains))
+            {
+                billing.Transfer();
+
+                previousDebitAmount += billing.GetPayableAmount();
+
+                debtorBilling = billing;
+            }
+
+            else if (contractIds.Contains(overdueBilling.ActiveContractId))
+            {
+                billing.Transfer();
+
+                previousDebitAmount += billing.GetPayableAmount();
+
+                debtorBilling ??= billing;
+            }
         }
 
-        return debtorBillings;
+        return debtorBilling;
     }
 
-    private static List<MerchantBilling> GetCreditorBillings(List<NegativeSettledBilling> negativeBillings, BillingType type, IEnumerable<int> contactIds)
+    private static MerchantBilling TransferCreditorBillings(List<NegativeSettledBilling> negativeBillings, BillingType type, List<int> contractIds, out decimal previousCreditAmount)
     {
-        var creditorBillings = negativeBillings
-            .Where(p => p.Billing.Type == type)
-            .Where(p => contactIds.Any(q => p.Billing.ContractIds.Contains(q)))
-            .Select(p => p.Billing).ToList();
+        previousCreditAmount = 0;
+        MerchantBilling creditorBilling = null;
 
-        if (!creditorBillings.Any())
+        foreach (var negativeBilling in negativeBillings.Where(p => p.Billing.Type == type))
         {
-            creditorBillings = negativeBillings
-                .Where(p => p.Billing.Type == type)
-                .Where(p => contactIds.Contains(p.ActiveContractId))
-                .Select(p => p.Billing).ToList();
+            var billing = negativeBilling.Billing;
+
+            if (billing.ContractIds.Any(contractIds.Contains))
+            {
+                billing.Transfer();
+
+                previousCreditAmount += Math.Abs(billing.GetPayableAmount());
+
+                creditorBilling = billing;
+            }
+
+            else if (contractIds.Contains(negativeBilling.ActiveContractId))
+            {
+                billing.Transfer();
+
+                previousCreditAmount += Math.Abs(billing.GetPayableAmount());
+
+                creditorBilling ??= billing;
+            }
         }
 
-        return creditorBillings;
+        return creditorBilling;
     }
 
     private async Task<Transactions> CalculateTransactions(BillingDto billingDto, CancellationToken cancellationToken)

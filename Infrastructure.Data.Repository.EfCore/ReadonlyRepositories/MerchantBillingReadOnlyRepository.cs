@@ -75,7 +75,6 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 PeriodType = p.PeriodType,
                 Additions = p.AdditionsAmount,
                 Deductions = p.DeductionsAmount,
-                MerchantId = p.ToBusinessIdentityId,
                 PaidAmount = p.Payments.Sum(q => q.Amount),
                 TypeTitle = p.Type.GetEnumDescription(),
                 StatusTitle = p.Status.GetEnumDescription(),
@@ -91,7 +90,9 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 IsCommissionExchanged = dbContext.TenantMerchantContracts.FirstOrDefault(q => q.Id == p.MainContractId).IsCommissionExchanged,
                 TotalDebitAmount = p.PreviousDebitAmount + p.PurchaseTransactionsAmount + p.RefundedTransactionsCommission + p.AdditionsAmount,
                 TotalCreditAmount = p.PreviousCreditAmount + p.PurchaseTransactionsCommission + p.RefundedTransactionsAmount + p.DeductionsAmount,
-                Title = $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}"
+                Title = $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}",
+                MerchantId = p.Type == BillingType.TenantToMerchant ? p.ToBusinessIdentityId : 
+                             p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0
             }).FirstOrDefaultAsync();
     }
 
