@@ -1,14 +1,13 @@
-﻿using System;
+﻿using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
+using Domain.Core.Enums;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Domain.Core.Enums;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
@@ -121,7 +120,7 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             .Where(p => p.Type == FinancialDocumentType.Refund)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
             .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
-            .SumAsync(p => p.Parent.Commission, cancellationToken) ?? 0;
+            .SumAsync(p => p.Parent.Commission, cancellationToken);
     }
 
     public IQueryable<int?> GetParentTenantMerchantContractIds(IEnumerable<int> contractIds, DateTime startOfPeriod,
