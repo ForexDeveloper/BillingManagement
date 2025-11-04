@@ -1,14 +1,14 @@
-﻿using System;
-using Domain.Base;
-using Domain.Core.Enums;
-using Domain.Core.Helper;
-using System.Collections.Generic;
+﻿using Domain.Base;
 using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantPlatformContractAggregate;
+using Domain.Core.Enums;
+using Domain.Core.Helper;
+using System;
+using System.Collections.Generic;
 
 namespace Domain.Core.Entities.FinancialDocumentAggregate;
 
@@ -64,7 +64,7 @@ public class FinancialDocument : BaseEntity<long>
 
     public decimal PrepaymentAmount { get; set; }
 
-    public decimal? Commission { get; private set; }
+    public decimal Commission { get; private set; }
 
     public long? ParentId { get; private set; }
 
@@ -105,6 +105,7 @@ public class FinancialDocument : BaseEntity<long>
         RefundDescription = refundDescription;
         RefundType = refundType;
         ParentId = parentId;
+        Commission = 0;
         SetCheckSum();
     }
 
@@ -129,7 +130,7 @@ public class FinancialDocument : BaseEntity<long>
         CheckSum = HashHelper.Hash($"{FromBusinessIdentityId}{ToBusinessIdentityId}{Type}{Amount:F10}{CreatedDateTime:yyyy-MM-ddTHH:mm:ss}");
     }
 
-    public void SetCommission(decimal? commission)
+    public void SetCommission(decimal commission)
     {
         Commission = commission;
     }
