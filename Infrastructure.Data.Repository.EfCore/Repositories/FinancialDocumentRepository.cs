@@ -1,13 +1,13 @@
-﻿using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
-using Domain.Core.Enums;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Threading;
+using Domain.Core.Enums;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate.Dtos;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.Repositories;
 
@@ -21,11 +21,6 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
     public async Task<FinancialDocument> GetByIdAsync(long id)
     {
         return await applicationDbContext.FinancialDocuments.FirstOrDefaultAsync(p => p.Id == id);
-    }
-
-    public async Task<List<FinancialDocument>> GetRefundsByParentIdAsync(long parentId)
-    {
-        return await applicationDbContext.FinancialDocuments.Where(p => p.ParentId == parentId && p.Type == FinancialDocumentType.Refund).ToListAsync();
     }
 
     public void Update(FinancialDocument financialDocument)
@@ -121,17 +116,5 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
             .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
             .SumAsync(p => p.Parent.Commission, cancellationToken);
-    }
-
-    public IQueryable<int?> GetParentTenantMerchantContractIds(IEnumerable<int> contractIds, DateTime startOfPeriod,
-        DateTime endOfPeriod)
-    {
-        return applicationDbContext.FinancialDocuments
-            .Where(p => p.Type == FinancialDocumentType.Refund)
-            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
-            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
-            .Where(p => p.Parent.TenantMerchantContract.CommissionCalculationType == CommissionCalculationType.FixedAmount ||
-                        p.Parent.TenantMerchantContract.CommissionCalculationType == CommissionCalculationType.FixedPercentage)
-            .Select(p => p.Parent.TenantMerchantContractId);
     }
 }
