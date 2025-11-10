@@ -30,7 +30,7 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
             .Select(p => new NotSettledBilling
             {
                 Billing = p,
-                PaidAmount = p.Payments.Sum(q => q.Amount),
+                PayableAmount = p.Amount - p.Payments.Sum(q => q.Amount),
                 ActiveContractId = _applicationDbContext.TenantMerchantContracts.Where(q =>
                     (q.Status &&
                      p.Type == BillingType.TenantToMerchant &&
