@@ -8,8 +8,8 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-		<PackageReference Include="Shared.Exception.Abstraction" Version="251110.719.24" />
-		<PackageReference Include="Shared.MinIO" Version="251110.719.24" />
+		<PackageReference Include="Shared.Exception.Abstraction" Version="251110.1047.20" />
+		<PackageReference Include="Shared.MinIO" Version="251110.1047.20" />
 
 	</ItemGroup>
 
