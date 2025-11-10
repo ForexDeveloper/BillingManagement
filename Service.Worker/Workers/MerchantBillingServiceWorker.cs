@@ -30,6 +30,16 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
 
             logger.AddTraceId(Guid.NewGuid().ToString());
 
+            logger.LogTrace(new LogStruct()
+            {
+                Results = "",
+                InputParams = "",
+                Exception = null,
+                ResponseTimeStopWatcher = _stopwatch,
+                Message = "MerchantBillingServiceWorker started",
+                ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
+            });
+
             try
             {
                 var jobCreatedDateTime = await backgroundJobService.CreateMerchantBillingJobAsync(stoppingToken);
@@ -55,8 +65,8 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
                     Results = "",
                     InputParams = "",
                     Exception = null,
-                    Message = string.Empty,
                     ResponseTimeStopWatcher = _stopwatch,
+                    Message = "MerchantBillingServiceWorker executed successfully",
                     ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
                 });
 

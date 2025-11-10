@@ -418,9 +418,7 @@ public sealed class MerchantBillingService(
 
         foreach (var notPaidBilling in notPaidBillings)
         {
-            var payableAmount = notPaidBilling.CalculatePayableAmount();
-
-            if (payableAmount != 0)
+            if (notPaidBilling.PayableAmount > 0)
             {
                 notPaidBilling.Billing.Overdue();
             }

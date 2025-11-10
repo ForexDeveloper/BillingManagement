@@ -6,12 +6,12 @@
 
 	<ItemGroup>
 		<PackageReference Include="Polly" Version="8.5.2" />
-		<PackageReference Include="Shared.EventBus" Version="251026.1237.34" />
-		<PackageReference Include="Shared.FluentValidation" Version="251026.1237.34" />
-		<PackageReference Include="Shared.IdentityServerProvider" Version="251026.1237.34" />
-		<PackageReference Include="Shared.MediatR" Version="251026.1237.34" />
-		<PackageReference Include="Shared.Utilities" Version="251026.1237.34" />
-		<PackageReference Include="Shared.Redis" Version="251026.1237.34" />
+		<PackageReference Include="Shared.EventBus" Version="251110.719.24" />
+		<PackageReference Include="Shared.FluentValidation" Version="251110.719.24" />
+		<PackageReference Include="Shared.IdentityServerProvider" Version="251110.719.24" />
+		<PackageReference Include="Shared.MediatR" Version="251110.719.24" />
+		<PackageReference Include="Shared.Utilities" Version="251110.719.24" />
+		<PackageReference Include="Shared.Redis" Version="251110.719.24" />
 
 	</ItemGroup>
 
