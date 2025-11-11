@@ -13,6 +13,6 @@ public enum BillingStatus : byte
     [Description("تسویه ‌شده")]
     Settled = 3,
 
-    [Description("معوق")]
+    [Description("معوق شده")]
     Overdue = 4
 }
