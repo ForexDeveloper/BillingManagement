@@ -2,6 +2,7 @@
 using Application.Service.Dtos.Shared;
 using Application.Service.Dtos.TenantMerchantContracts;
 using Domain.Core.Entities.MerchantAggregate;
+using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Exceptions;
@@ -12,6 +13,7 @@ using Shared.IdentityServerProvider.Contracts;
 using Shared.MinIO.Contracts;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -209,6 +211,13 @@ namespace Application.Command.TenantMerchantContractCommands
                     request.PeriodMinCommissionAmount,
                     request.PeriodMaxCommissionAmount
                 );
+
+            if (request.CommissionCalculationType == CommissionCalculationType.UniformTiered || request.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
+            {
+                var tieredCommissions = request.TieredCommissions.Select(x =>
+                new TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList();
+                contract.SetTieredCommissions(tieredCommissions);
+            }
 
             _tenantMerchantContractService.SetTenantMerchantContractDocument(request.ContractDocument, merchant.Type);
 
