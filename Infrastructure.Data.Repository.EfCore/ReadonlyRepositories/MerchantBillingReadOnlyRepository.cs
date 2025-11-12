@@ -246,6 +246,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             .Select(p => new GetRefundedTransactionsCommissionVm
             {
                 Id = p.Id,
+                MerchantId = p.ToBusinessIdentityId,
                 Amount = p.RefundedTransactionsCommission,
                 Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.EndDate)
                     .Where(q => contractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractVm()
