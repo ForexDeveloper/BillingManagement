@@ -223,7 +223,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                              p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0,
 
                 Message = p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ? 
-                    $".مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize()} درنظر گرفته می شود" :
+                    $".مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize()}  ریال درنظر گرفته می شود" :
                     string.Empty
 
             }).FirstOrDefaultAsync();
