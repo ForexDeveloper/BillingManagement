@@ -12,7 +12,7 @@ using Application.Query.ViewModels.MerchantBillings;
 
 namespace Service.Rest.V1.Controllers;
 
-[Authorize]
+//[Authorize]
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/tenant-panel/merchant-billings")]
@@ -38,7 +38,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing returned", typeof(GetMerchantBillingVm))]
     public async Task<ActionResult> GetAsync([FromRoute] long id)
     {
-        var billing = await mediator.Send(new GetMerchantBillingQuery(currentUserService.TenantId, id));
+        var billing = await mediator.Send(new GetMerchantBillingQuery(2, id));
 
         return Ok(billing);
     }

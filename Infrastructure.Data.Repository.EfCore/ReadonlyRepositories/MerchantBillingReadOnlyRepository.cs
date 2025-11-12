@@ -71,12 +71,11 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 Status = p.Status,
                 DueDate = p.DueDate,
                 StartDate = p.StartDate,
-                IsPayable = p.Amount > 0,
                 PeriodType = p.PeriodType,
                 Additions = p.AdditionsAmount,
                 Deductions = p.DeductionsAmount,
-                PaidAmount = p.Payments.Sum(q => q.Amount),
                 TypeTitle = p.Type.GetEnumDescription(),
+                PaidAmount = p.Payments.Sum(q => q.Amount),
                 StatusTitle = p.Status.GetEnumDescription(),
                 PreviousDebitAmount = p.PreviousDebitAmount,
                 PreviousCreditAmount = p.PreviousCreditAmount,
@@ -87,12 +86,17 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 RefundedTransactionsAmount = p.RefundedTransactionsAmount,
                 PurchaseTransactionsCommission = p.PurchaseTransactionsCommission,
                 RefundedTransactionsCommission = p.RefundedTransactionsCommission,
+                IsPayable = p.Amount > 0 && (p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid),
                 IsCommissionExchanged = dbContext.TenantMerchantContracts.FirstOrDefault(q => q.Id == p.MainContractId).IsCommissionExchanged,
                 TotalDebitAmount = p.PreviousDebitAmount + p.PurchaseTransactionsAmount + p.RefundedTransactionsCommission + p.AdditionsAmount,
                 TotalCreditAmount = p.PreviousCreditAmount + p.PurchaseTransactionsCommission + p.RefundedTransactionsAmount + p.DeductionsAmount,
-                Title = $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}",
-                MerchantId = p.Type == BillingType.TenantToMerchant ? p.ToBusinessIdentityId : 
-                             p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0
+
+                MerchantId = p.Type == BillingType.TenantToMerchant ? p.ToBusinessIdentityId :
+                             p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0,
+
+                Title = p.Type == BillingType.TenantToMerchant ? $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}" : 
+                        p.Type == BillingType.MerchantToTenant ? $"صورتحساب کارمزدی {dbContext.Merchants.FirstOrDefault(q => q.Id == p.FromBusinessIdentityId).Title} به بهره بردار" : string.Empty
+
             }).FirstOrDefaultAsync();
     }
 
