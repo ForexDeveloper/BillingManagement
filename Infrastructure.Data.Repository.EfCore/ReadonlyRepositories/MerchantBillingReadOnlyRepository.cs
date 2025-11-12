@@ -28,7 +28,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
 
         if (!string.IsNullOrEmpty(query.Code))
         {
-            billingQuery = billingQuery.Where(p => p.Code.Contains(query.Code));
+            billingQuery = billingQuery.Where(p => p.Code.Contains(query.Code.Trim()));
         }
 
         var totalCount = await billingQuery.CountAsync();
