@@ -1,8 +1,8 @@
 ﻿using System.Linq;
 using Domain.Core.Enums;
+using Domain.Core.Helper;
 using Domain.Core.Constants;
 using System.Threading.Tasks;
-using Shared.Utilities.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Application.Query.ViewModels.Billings;
 using Application.Query.Queries.MerchantBilling;
@@ -40,9 +40,9 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             Type = p.Type,
             Status = p.Status,
             DueDate = p.DueDate,
-            PaymentDeadlineDate = p.PaymentDeadlineDate,
             TypeTitle = p.Type.GetEnumDescription(),
             StatusTitle = p.Status.GetEnumDescription(),
+            PaymentDeadlineDate = p.PaymentDeadlineDate,
             PayableAmount = p.Amount - p.Payments.Sum(q => q.Amount)
         })
         .Skip((query.PageIndex - 1) * query.PageSize)
@@ -94,8 +94,8 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 MerchantId = p.Type == BillingType.TenantToMerchant ? p.ToBusinessIdentityId :
                              p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0,
 
-                Title = p.Type == BillingType.TenantToMerchant ? $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}" : 
-                        p.Type == BillingType.MerchantToTenant ? $"صورتحساب کارمزدی {dbContext.Merchants.FirstOrDefault(q => q.Id == p.FromBusinessIdentityId).Title} به بهره بردار" : string.Empty
+                Title = p.Type == BillingType.TenantToMerchant ? $"صورتحساب دوره ای {dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title}" :
+                        p.Type == BillingType.MerchantToTenant ? $"صورتحساب کارمزد {dbContext.Merchants.FirstOrDefault(q => q.Id == p.FromBusinessIdentityId).Title} به بهره بردار" : string.Empty
 
             }).FirstOrDefaultAsync();
     }
@@ -190,8 +190,6 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 TransactionsAmount = p.PurchaseTransactionsAmount,
                 TieredCalculatedLevels = p.TieredCalculatedLevels,
                 CalculatedAmount = p.PurchaseTransactionsCalculatedCommission,
-                MerchantId = p.Type == BillingType.TenantToMerchant ? p.ToBusinessIdentityId :
-                             p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0,
 
                 Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.EndDate)
                     .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractQueryModel()
@@ -212,7 +210,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                         Description = q.CommissionCalculationType == CommissionCalculationType.UniformTiered ? TenantMerchantConstants.UniformedTieredCommissionDescription :
                             q.CommissionCalculationType == CommissionCalculationType.CumulativeTiered ? TenantMerchantConstants.CumulativeTieredCommissionDescription :
                             q.CommissionCalculationType == CommissionCalculationType.FixedPercentage ? TenantMerchantConstants.FixedPercentageCommissionDescription :
-                            q.CommissionCalculationType == CommissionCalculationType.FixedAmount ? TenantMerchantConstants.FixedAmountCommissionDescription : string.Empty,
+                            q.CommissionCalculationType == CommissionCalculationType.FixedAmount ? TenantMerchantConstants.FixedAmountCommissionDescription : string.Empty
 
                     }).ToList(),
 
@@ -221,8 +219,11 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                                 p.StartDate <= q.DueDate && q.DueDate < p.DueDate &&
                                 p.ContractIds.Contains(q.TenantMerchantContractId)),
 
-                Message = p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ?
-                    $".مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission} درنظر گرفته می شود" :
+                MerchantId = p.Type == BillingType.TenantToMerchant ? p.ToBusinessIdentityId : 
+                             p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0,
+
+                Message = p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ? 
+                    $".مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize()} درنظر گرفته می شود" :
                     string.Empty
 
             }).FirstOrDefaultAsync();
