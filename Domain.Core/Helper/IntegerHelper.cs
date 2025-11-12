@@ -2,9 +2,9 @@
 
 public static class IntegerHelper
 {
-    public static string GetLast2Digits(this int number)
+    public static string GetLast2Digits(this int value)
     {
-        var last2Digits = (number % 100).ToString().PadLeft(2, '0');
+        var last2Digits = (value % 100).ToString().PadLeft(2, '0');
 
         return last2Digits;
     }
