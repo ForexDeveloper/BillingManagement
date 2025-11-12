@@ -6,10 +6,14 @@ using Application.Service.Dtos.FileManagers;
 using Application.Service.Dtos.Shared;
 using Application.Service.Encryptions;
 using Application.Service.Services;
+using Domain.Core.Entities.BackgroundJobAggregate;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.CustomerAggregate;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
 using Domain.Core.Entities.GuarantorAggregate;
+using Domain.Core.Entities.InstallmentAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -31,9 +35,6 @@ using Shared.MinIO;
 using Shared.MinIO.Contracts;
 using Shared.Redis;
 using System.Reflection;
-using Domain.Core.Entities.BackgroundJobAggregate;
-using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.InstallmentAggregate;
 
 namespace Service.Rest
 {
@@ -78,6 +79,8 @@ namespace Service.Rest
             services.AddScoped<ITenantPlatformContractRepository, TenantPlatformContractRepository>();
             services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<IWalletContractRepository, WalletContractRepository>();
+            services.AddScoped<ICustomerRepository, CustomerRepository>();
+
             #endregion
         }
 

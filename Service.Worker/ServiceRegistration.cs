@@ -2,9 +2,9 @@
 using Application.Service.Contracts;
 using Application.Service.EventConsumers;
 using Application.Service.Services;
-using Domain.Core.Entities;
 using Domain.Core.Entities.BackgroundJobAggregate;
 using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.CustomerAggregate;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
@@ -77,6 +77,9 @@ namespace Service.Worker
                 x.AddConsumer<MerchantBranchAddedOrUpdatedEventConsumer>()
                     .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
 
+                x.AddConsumer<CustomerAddedOrUpdatedEventConsumer>()
+                    .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
+
                 x.AddConsumer<BillingManualPaymentUpdateStateEventConsumer>()
                     .Endpoint(p => p.InstanceId = configuration["PublicAppConfiguration:ApplicationName"]);
 
@@ -141,6 +144,8 @@ namespace Service.Worker
             services.AddScoped<IFinancialDocumentRepository, FinancialDocumentRepository>();
             services.AddScoped<ITenantMerchantContractRepository, TenantMerchantContractRepository>();
             services.AddScoped<ITenantPlatformContractRepository, TenantPlatformContractRepository>();
+            services.AddScoped<ICustomerRepository, CustomerRepository>();
+
         }
         internal static void RegisterRedisServices(this IServiceCollection services, IConfiguration configuration)
         {
