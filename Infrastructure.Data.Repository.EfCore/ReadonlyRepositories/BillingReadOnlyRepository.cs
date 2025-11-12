@@ -27,7 +27,7 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
 
         if (!string.IsNullOrEmpty(query.Code))
         {
-            billingQuery = billingQuery.Where(p => p.Code.Contains(query.Code));
+            billingQuery = billingQuery.Where(p => p.Code.Contains(query.Code.Trim()));
         }
 
         if (query.MerchantId.HasValue)
