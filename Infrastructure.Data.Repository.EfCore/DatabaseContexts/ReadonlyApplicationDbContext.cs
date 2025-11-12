@@ -1,6 +1,8 @@
-﻿using Domain.Core.Entities.BillingAggregate;
+﻿using Domain.Core.Entities.BackgroundJobAggregate;
+using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.BillingPaymentAggregate;
 using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.CustomerAggregate;
 using Domain.Core.Entities.FacilitatorAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.FinancierAggregate;
@@ -22,7 +24,6 @@ using Shared.EventBus.Entities;
 using Shared.MinIO.Entities;
 using System.Threading;
 using System.Threading.Tasks;
-using Domain.Core.Entities.BackgroundJobAggregate;
 
 namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
 {
@@ -38,7 +39,8 @@ namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
         public DbSet<Merchant> Merchants { get; set; }
 
         public DbSet<Tenant> Tenants { get; set; }
-
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<CustomerOrganization> CustomerOrganizations { get; set; }
         public DbSet<OutboxEntity> Outboxes { get; set; }
 
         public DbSet<TenantMerchantContract> TenantMerchantContracts { get; set; }
@@ -110,6 +112,8 @@ namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
             modelBuilder.ApplyConfiguration(new TenantPlatformContractConfiguration());
             modelBuilder.ApplyConfiguration(new TenantPlatformContractFacilitatorConfiguration());
             modelBuilder.ApplyConfiguration(new TenantPlatformContractProviderConfiguration());
+            modelBuilder.ApplyConfiguration(new CustomerConfiguration());
+            modelBuilder.ApplyConfiguration(new CustomerOrganizationConfiguration());
             modelBuilder.ApplyConfiguration(new WalletContractConfiguration());
             modelBuilder.ApplyConfiguration(new WalletContractFinancierConfiguration());
             modelBuilder.ApplyConfiguration(new WalletContractFacilitatorConfiguration());
