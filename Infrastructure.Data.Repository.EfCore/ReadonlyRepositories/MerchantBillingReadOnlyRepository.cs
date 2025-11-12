@@ -200,18 +200,18 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                         StartDate = q.StartDate,
                         TieredCommissions = q.TieredCommissions,
                         FixedAmountCommission = q.FixedAmountCommission,
+                        CommissionCalculationType = q.CommissionCalculationType,
                         FixedPercentageCommission = q.FixedPercentageCommission,
                         PeriodMaxCommissionAmount = q.PeriodMaxCommissionAmount,
                         PeriodMinCommissionAmount = q.PeriodMinCommissionAmount,
                         TransactionMaxCommissionAmount = q.TransactionMaxCommissionAmount,
                         TransactionMinCommissionAmount = q.TransactionMinCommissionAmount,
-                        CommissionCalculationType = q.CommissionCalculationType,
                         CommissionCalculationTypeTitle = q.CommissionCalculationType.GetEnumDescription(),
                         Description = q.CommissionCalculationType == CommissionCalculationType.UniformTiered ? TenantMerchantConstants.UniformedTieredCommissionDescription :
                             q.CommissionCalculationType == CommissionCalculationType.CumulativeTiered ? TenantMerchantConstants.CumulativeTieredCommissionDescription :
                             q.CommissionCalculationType == CommissionCalculationType.FixedPercentage ? TenantMerchantConstants.FixedPercentageCommissionDescription :
                             q.CommissionCalculationType == CommissionCalculationType.FixedAmount ? TenantMerchantConstants.FixedAmountCommissionDescription : string.Empty
-
+                            
                     }).ToList(),
 
                 TransactionsCount = dbContext.MerchantInstallments
@@ -219,12 +219,16 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                                 p.StartDate <= q.DueDate && q.DueDate < p.DueDate &&
                                 p.ContractIds.Contains(q.TenantMerchantContractId)),
 
-                MerchantId = p.Type == BillingType.TenantToMerchant ? p.ToBusinessIdentityId : 
+                MerchantId = p.Type == BillingType.TenantToMerchant ? p.ToBusinessIdentityId :
                              p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0,
 
-                Message = p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ? 
-                    $".مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize()}  ریال درنظر گرفته می شود" :
-                    string.Empty
+                Message =
+                    p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ? 
+                        $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال درنظر گرفته می شود" :
+
+                        p.PurchaseTransactionsCommission < p.PurchaseTransactionsCalculatedCommission ? 
+                            $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداکثر مبلغ کارمزد دوره بیشتر است، در نتیجه حداکثر مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال درنظر گرفته می شود" :
+                            string.Empty
 
             }).FirstOrDefaultAsync();
     }

@@ -6,4 +6,9 @@ public static class DecimalHelper
     {
         return value / 1.000000000000000000000000000000000m;
     }
+
+    public static string CommaSeparate(this decimal value)
+    {
+        return value.ToString("#,##0.##");
+    }
 }
