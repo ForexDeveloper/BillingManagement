@@ -16,7 +16,7 @@ public sealed record GetPurchaseTransactionsCommissionQuery(int TenantId, long I
     public int TenantId { get; set; } = TenantId;
 }
 
-public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBillingReadOnlyRepository repository)
+public sealed class GetPurchaseTransactionsCommissionQueryHandler(IMerchantBillingReadOnlyRepository repository)
     : IRequestHandler<GetPurchaseTransactionsCommissionQuery, GetPurchaseTransactionsCommissionVm>
 {
     public async Task<GetPurchaseTransactionsCommissionVm> Handle(GetPurchaseTransactionsCommissionQuery query,
@@ -29,7 +29,7 @@ public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBill
             throw new BillingNotFoundException(BillingConstants.NotFoundMessage);
         }
 
-        return new GetPurchaseTransactionsCommissionVm()
+        var transactionsCommission = new GetPurchaseTransactionsCommissionVm()
         {
             Id = commission.BillingId,
             Message = commission.Message,
@@ -73,8 +73,18 @@ public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBill
                         Percentage = tieredCommission.Percentage,
                         FromAmount = tieredCommission.FromAmount
                     };
-                })
-            })
+                }).ToList()
+            }).ToList()
         };
+
+        foreach (var contract in transactionsCommission.Contracts.Skip(1))
+        {
+            foreach (var tieredCommission in contract.TieredCommissions)
+            {
+                tieredCommission.Selected = false;
+            }
+        }
+
+        return transactionsCommission;
     }
 }

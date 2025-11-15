@@ -278,8 +278,8 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             Id = billing.Id,
             Status = billing.Status,
             DueDate = billing.DueDate,
-            PaymentDeadlineDate = billing.PaymentDeadlineDate,
             GracePeriod = billing.GracePeriod,
+            PaymentDeadlineDate = billing.PaymentDeadlineDate,
             PayableAmount = billing.GetPayableAmount()
         };
     }

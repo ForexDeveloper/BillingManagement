@@ -33,5 +33,5 @@ public sealed record GetMerchantBillingContractQueryModel
 
     public CommissionCalculationType? CommissionCalculationType { get; set; }
 
-    public List<TieredCommission> TieredCommissions { get; set; }
+    public IEnumerable<TieredCommission> TieredCommissions { get; set; }
 }
