@@ -29,7 +29,9 @@ public sealed class GetPurchaseTransactionsCommissionQueryHandler(IMerchantBilli
             throw new BillingNotFoundException(BillingConstants.NotFoundMessage);
         }
 
-        var transactionsCommission = new GetPurchaseTransactionsCommissionVm()
+        var first = false;
+
+        var purchaseCommission = new GetPurchaseTransactionsCommissionVm()
         {
             Id = commission.BillingId,
             Message = commission.Message,
@@ -77,14 +79,16 @@ public sealed class GetPurchaseTransactionsCommissionQueryHandler(IMerchantBilli
             }).ToList()
         };
 
-        foreach (var contract in transactionsCommission.Contracts.Skip(1))
+        foreach (var contract in purchaseCommission.Contracts.Skip(1))
         {
+            if (contract.TieredCommissions == null) continue;
+
             foreach (var tieredCommission in contract.TieredCommissions)
             {
                 tieredCommission.Selected = false;
             }
         }
 
-        return transactionsCommission;
+        return purchaseCommission;
     }
 }
