@@ -29,8 +29,6 @@ public sealed class GetPurchaseTransactionsCommissionQueryHandler(IMerchantBilli
             throw new BillingNotFoundException(BillingConstants.NotFoundMessage);
         }
 
-        var first = false;
-
         var purchaseCommission = new GetPurchaseTransactionsCommissionVm()
         {
             Id = commission.BillingId,
@@ -64,30 +62,22 @@ public sealed class GetPurchaseTransactionsCommissionQueryHandler(IMerchantBilli
                 TransactionMinCommissionAmount = p.TransactionMinCommissionAmount,
                 TieredCommissions = p.TieredCommissions?.Select(tieredCommission =>
                 {
-                    var selected = commission.TieredCalculatedLevels?.Any(r => r.TieredCommission == tieredCommission);
+                    var selected = commission.TieredCalculatedLevels?.Any(r => r.TieredCommission == tieredCommission) ?? false;
+
+                    if (p.Id != commission.MainContractId) selected = false;
 
                     return new TieredCommissionVm()
                     {
-                        Selected = selected ?? false,
+                        Selected = selected,
                         ToAmount = tieredCommission.ToAmount,
                         MaxAmount = tieredCommission.MaxAmount,
                         MinAmount = tieredCommission.MinAmount,
                         Percentage = tieredCommission.Percentage,
                         FromAmount = tieredCommission.FromAmount
                     };
-                }).ToList()
-            }).ToList()
+                })
+            })
         };
-
-        foreach (var contract in purchaseCommission.Contracts.Skip(1))
-        {
-            if (contract.TieredCommissions == null) continue;
-
-            foreach (var tieredCommission in contract.TieredCommissions)
-            {
-                tieredCommission.Selected = false;
-            }
-        }
 
         return purchaseCommission;
     }
