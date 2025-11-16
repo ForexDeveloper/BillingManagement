@@ -224,10 +224,10 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
 
                 Message =
                     p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ? 
-                        $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال درنظر گرفته می شود" :
+                        $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال در نظر گرفته می شود" :
 
                         p.PurchaseTransactionsCommission < p.PurchaseTransactionsCalculatedCommission ? 
-                            $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداکثر مبلغ کارمزد دوره بیشتر است، در نتیجه حداکثر مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال درنظر گرفته می شود" :
+                            $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداکثر مبلغ کارمزد دوره بیشتر است، در نتیجه حداکثر مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال در نظر گرفته می شود" :
                             string.Empty
 
             }).FirstOrDefaultAsync();
