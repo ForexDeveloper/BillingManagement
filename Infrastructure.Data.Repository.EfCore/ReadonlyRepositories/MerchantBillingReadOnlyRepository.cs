@@ -191,7 +191,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 TieredCalculatedLevels = p.TieredCalculatedLevels,
                 CalculatedAmount = p.PurchaseTransactionsCalculatedCommission,
 
-                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.EndDate)
+                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.CreatedDateTime)
                     .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractQueryModel()
                     {
                         Id = q.Id,
@@ -252,7 +252,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 Id = p.Id,
                 MerchantId = p.ToBusinessIdentityId,
                 Amount = p.RefundedTransactionsCommission,
-                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.EndDate)
+                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.CreatedDateTime)
                     .Where(q => contractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractVm()
                     {
                         Id = q.Id,
