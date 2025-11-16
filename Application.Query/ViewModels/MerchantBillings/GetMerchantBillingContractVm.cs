@@ -32,7 +32,7 @@ public sealed record GetMerchantBillingContractVm
 
     public CommissionCalculationType? CommissionCalculationType { get; set; }
 
-    public List<TieredCommissionVm> TieredCommissions { get; set; }
+    public IEnumerable<TieredCommissionVm> TieredCommissions { get; set; }
 }
 
 public sealed record TieredCommissionVm

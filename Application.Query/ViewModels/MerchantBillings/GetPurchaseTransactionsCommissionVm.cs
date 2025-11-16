@@ -22,7 +22,7 @@ public sealed record GetPurchaseTransactionsCommissionVm
 
     public IEnumerable<TieredCalculatedLevelVm> TieredCalculatedLevels { get; set; }
 
-    public List<GetMerchantBillingContractVm> Contracts { get; set; }
+    public IEnumerable<GetMerchantBillingContractVm> Contracts { get; set; }
 }
 
 public sealed record TieredCalculatedLevelVm
