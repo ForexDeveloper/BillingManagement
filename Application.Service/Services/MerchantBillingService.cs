@@ -523,10 +523,10 @@ public sealed class MerchantBillingService(
 
         calculatedTieredLevels.Add(new TieredCalculatedLevel()
         {
-            Number = 1,
             Commission = commission,
             TieredCommission = tieredCommission,
-            TransactionsAmount = totalTransactionsAmount
+            TransactionsAmount = totalTransactionsAmount,
+            Number = tieredCommissions.IndexOf(tieredCommission) + 1
         });
 
         return calculatedTieredLevels;
