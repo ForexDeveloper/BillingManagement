@@ -15,17 +15,24 @@ public class BillingPaymentService(IMerchantBillingRepository merchantBillingRep
 {
     public bool IsMerchantBillingPayable(MerchantBillingPayableDto request)
     {
-        if (
-             request.Status == BillingStatus.Settled || request.Status == BillingStatus.Overdue ||
-             request.DueDate.AddDays(request.GracePeriod).Date < DateTime.Today
-            )
-        {
-            return false;
-        }
-
         if (request.PayAmount > request.PayableAmount)
         {
-            return false;
+            throw new ArgumentValidationException("BillingId", "مبلغ پرداختی بیشتر از مبلغ قابل پرداخت صورت حساب می باشد.");
+        }
+
+        if (request.Status == BillingStatus.Settled)
+        {
+            throw new ArgumentValidationException("BillingId", "صورت حساب قبلا پرداخت شده است.");
+        }
+
+        if (request.Status == BillingStatus.Overdue)
+        {
+            throw new ArgumentValidationException("BillingId", "صورت حساب معوق قابل پرداخت نمی باشد.");
+        }
+
+        if (request.DueDate.AddDays(request.GracePeriod).Date < DateTime.Today)
+        {
+            throw new ArgumentValidationException("BillingId", "صورت حساب قابل پرداخت نمی باشد.");
         }
 
         return true;
@@ -39,10 +46,8 @@ public class BillingPaymentService(IMerchantBillingRepository merchantBillingRep
         var merchantBillingPayableDto = new MerchantBillingPayableDto(
             billing.TenantId, billing.Status, billing.DueDate, billing.GracePeriod, payableAmount, requset.Amount);
 
-        if (!IsMerchantBillingPayable(merchantBillingPayableDto))
-        {
-            throw new ArgumentValidationException(nameof(requset.BillingId), "صورت حساب قابل پرداخت نمی باشد.");
-        }
+
+        IsMerchantBillingPayable(merchantBillingPayableDto);
 
         billing.AddBillingPayment(requset.BillingId, requset.PaymentId, requset.Amount, requset.PaymentDate);
 
