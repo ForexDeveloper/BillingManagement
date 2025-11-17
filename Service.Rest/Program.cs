@@ -28,19 +28,6 @@ try
         .AddEnvironmentVariables()
         .AddUserSecrets(Assembly.GetExecutingAssembly()).Build();
 
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    {
-        options.UseSqlServer(configuration["ConnectionStrings:ApplicationDbConnection"],
-            x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Bill"));
-        options.UseQueryTrackingBehavior(QueryTrackingBehavior.TrackAll);
-    });
-
-    builder.Services.AddDbContextPool<ReadonlyApplicationDbContext>(options =>
-    {
-        options.UseSqlServer(configuration["ConnectionStrings:ReadonlyDbConnection"],
-            x => x.MigrationsHistoryTable(HistoryRepository.DefaultTableName, "Bill"));
-        options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-    });
     builder.AddCustomWebApplicationSerilog(configuration, options =>
     {
         options.ApplicationType = ApplicationType.Api;
@@ -48,52 +35,21 @@ try
         options.BaseFilePath = configuration["Serilog:BaseFilePath"];
     });
 
-    builder.Services.AddCustomSwagger(cfg =>
-    {
-        cfg.Title = "Billing Management Api";
-        cfg.IdpServer = new Uri($"{configuration["IDP:Server"]}/connect/token");
-    });
-    builder.Services.AddHttpContextAccessor();
-    builder.Services.AddOptions();
-    builder.Services.AddControllers(cfg =>
-    {
-        cfg.Conventions.AddSwaggerResponseModelConvention();
-    })
-        .AddCustomFluentValidation(new[] { typeof(BaseCommandValidator<>).Assembly });
-
-    builder.Services.RegisterAuthentication(configuration);
-    builder.Services.RegisterMediatorService();
-    builder.Services.RegisterRepositories();
-    builder.Services.RegisterServices();
-    builder.Services.RegisterPublicAppConfiguration(configuration);
-    builder.Services.RegisterUnitOfWorks();
-    builder.Services.RegisteRedisServices(configuration);
-    builder.Services.RegisterOutBoxServices(configuration);
-    builder.Services.RegisterMinIoServices(configuration);
-    builder.Services.RegisterEncryptionServices(configuration);
-    builder.Services.UploadFileConfigurationServices(configuration);
-
-    builder.Services.AddCustomApiVersioning();
-    builder.Services.AddHealthChecks().AddCheck<DatabaseConnectionHealthCheck>("database_health_check");
-
+    var startup = new Startup(builder.Configuration, builder.Environment);
+    startup.ConfigureServices(builder.Services);
 
     var app = builder.Build();
-
-
+  
     app.UseRequestResponseLogger(cfg =>
     {
         cfg.ExcludedLogPaths = configuration.GetSection("Serilog:ExcludedLogPaths").Get<Collection<string>>();
     });
     app.UseCustomExceptionHandler();
     app.UseCustomSwagger();
-    app.UseRouting();
-    app.UseAuthentication();
-    app.UseAuthorization();
-    app.UseEndpoints(cfg =>
-    {
-        cfg.MapControllers();
-        cfg.MapHealthChecks("/healthz");
-    });
+
+    var logger = app.Services.GetRequiredService<ILogger<Startup>>();
+    startup.Configure(app, logger);
+
     app.Run();
 }
 catch (Exception exception)
