@@ -16,7 +16,7 @@ public sealed record GetPurchaseTransactionsCommissionQuery(int TenantId, long I
     public int TenantId { get; set; } = TenantId;
 }
 
-public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBillingReadOnlyRepository repository)
+public sealed class GetPurchaseTransactionsCommissionQueryHandler(IMerchantBillingReadOnlyRepository repository)
     : IRequestHandler<GetPurchaseTransactionsCommissionQuery, GetPurchaseTransactionsCommissionVm>
 {
     public async Task<GetPurchaseTransactionsCommissionVm> Handle(GetPurchaseTransactionsCommissionQuery query,
@@ -29,7 +29,7 @@ public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBill
             throw new BillingNotFoundException(BillingConstants.NotFoundMessage);
         }
 
-        return new GetPurchaseTransactionsCommissionVm()
+        var purchaseCommission = new GetPurchaseTransactionsCommissionVm()
         {
             Id = commission.BillingId,
             Message = commission.Message,
@@ -62,11 +62,13 @@ public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBill
                 TransactionMinCommissionAmount = p.TransactionMinCommissionAmount,
                 TieredCommissions = p.TieredCommissions?.Select(tieredCommission =>
                 {
-                    var selected = commission.TieredCalculatedLevels?.Any(r => r.TieredCommission == tieredCommission);
+                    var selected = commission.TieredCalculatedLevels?.Any(r => r.TieredCommission == tieredCommission) ?? false;
+
+                    if (p.Id != commission.MainContractId) selected = false;
 
                     return new TieredCommissionVm()
                     {
-                        Selected = selected ?? false,
+                        Selected = selected,
                         ToAmount = tieredCommission.ToAmount,
                         MaxAmount = tieredCommission.MaxAmount,
                         MinAmount = tieredCommission.MinAmount,
@@ -76,5 +78,7 @@ public sealed class GetCPurchaseTransactionsCommissionQueryHandler(IMerchantBill
                 })
             })
         };
+
+        return purchaseCommission;
     }
 }

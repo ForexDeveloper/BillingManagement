@@ -191,7 +191,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 TieredCalculatedLevels = p.TieredCalculatedLevels,
                 CalculatedAmount = p.PurchaseTransactionsCalculatedCommission,
 
-                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.EndDate)
+                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.CreatedDateTime)
                     .Where(q => p.ContractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractQueryModel()
                     {
                         Id = q.Id,
@@ -224,10 +224,10 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
 
                 Message =
                     p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ? 
-                        $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال درنظر گرفته می شود" :
+                        $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال در نظر گرفته می شود" :
 
                         p.PurchaseTransactionsCommission < p.PurchaseTransactionsCalculatedCommission ? 
-                            $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداکثر مبلغ کارمزد دوره بیشتر است، در نتیجه حداکثر مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال درنظر گرفته می شود" :
+                            $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداکثر مبلغ کارمزد دوره بیشتر است، در نتیجه حداکثر مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال در نظر گرفته می شود" :
                             string.Empty
 
             }).FirstOrDefaultAsync();
@@ -252,7 +252,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 Id = p.Id,
                 MerchantId = p.ToBusinessIdentityId,
                 Amount = p.RefundedTransactionsCommission,
-                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.EndDate)
+                Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.CreatedDateTime)
                     .Where(q => contractIds.Contains(q.Id)).Select(q => new GetMerchantBillingContractVm()
                     {
                         Id = q.Id,
@@ -283,8 +283,8 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             Id = billing.Id,
             Status = billing.Status,
             DueDate = billing.DueDate,
-            PaymentDeadlineDate = billing.PaymentDeadlineDate,
             GracePeriod = billing.GracePeriod,
+            PaymentDeadlineDate = billing.PaymentDeadlineDate,
             PayableAmount = billing.GetPayableAmount()
         };
     }
