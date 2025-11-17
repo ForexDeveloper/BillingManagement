@@ -55,7 +55,7 @@ public class BillingPaymentService(IMerchantBillingRepository merchantBillingRep
             billing.PartialPay();
         }
 
-        outboxService.AddNewEvent(new PmBillingManualPaymentUpdateStateEvent
+        outboxService.AddNewEvent(new BmBillingManualPaymentSettledEvent
         {
             BillingId = requset.BillingId,
             PaymentId = requset.PaymentId,
