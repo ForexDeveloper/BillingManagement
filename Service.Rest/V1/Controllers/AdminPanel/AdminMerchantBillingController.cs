@@ -1,12 +1,12 @@
-﻿using MediatR;
-using System.Net;
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using Microsoft.AspNetCore.Authorization;
-using Application.Command.BillingCommands;
-using Service.Rest.V1.RequestModels.Billings;
+﻿using Application.Command.BillingCommands;
 using Application.Query.Queries.MerchantBilling;
 using Application.Query.ViewModels.MerchantBillings;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Service.Rest.V1.RequestModels.Billings;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Net;
 
 namespace Service.Rest.V1.Controllers.AdminPanel;
 
@@ -141,9 +141,9 @@ public sealed class AdminMerchantBillingController(IMediator mediator) : Control
     [SwaggerOperation("Get billing payable amount")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing not found")]
     [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing payable amount returned", typeof(decimal))]
-    public async Task<ActionResult<decimal>> GetBillingPayableAmount([FromRoute] int id, [FromRoute] long billingId, [FromRoute] decimal amount)
+    public async Task<ActionResult<decimal>> GetBillingPayableAmount([FromRoute] int tenantId, [FromRoute] long billingId, [FromRoute] decimal amount)
     {
-        var merchantBillingPayableAmount = await mediator.Send(new GetMerchantBillingPayableAmountQuery(id, billingId, amount));
+        var merchantBillingPayableAmount = await mediator.Send(new GetMerchantBillingPayableAmountQuery(tenantId, billingId, amount));
 
         return Ok(merchantBillingPayableAmount);
     }

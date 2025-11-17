@@ -1,14 +1,14 @@
-﻿using MediatR;
-using System.Net;
-using Microsoft.AspNetCore.Mvc;
-using Swashbuckle.AspNetCore.Annotations;
-using Microsoft.AspNetCore.Authorization;
-using Application.Command.BillingCommands;
+﻿using Application.Command.BillingCommands;
+using Application.Query.Queries.MerchantBilling;
 using Application.Query.ViewModels.Billings;
+using Application.Query.ViewModels.MerchantBillings;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Service.Rest.V1.RequestModels.Billings;
 using Shared.IdentityServerProvider.Contracts;
-using Application.Query.Queries.MerchantBilling;
-using Application.Query.ViewModels.MerchantBillings;
+using Swashbuckle.AspNetCore.Annotations;
+using System.Net;
 
 namespace Service.Rest.V1.Controllers;
 
@@ -18,7 +18,7 @@ namespace Service.Rest.V1.Controllers;
 [Route("api/tenant-panel/merchant-billings")]
 public sealed class MerchantBillingController(IMediator mediator, ICurrentUserService currentUserService) : ControllerBase
 {
-    [HttpGet]   
+    [HttpGet]
     [Route("/api/tenant-panel/merchants/{id}/billings")]
     [SwaggerOperation("Get merchant billing list")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "merchant billing list not found")]
@@ -154,7 +154,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{billingId}/pay-amount/{amount}/payable-amount")]
+    [HttpGet("{id}/pay-amount/{amount}/payable-amount")]
     [SwaggerOperation("Get billing payable amount")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing not found")]
     [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing payable amount returned", typeof(decimal))]
