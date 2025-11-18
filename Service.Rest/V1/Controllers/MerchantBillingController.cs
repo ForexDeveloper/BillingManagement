@@ -1,14 +1,14 @@
-﻿using Application.Command.BillingCommands;
-using Application.Query.Queries.MerchantBilling;
-using Application.Query.ViewModels.Billings;
-using Application.Query.ViewModels.MerchantBillings;
-using MediatR;
-using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Authorization;
+using Application.Command.BillingCommands;
+using Application.Query.ViewModels.Billings;
 using Service.Rest.V1.RequestModels.Billings;
 using Shared.IdentityServerProvider.Contracts;
-using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
+using Application.Query.Queries.MerchantBilling;
+using Application.Query.ViewModels.MerchantBillings;
 
 namespace Service.Rest.V1.Controllers;
 
