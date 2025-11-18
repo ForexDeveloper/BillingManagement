@@ -186,35 +186,38 @@ public sealed class MerchantBillingService(
                             out previousCreditAmount);
                     }
 
-                    Commission commission = new();
-                    Transactions transactions = new();
+                    Commission purchaseCommission = new();
+                    Transactions refundedTransactions = new();
 
                     if (contract.IsCommissionExchanged)
                     {
-                        transactions = await CalculateTransactions(billingDto, cancellationToken);
+                        refundedTransactions = await CalculateRefundedTransactions(billingDto, cancellationToken);
 
-                        commission = await CalculateTransactionsCommission(billingDto, cancellationToken);
+                        purchaseCommission = await CalculateTransactionsCommission(billingDto, cancellationToken);
                     }
                     else
                     {
                         if (billingDto.Type == BillingType.TenantToMerchant)
                         {
-                            transactions = await CalculateTransactions(billingDto, cancellationToken);
-                        }
+                            refundedTransactions = await CalculateRefundedTransactions(billingDto, cancellationToken);
 
+                        }
                         else if (billingDto.Type == BillingType.MerchantToTenant)
                         {
-                            commission = await CalculateTransactionsCommission(billingDto, cancellationToken);
+                            purchaseCommission = await CalculateTransactionsCommission(billingDto, cancellationToken);
                         }
                     }
 
-                    var purchaseTransactionsAmount = transactions.PurchaseTransactionsAmount;
-                    var refundedTransactionsAmount = transactions.RefundedTransactionsAmount;
-                    var refundedTransactionsCommission = transactions.RefundedTransactionsCommission;
+                    var purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(
+                         contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                    var tieredCalculatedLevels = commission.TieredCalculatedLevels;
-                    var purchaseTransactionsCommission = commission.PurchaseTransactionsCommission;
-                    var purchaseTransactionsCalculatedCommission = commission.PurchaseTransactionsCalculatedCommission;
+                    var refundedTransactionsAmount = refundedTransactions.RefundedTransactionsAmount;
+                    var refundedTransactionsCommission = refundedTransactions.RefundedTransactionsCommission;
+
+                    var tieredCalculatedLevels = purchaseCommission.TieredCalculatedLevels;
+                    var tieredTransactionsAmount = purchaseCommission.TieredTransactionsAmount;
+                    var purchaseTransactionsCommission = purchaseCommission.PurchaseTransactionsCommission;
+                    var purchaseTransactionsCalculatedCommission = purchaseCommission.PurchaseTransactionsCalculatedCommission;
 
                     var billing = new MerchantBilling(contract.TenantId,
                         billingDto.FromBusinessIdentityId,
@@ -234,6 +237,7 @@ public sealed class MerchantBillingService(
                         purchaseTransactionsCommission,
                         refundedTransactionsCommission,
                         purchaseTransactionsCalculatedCommission,
+                        tieredTransactionsAmount,
                         tieredCalculatedLevels,
                         debtorBilling,
                         creditorBilling);
@@ -691,22 +695,18 @@ public sealed class MerchantBillingService(
         return creditorBilling;
     }
 
-    private async Task<Transactions> CalculateTransactions(BillingDto billingDto, CancellationToken cancellationToken)
+    private async Task<Transactions> CalculateRefundedTransactions(BillingDto billingDto, CancellationToken cancellationToken)
     {
         var contract = billingDto.ContractGroup;
 
-        var purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(contract.ContractIds,
-            billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+        var refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(
+            contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-        var refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(contract.ContractIds,
-            billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
-
-        var refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(contract.ContractIds,
-            billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+        var refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(
+            contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
         return new Transactions()
         {
-            PurchaseTransactionsAmount = purchaseTransactionsAmount,
             RefundedTransactionsAmount = refundedTransactionsAmount,
             RefundedTransactionsCommission = refundedTransactionsCommission
         };
@@ -714,7 +714,7 @@ public sealed class MerchantBillingService(
 
     private async Task<Commission> CalculateTransactionsCommission(BillingDto billingDto, CancellationToken cancellationToken)
     {
-        decimal sumOfTieredTransactions;
+        decimal sumOfTieredTransactions = 0;
         decimal purchaseTransactionsCalculatedCommission = 0;
         List<TieredCalculatedLevel> tieredCalculatedLevels = null;
 
@@ -751,6 +751,7 @@ public sealed class MerchantBillingService(
         return new Commission()
         {
             TieredCalculatedLevels = tieredCalculatedLevels,
+            TieredTransactionsAmount = sumOfTieredTransactions,
             PurchaseTransactionsCommission = purchaseTransactionsCommission,
             PurchaseTransactionsCalculatedCommission = purchaseTransactionsCalculatedCommission
         };
@@ -779,6 +780,8 @@ public sealed class MerchantBillingService(
 
     private sealed record Commission
     {
+        public decimal TieredTransactionsAmount { get; init; }
+
         public decimal PurchaseTransactionsCommission { get; init; }
 
         public decimal PurchaseTransactionsCalculatedCommission { get; init; }
@@ -788,8 +791,6 @@ public sealed class MerchantBillingService(
 
     private sealed record Transactions
     {
-        public decimal PurchaseTransactionsAmount { get; init; }
-
         public decimal RefundedTransactionsAmount { get; init; }
 
         public decimal RefundedTransactionsCommission { get; init; }

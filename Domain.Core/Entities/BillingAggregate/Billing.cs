@@ -37,6 +37,8 @@ public abstract class Billing : BaseEntity<long>
 
     public decimal PreviousPenaltyAmount { get; protected set; }
 
+    public decimal? TieredTransactionsAmount { get; protected set; }
+
     public decimal AdditionsAmount { get; protected set; }
 
     public decimal DeductionsAmount { get; protected set; }
@@ -97,8 +99,8 @@ public abstract class Billing : BaseEntity<long>
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
-        List<int> contractIds, List<TieredCalculatedLevel> tieredCalculatedLevels = null, Billing? debtor = null,
-        Billing? creditor = null)
+        List<int> contractIds, decimal tieredTransactionsAmount, List<TieredCalculatedLevel> tieredCalculatedLevels = null,
+        Billing? debtor = null, Billing? creditor = null)
     {
         Type = type;
         Debtor = debtor;
@@ -116,6 +118,7 @@ public abstract class Billing : BaseEntity<long>
         PreviousPenaltyAmount = previousPenaltyAmount;
         TieredCalculatedLevels = tieredCalculatedLevels;
         FromBusinessIdentityId = fromBusinessIdentityId;
+        TieredTransactionsAmount = tieredTransactionsAmount;
 
         SetContractIds(contractIds);
         SetBillingDates(startDate, endDate);
