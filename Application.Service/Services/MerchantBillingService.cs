@@ -113,10 +113,8 @@ public sealed class MerchantBillingService(
 
                 var replicateBillings = new List<MerchantBilling>();
 
-                for (var i = 0; i < billingDtos.Count; i++)
+                foreach (var billingDto in billingDtos)
                 {
-                    var billingDto = billingDtos[i];
-
                     var contract = billingDto.ContractGroup;
 
                     decimal previousDebitAmount = 0;
@@ -130,7 +128,9 @@ public sealed class MerchantBillingService(
 
                     if (replicateBilling != null)
                     {
-                        var previousContract = billingDtos[i - 1].ContractGroup;
+                        var previousIndex = billingDtos.IndexOf(billingDto) - 1;
+
+                        var previousContract = billingDtos[previousIndex].ContractGroup;
 
                         var contractIdentifier = contract.CreateIdentifier();
 
@@ -186,35 +186,37 @@ public sealed class MerchantBillingService(
                             out previousCreditAmount);
                     }
 
-                    Commission commission = new();
-                    Transactions transactions = new();
+                    Commission purchaseCommissions = new();
+                    Transactions refundedTransactions = new();
 
                     if (contract.IsCommissionExchanged)
                     {
-                        transactions = await CalculateTransactions(billingDto, cancellationToken);
+                        refundedTransactions = await CalculateRefundedTransactions(billingDto, cancellationToken);
 
-                        commission = await CalculateTransactionsCommission(billingDto, cancellationToken);
+                        purchaseCommissions = await CalculateTransactionsCommission(billingDto, cancellationToken);
                     }
                     else
                     {
                         if (billingDto.Type == BillingType.TenantToMerchant)
                         {
-                            transactions = await CalculateTransactions(billingDto, cancellationToken);
-                        }
+                            refundedTransactions = await CalculateRefundedTransactions(billingDto, cancellationToken);
 
+                        }
                         else if (billingDto.Type == BillingType.MerchantToTenant)
                         {
-                            commission = await CalculateTransactionsCommission(billingDto, cancellationToken);
+                            purchaseCommissions = await CalculateTransactionsCommission(billingDto, cancellationToken);
                         }
                     }
 
-                    var purchaseTransactionsAmount = transactions.PurchaseTransactionsAmount;
-                    var refundedTransactionsAmount = transactions.RefundedTransactionsAmount;
-                    var refundedTransactionsCommission = transactions.RefundedTransactionsCommission;
+                    var purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(
+                         contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-                    var tieredCalculatedLevels = commission.TieredCalculatedLevels;
-                    var purchaseTransactionsCommission = commission.PurchaseTransactionsCommission;
-                    var purchaseTransactionsCalculatedCommission = commission.PurchaseTransactionsCalculatedCommission;
+                    var refundedTransactionsAmount = refundedTransactions.RefundedTransactionsAmount;
+                    var refundedTransactionsCommission = refundedTransactions.RefundedTransactionsCommission;
+
+                    var tieredCalculatedLevels = purchaseCommissions.TieredCalculatedLevels;
+                    var purchaseTransactionsCommission = purchaseCommissions.PurchaseTransactionsCommission;
+                    var purchaseTransactionsCalculatedCommission = purchaseCommissions.PurchaseTransactionsCalculatedCommission;
 
                     var billing = new MerchantBilling(contract.TenantId,
                         billingDto.FromBusinessIdentityId,
@@ -691,22 +693,18 @@ public sealed class MerchantBillingService(
         return creditorBilling;
     }
 
-    private async Task<Transactions> CalculateTransactions(BillingDto billingDto, CancellationToken cancellationToken)
+    private async Task<Transactions> CalculateRefundedTransactions(BillingDto billingDto, CancellationToken cancellationToken)
     {
         var contract = billingDto.ContractGroup;
 
-        var purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(contract.ContractIds,
-            billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+        var refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(
+            contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-        var refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(contract.ContractIds,
-            billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
-
-        var refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(contract.ContractIds,
-            billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+        var refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(
+            contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
         return new Transactions()
         {
-            PurchaseTransactionsAmount = purchaseTransactionsAmount,
             RefundedTransactionsAmount = refundedTransactionsAmount,
             RefundedTransactionsCommission = refundedTransactionsCommission
         };
@@ -788,8 +786,6 @@ public sealed class MerchantBillingService(
 
     private sealed record Transactions
     {
-        public decimal PurchaseTransactionsAmount { get; init; }
-
         public decimal RefundedTransactionsAmount { get; init; }
 
         public decimal RefundedTransactionsCommission { get; init; }

@@ -19,7 +19,14 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
     public async Task<GetBillingsVm> GetBillingsAsync(GetMerchantBillingsQuery query)
     {
         var billingQuery = dbContext.MerchantBillings.Where(p =>
-            p.FromBusinessIdentityId == query.TenantId && p.ToBusinessIdentityId == query.MerchantId);
+            p.TenantId == query.TenantId &&
+            (p.ToBusinessIdentityId == query.MerchantId && p.Type == BillingType.TenantToMerchant) ||
+            (p.FromBusinessIdentityId == query.MerchantId && p.Type == BillingType.MerchantToTenant));
+
+        if (query.Type.HasValue)
+        {
+            billingQuery = billingQuery.Where(p => p.Type == query.Type);
+        }
 
         if (query.Status.HasValue)
         {
