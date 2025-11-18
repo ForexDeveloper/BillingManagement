@@ -1,6 +1,7 @@
-﻿using Domain.Core.Entities.TenantAggregate;
+﻿using Domain.Core.Entities.MerchantAggregate;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Enums;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using IntegrationTest.Server;
 
 namespace Rest.Integration.Tests.Base
 {
@@ -27,6 +28,18 @@ namespace Rest.Integration.Tests.Base
             return tenant;
         }
 
-     
+        public async Task<Merchant> CreateMerchant(int tenantId)
+        {
+            var merchant = new Merchant(2, tenantId,"tt",(byte) IdentityTypeEnum.Individual,(byte) SaleType.Online,(byte) MerchantStatus.Active);
+
+            _context.Add(merchant);
+            _context.Merchants.Add(merchant);
+
+            await _context.SaveChangesAsync();
+
+            return merchant;
+        }
+
+
     }
 }

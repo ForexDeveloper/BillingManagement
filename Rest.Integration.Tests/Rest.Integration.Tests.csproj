@@ -50,5 +50,10 @@
 	  <ProjectReference Include="..\Infrastructure.Data.Repository.EfCore\Infrastructure.Data.Repository.EfCore.csproj" />
 	  <ProjectReference Include="..\Service.Rest\Service.Rest.csproj" />
 	</ItemGroup>
+
+
+	<ItemGroup>
+	  <Folder Include="BillingTests\Merchants\" />
+	</ItemGroup>
 	
 </Project>

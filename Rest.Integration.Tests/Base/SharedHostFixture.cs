@@ -1,35 +1,19 @@
-﻿using Domain.Core.Entities.MerchantAggregate;
+﻿using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.TenantAggregate;
-using IdentityModel;
-using IdentityModel.Client;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Polly;
-using Rest.Integration.Tests.Base;
-using Rest.Integration.Tests.Models;
 using Service.Rest;
-using Shared.IdentityServerProvider.Contracts;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
-using static MassTransit.MessageHeaders;
 
 
-namespace IntegrationTest.Server;
+namespace Rest.Integration.Tests.Base;
 
 public class SharedHostFixture : IDisposable
 {
@@ -39,11 +23,13 @@ public class SharedHostFixture : IDisposable
     private readonly HttpMessageHandler _httpMessageHandler;
     private readonly ILogger<SharedHostFixture> _logger;
     private readonly IAccessTokenManager _tokenManager;
+    private static readonly SemaphoreSlim TestLock = new SemaphoreSlim(1, 1);
     private bool _isExistDb;
     private ApplicationDbContext _mainContext;
     private readonly BaseTestDataBuilder _baseTestDataBuilder;
     private bool _disposed;
     private Tenant _tenant;
+    private Merchant _merchant;
 
     public SharedHostFixture()
     {
@@ -56,7 +42,8 @@ public class SharedHostFixture : IDisposable
         _httpClient = _host.GetTestClient();
         _tokenManager = new AccessTokenManager(Configuration);
 
-        InitializeDatabase();
+
+        InitializeDatabaseAsync().GetAwaiter().GetResult();
 
         _baseTestDataBuilder = new BaseTestDataBuilder(this);
 
@@ -110,17 +97,32 @@ public class SharedHostFixture : IDisposable
         };
     }
 
-    private void InitializeDatabase()
+
+    private async Task InitializeDatabaseAsync()
     {
-        GenerateTestSqlConnectionString();
+        if (_isExistDb) return;
 
-        _mainContext = _host.Services.GetRequiredService<ApplicationDbContext>();
 
-        if (!_isExistDb)
+        await TestLock.WaitAsync();
+
+        try
+        {
+            if (_isExistDb) return;
+
+            GenerateTestSqlConnectionString();
+
+            _mainContext ??= _host.Services.GetRequiredService<ApplicationDbContext>();
+
             _mainContext.Database.EnsureCreated();
 
-        _isExistDb = true;
+            _isExistDb = true;
+        }
+        finally
+        {
+            TestLock.Release();
+        }
     }
+
 
     private void GenerateTestSqlConnectionString()
     {
@@ -132,6 +134,8 @@ public class SharedHostFixture : IDisposable
         var newConnection = connection.Replace("$_DbName_DontChangeIt_Its_A_Token_$", dbName);
 
         Configuration["ConnectionStrings:ApplicationDbConnection"] = newConnection;
+        Configuration["ConnectionStrings:ReadonlyDbConnection"] = newConnection;
+
     }
 
     private static string GenerateUniqueDbName()
@@ -140,16 +144,25 @@ public class SharedHostFixture : IDisposable
         return $"BillingManagement_{timestamp}__IntegrationTest";
     }
 
-    public async Task<HttpClient> GetAuthenticatedHttpClientAsync()
+    public async Task<HttpClient> GetAuthenticatedHttpClientAsync(int? tenantId = null, string? userId = null)
     {
         var token = await _tokenManager.GetAccessToken();
+
         SetAccessToken(token);
+
+        if (!string.IsNullOrWhiteSpace(userId))
+            _httpClient.DefaultRequestHeaders.Add("user_id", userId);
+
+        if (tenantId != null)
+            _httpClient.DefaultRequestHeaders.Add("tenant_id", tenantId.ToString());
+
         return _httpClient;
     }
 
-    public HttpClient CreateUnauthenticatedHttpClient() => new HttpClient(_httpMessageHandler);
+    public HttpClient CreateUnauthenticatedHttpClient => new HttpClient(_httpMessageHandler);
 
     public Tenant Tenant => _tenant;
+    public Merchant Merchant => _merchant;
 
 
     private void SetAccessToken(string token)
@@ -195,7 +208,7 @@ public class SharedHostFixture : IDisposable
     {
 
         _tenant = _baseTestDataBuilder.CreateTenant().Result;
-
+        _merchant = _baseTestDataBuilder.CreateMerchant(_tenant.Id).Result;
 
     }
 }
