@@ -113,10 +113,8 @@ public sealed class MerchantBillingService(
 
                 var replicateBillings = new List<MerchantBilling>();
 
-                for (var i = 0; i < billingDtos.Count; i++)
+                foreach (var billingDto in billingDtos)
                 {
-                    var billingDto = billingDtos[i];
-
                     var contract = billingDto.ContractGroup;
 
                     decimal previousDebitAmount = 0;
@@ -130,7 +128,9 @@ public sealed class MerchantBillingService(
 
                     if (replicateBilling != null)
                     {
-                        var previousContract = billingDtos[i - 1].ContractGroup;
+                        var previousIndex = billingDtos.IndexOf(billingDto) - 1;
+
+                        var previousContract = billingDtos[previousIndex].ContractGroup;
 
                         var contractIdentifier = contract.CreateIdentifier();
 

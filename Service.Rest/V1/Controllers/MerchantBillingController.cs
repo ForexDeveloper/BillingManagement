@@ -26,7 +26,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     public async Task<ActionResult> GetListAsync([FromRoute] int id, [FromQuery] GetBillingsRequest request)
     {
         var billings = await mediator.Send(new GetMerchantBillingsQuery(currentUserService.TenantId, id, request.Code,
-            request.Status, request.PageSize, request.PageIndex));
+            request.Type, request.Status, request.PageSize, request.PageIndex));
 
         return Ok(billings);
     }

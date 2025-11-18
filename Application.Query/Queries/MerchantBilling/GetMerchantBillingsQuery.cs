@@ -16,10 +16,13 @@ public sealed class GetMerchantBillingsQuery : BasePaginatedListRequest, IReques
 
     public int? MerchantId { get; set; }
 
+    public BillingType? Type { get; set; }
+
     public BillingStatus? Status { get; set; }
 
-    public GetMerchantBillingsQuery(int tenantId, int merchantId, string? code, BillingStatus? status, int pageSize, int pageIndex)
+    public GetMerchantBillingsQuery(int tenantId, int merchantId, string? code, BillingType? type, BillingStatus? status, int pageSize, int pageIndex)
     {
+        Type = type;
         Code = code;
         Status = status;
         TenantId = tenantId;
