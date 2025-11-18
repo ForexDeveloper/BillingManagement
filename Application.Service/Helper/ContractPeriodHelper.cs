@@ -44,7 +44,7 @@ public static class ContractPeriodHelper
 
                 difference = totalDays % billingPeriod;
 
-                startOfPeriod = pc.AddDays(specificDate, -difference);
+                startOfPeriod = difference == 0 ? pc.AddDays(specificDate, -billingPeriod) : pc.AddDays(specificDate, -difference);
 
                 endOfPeriod = pc.AddDays(startOfPeriod, billingPeriod);
 
