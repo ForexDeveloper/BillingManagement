@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Application.Query.Queries.Billings;
 using Application.Query.ViewModels.Billings;
 using Application.Query.ReadOnlyRepositoryContracts;
+using Domain.Core.Enums;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
@@ -32,7 +33,8 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
 
         if (query.MerchantId.HasValue)
         {
-            billingQuery = billingQuery.Where(p => p.ToBusinessIdentityId == query.MerchantId);
+            billingQuery = billingQuery.Where(p => (p.ToBusinessIdentityId == query.MerchantId && p.Type == BillingType.TenantToMerchant) ||
+                                                   (p.FromBusinessIdentityId == query.MerchantId && p.Type == BillingType.MerchantToTenant));
         }
 
         var totalCount = await billingQuery.CountAsync();
@@ -48,7 +50,8 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
             StatusTitle = p.Status.GetEnumDescription(),
             PaymentDeadlineDate = p.PaymentDeadlineDate,
             PayableAmount = p.Amount - p.Payments.Sum(q => q.Amount),
-            MerchantTitle = dbContext.Merchants.FirstOrDefault(q => q.Id == p.ToBusinessIdentityId).Title
+            MerchantTitle = dbContext.Merchants.FirstOrDefault(q => (q.Id == p.ToBusinessIdentityId && p.Type == BillingType.TenantToMerchant) ||
+                                                                    (q.Id == p.FromBusinessIdentityId && p.Type == BillingType.MerchantToTenant)).Title
         })
         .OrderByDescending(p => p.DueDate)
         .Skip((query.PageIndex - 1) * query.PageSize)
