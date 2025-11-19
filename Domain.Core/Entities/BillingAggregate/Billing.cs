@@ -159,12 +159,25 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(additionsAmount), "مبلغ اضافات نمی تواند از 0 کوچکتر باشد");
         }
 
-        ValidateCheckSum();
+        if (Status == BillingStatus.Overdue)
+        {
+            throw new ArgumentValidationException(nameof(additionsAmount), "امکان ثبت اضافات برای صورتحساب معوق شده وجود ندارد");
+        }
+
+        if (Amount <= 0)
+        {
+            throw new ArgumentValidationException(nameof(additionsAmount), "امکان ثبت اضافات برای صورتحساب صفر یا منفی وجود ندارد");
+        }
+
+        if (Status == BillingStatus.Settled && PaymentDeadlineDate < DateTime.Today)
+        {
+            throw new ArgumentValidationException(nameof(additionsAmount), "امکان ثبت اضافات برای صورتحسابی که مهلت بازپرداخت آن گذشته است، وجود ندارد");
+        }
+
         AdditionsAmount = additionsAmount;
         AdditionsDescription = additionDescription;
         CalculateAmount();
-        SetCheckSum();
-        SetEditDateTime(DateTime.Now);
+        UpdateStatus(Status == BillingStatus.Settled ? BillingStatus.PartiallyPaid : Status);
     }
 
     public void SetDeductions(decimal deductionsAmount, string? deductionDescription)
@@ -174,6 +187,11 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از 0 کوچکتر باشد");
         }
 
+        if (Status is BillingStatus.Settled or BillingStatus.Overdue)
+        {
+            throw new ArgumentValidationException(nameof(deductionsAmount), "امکان ثبت کسورات برای صورتحساب تسویه شده یا معوق شده وجود ندارد");
+        }
+
         Amount += DeductionsAmount;
 
         if (Amount < deductionsAmount)
@@ -181,13 +199,10 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از مبلغ کل صورتحساب بیشتر باشد");
         }
 
-        ValidateCheckSum();
         DeductionsAmount = deductionsAmount;
         DeductionsDescription = deductionDescription;
         CalculateAmount();
-        SetFinalStatus();
-        SetCheckSum();
-        SetEditDateTime(DateTime.Now);
+        UpdateStatus(Amount == 0 ? BillingStatus.Settled : Status);
     }
 
     public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)
