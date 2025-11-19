@@ -37,6 +37,8 @@ public abstract class Billing : BaseEntity<long>
 
     public decimal PreviousPenaltyAmount { get; protected set; }
 
+    public decimal? TieredTransactionsAmount { get; protected set; }
+
     public decimal AdditionsAmount { get; protected set; }
 
     public decimal DeductionsAmount { get; protected set; }
@@ -97,8 +99,8 @@ public abstract class Billing : BaseEntity<long>
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
-        List<int> contractIds, List<TieredCalculatedLevel> tieredCalculatedLevels = null, Billing? debtor = null,
-        Billing? creditor = null)
+        List<int> contractIds, decimal tieredTransactionsAmount, List<TieredCalculatedLevel> tieredCalculatedLevels = null,
+        Billing? debtor = null, Billing? creditor = null)
     {
         Type = type;
         Debtor = debtor;
@@ -116,6 +118,7 @@ public abstract class Billing : BaseEntity<long>
         PreviousPenaltyAmount = previousPenaltyAmount;
         TieredCalculatedLevels = tieredCalculatedLevels;
         FromBusinessIdentityId = fromBusinessIdentityId;
+        TieredTransactionsAmount = tieredTransactionsAmount;
 
         SetContractIds(contractIds);
         SetBillingDates(startDate, endDate);
@@ -171,10 +174,13 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(additionsAmount), "امکان ثبت اضافات برای صورتحسابی که مهلت بازپرداخت آن گذشته است، وجود ندارد");
         }
 
+        ValidateCheckSum();
         AdditionsAmount = additionsAmount;
         AdditionsDescription = additionDescription;
         CalculateAmount();
-        UpdateStatus(Status == BillingStatus.Settled ? BillingStatus.PartiallyPaid : Status);
+        if (Status == BillingStatus.Settled) Status = BillingStatus.PartiallyPaid;
+        SetCheckSum();
+        SetEditDateTime(DateTime.Now);
     }
 
     public void SetDeductions(decimal deductionsAmount, string? deductionDescription)
@@ -199,7 +205,9 @@ public abstract class Billing : BaseEntity<long>
         DeductionsAmount = deductionsAmount;
         DeductionsDescription = deductionDescription;
         CalculateAmount();
-        UpdateStatus(Amount == 0 ? BillingStatus.Settled : Status);
+        if (Amount == 0) Status = BillingStatus.Settled;
+        SetCheckSum();
+        SetEditDateTime(DateTime.Now);
     }
 
     public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)

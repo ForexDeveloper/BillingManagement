@@ -186,14 +186,14 @@ public sealed class MerchantBillingService(
                             out previousCreditAmount);
                     }
 
-                    Commission purchaseCommissions = new();
+                    Commission purchaseCommission = new();
                     Transactions refundedTransactions = new();
 
                     if (contract.IsCommissionExchanged)
                     {
                         refundedTransactions = await CalculateRefundedTransactions(billingDto, cancellationToken);
 
-                        purchaseCommissions = await CalculateTransactionsCommission(billingDto, cancellationToken);
+                        purchaseCommission = await CalculateTransactionsCommission(billingDto, cancellationToken);
                     }
                     else
                     {
@@ -204,7 +204,7 @@ public sealed class MerchantBillingService(
                         }
                         else if (billingDto.Type == BillingType.MerchantToTenant)
                         {
-                            purchaseCommissions = await CalculateTransactionsCommission(billingDto, cancellationToken);
+                            purchaseCommission = await CalculateTransactionsCommission(billingDto, cancellationToken);
                         }
                     }
 
@@ -214,9 +214,10 @@ public sealed class MerchantBillingService(
                     var refundedTransactionsAmount = refundedTransactions.RefundedTransactionsAmount;
                     var refundedTransactionsCommission = refundedTransactions.RefundedTransactionsCommission;
 
-                    var tieredCalculatedLevels = purchaseCommissions.TieredCalculatedLevels;
-                    var purchaseTransactionsCommission = purchaseCommissions.PurchaseTransactionsCommission;
-                    var purchaseTransactionsCalculatedCommission = purchaseCommissions.PurchaseTransactionsCalculatedCommission;
+                    var tieredCalculatedLevels = purchaseCommission.TieredCalculatedLevels;
+                    var tieredTransactionsAmount = purchaseCommission.TieredTransactionsAmount;
+                    var purchaseTransactionsCommission = purchaseCommission.PurchaseTransactionsCommission;
+                    var purchaseTransactionsCalculatedCommission = purchaseCommission.PurchaseTransactionsCalculatedCommission;
 
                     var billing = new MerchantBilling(contract.TenantId,
                         billingDto.FromBusinessIdentityId,
@@ -236,6 +237,7 @@ public sealed class MerchantBillingService(
                         purchaseTransactionsCommission,
                         refundedTransactionsCommission,
                         purchaseTransactionsCalculatedCommission,
+                        tieredTransactionsAmount,
                         tieredCalculatedLevels,
                         debtorBilling,
                         creditorBilling);
@@ -712,7 +714,7 @@ public sealed class MerchantBillingService(
 
     private async Task<Commission> CalculateTransactionsCommission(BillingDto billingDto, CancellationToken cancellationToken)
     {
-        decimal sumOfTieredTransactions;
+        decimal sumOfTieredTransactions = 0;
         decimal purchaseTransactionsCalculatedCommission = 0;
         List<TieredCalculatedLevel> tieredCalculatedLevels = null;
 
@@ -749,6 +751,7 @@ public sealed class MerchantBillingService(
         return new Commission()
         {
             TieredCalculatedLevels = tieredCalculatedLevels,
+            TieredTransactionsAmount = sumOfTieredTransactions,
             PurchaseTransactionsCommission = purchaseTransactionsCommission,
             PurchaseTransactionsCalculatedCommission = purchaseTransactionsCalculatedCommission
         };
@@ -777,6 +780,8 @@ public sealed class MerchantBillingService(
 
     private sealed record Commission
     {
+        public decimal TieredTransactionsAmount { get; init; }
+
         public decimal PurchaseTransactionsCommission { get; init; }
 
         public decimal PurchaseTransactionsCalculatedCommission { get; init; }
