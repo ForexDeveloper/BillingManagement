@@ -52,6 +52,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             PaymentDeadlineDate = p.PaymentDeadlineDate,
             PayableAmount = p.Amount - p.Payments.Sum(q => q.Amount)
         })
+        .OrderByDescending(p => p.DueDate)
         .Skip((query.PageIndex - 1) * query.PageSize)
         .Take(query.PageSize)
         .ToListAsync();
