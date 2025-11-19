@@ -197,6 +197,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 FinalAmount = p.PurchaseTransactionsCommission,
                 TransactionsAmount = p.PurchaseTransactionsAmount,
                 TieredCalculatedLevels = p.TieredCalculatedLevels,
+                TieredTransactionsAmount = p.TieredTransactionsAmount ?? 0,
                 CalculatedAmount = p.PurchaseTransactionsCalculatedCommission,
 
                 Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.CreatedDateTime)
@@ -219,7 +220,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                             q.CommissionCalculationType == CommissionCalculationType.CumulativeTiered ? TenantMerchantConstants.CumulativeTieredCommissionDescription :
                             q.CommissionCalculationType == CommissionCalculationType.FixedPercentage ? TenantMerchantConstants.FixedPercentageCommissionDescription :
                             q.CommissionCalculationType == CommissionCalculationType.FixedAmount ? TenantMerchantConstants.FixedAmountCommissionDescription : string.Empty
-                            
+
                     }).ToList(),
 
                 TransactionsCount = dbContext.MerchantInstallments
@@ -231,10 +232,10 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                              p.Type == BillingType.MerchantToTenant ? p.FromBusinessIdentityId : 0,
 
                 Message =
-                    p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ? 
+                    p.PurchaseTransactionsCommission > p.PurchaseTransactionsCalculatedCommission ?
                         $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداقل مبلغ کارمزد دوره کمتر است، در نتیجه حداقل مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال در نظر گرفته می شود" :
 
-                        p.PurchaseTransactionsCommission < p.PurchaseTransactionsCalculatedCommission ? 
+                        p.PurchaseTransactionsCommission < p.PurchaseTransactionsCalculatedCommission ?
                             $"مجموع کارمزد شما {p.PurchaseTransactionsCalculatedCommission.Normalize().CommaSeparate()} ریال است که از حداکثر مبلغ کارمزد دوره بیشتر است، در نتیجه حداکثر مبلغ کارمزد یعنی {p.PurchaseTransactionsCommission.Normalize().CommaSeparate()} ریال در نظر گرفته می شود" :
                             string.Empty
 

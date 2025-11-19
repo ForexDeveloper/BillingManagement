@@ -174,10 +174,13 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(additionsAmount), "امکان ثبت اضافات برای صورتحسابی که مهلت بازپرداخت آن گذشته است، وجود ندارد");
         }
 
+        ValidateCheckSum();
         AdditionsAmount = additionsAmount;
         AdditionsDescription = additionDescription;
         CalculateAmount();
-        UpdateStatus(Status == BillingStatus.Settled ? BillingStatus.PartiallyPaid : Status);
+        if (Status == BillingStatus.Settled) Status = BillingStatus.PartiallyPaid;
+        SetCheckSum();
+        SetEditDateTime(DateTime.Now);
     }
 
     public void SetDeductions(decimal deductionsAmount, string? deductionDescription)
@@ -202,7 +205,9 @@ public abstract class Billing : BaseEntity<long>
         DeductionsAmount = deductionsAmount;
         DeductionsDescription = deductionDescription;
         CalculateAmount();
-        UpdateStatus(Amount == 0 ? BillingStatus.Settled : Status);
+        if (Amount == 0) Status = BillingStatus.Settled;
+        SetCheckSum();
+        SetEditDateTime(DateTime.Now);
     }
 
     public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)

@@ -39,6 +39,7 @@ public sealed class GetPurchaseTransactionsCommissionQueryHandler(IMerchantBilli
             CalculatedAmount = commission.CalculatedAmount,
             TransactionsCount = commission.TransactionsCount,
             TransactionsAmount = commission.TransactionsAmount,
+            TieredTransactionsAmount = commission.TieredTransactionsAmount,
             TieredCalculatedLevels = commission.TieredCalculatedLevels?.Select(p => new TieredCalculatedLevelVm()
             {
                 Number = p.Number,

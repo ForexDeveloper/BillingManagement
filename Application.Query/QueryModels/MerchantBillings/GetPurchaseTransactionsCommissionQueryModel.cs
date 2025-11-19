@@ -21,6 +21,8 @@ public sealed record GetPurchaseTransactionsCommissionQueryModel
 
     public decimal TransactionsAmount { get; set; }
 
+    public decimal TieredTransactionsAmount { get; set; }
+
     public IEnumerable<TieredCalculatedLevel> TieredCalculatedLevels { get; set; }
 
     public IEnumerable<GetMerchantBillingContractQueryModel> Contracts { get; set; }
