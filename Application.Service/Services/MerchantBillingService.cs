@@ -629,7 +629,7 @@ public sealed class MerchantBillingService(
         {
             var billing = overdueBilling.Billing;
 
-            if (billing.ContractIds.Any(contractIds.Contains))
+            if (contractIds.Any(billing.ContractIds.Contains))
             {
                 billing.Transfer();
 
@@ -667,7 +667,7 @@ public sealed class MerchantBillingService(
         {
             var billing = negativeBilling.Billing;
 
-            if (billing.ContractIds.Any(contractIds.Contains))
+            if (contractIds.Any(billing.ContractIds.Contains))
             {
                 billing.Transfer();
 
