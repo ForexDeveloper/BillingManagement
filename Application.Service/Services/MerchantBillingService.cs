@@ -497,9 +497,9 @@ public sealed class MerchantBillingService(
 
     private static List<TieredCalculatedLevel> CalculateUniformedTieredLevels(List<TieredCommission> tieredCommissions, decimal totalTransactionsAmount)
     {
-        List<TieredCalculatedLevel> calculatedTieredLevels = [];
+        List<TieredCalculatedLevel> tieredCalculatedLevels = [];
 
-        if (tieredCommissions == null) return calculatedTieredLevels;
+        if (tieredCommissions == null) return tieredCalculatedLevels;
 
         var tieredCommission = tieredCommissions.FirstOrDefault(p =>
             p.FromAmount < totalTransactionsAmount && totalTransactionsAmount <= p.ToAmount);
@@ -521,11 +521,11 @@ public sealed class MerchantBillingService(
             }
         }
 
-        if (tieredCommission == null) return calculatedTieredLevels;
+        if (tieredCommission == null) return tieredCalculatedLevels;
 
         var commission = CalculateCommission(totalTransactionsAmount, tieredCommission);
 
-        calculatedTieredLevels.Add(new TieredCalculatedLevel()
+        tieredCalculatedLevels.Add(new TieredCalculatedLevel()
         {
             Commission = commission,
             TieredCommission = tieredCommission,
@@ -533,14 +533,14 @@ public sealed class MerchantBillingService(
             Number = tieredCommissions.IndexOf(tieredCommission) + 1
         });
 
-        return calculatedTieredLevels;
+        return tieredCalculatedLevels;
     }
 
     private static List<TieredCalculatedLevel> CalculateCumulativeTieredLevels(List<TieredCommission> tieredCommissions, decimal totalTransactionsAmount)
     {
-        List<TieredCalculatedLevel> calculatedTieredLevels = [];
+        List<TieredCalculatedLevel> tieredCalculatedLevels = [];
 
-        if (tieredCommissions == null) return calculatedTieredLevels;
+        if (tieredCommissions == null) return tieredCalculatedLevels;
 
         var number = 1;
 
@@ -558,7 +558,7 @@ public sealed class MerchantBillingService(
 
                 commission = CalculateCommission(transactionsAmount, tieredCommission);
 
-                calculatedTieredLevels.Add(new TieredCalculatedLevel()
+                tieredCalculatedLevels.Add(new TieredCalculatedLevel()
                 {
                     Number = number,
                     Commission = commission,
@@ -582,7 +582,7 @@ public sealed class MerchantBillingService(
 
             commission = CalculateCommission(transactionsAmount, tieredCommission);
 
-            calculatedTieredLevels.Add(new TieredCalculatedLevel()
+            tieredCalculatedLevels.Add(new TieredCalculatedLevel()
             {
                 Number = number,
                 Commission = commission,
@@ -597,7 +597,7 @@ public sealed class MerchantBillingService(
             number++;
         }
 
-        return calculatedTieredLevels;
+        return tieredCalculatedLevels;
     }
 
     private static decimal CalculateCommission(decimal targetAmount, TieredCommission tieredCommission)
