@@ -131,7 +131,7 @@ public class SharedHostFixture : IDisposable
             throw new InvalidOperationException("ApplicationDbConnection connection string is not configured");
 
         var dbName = GenerateUniqueDbName();
-        var newConnection = connection.Replace("$_DbName_DontChangeIt_Its_A_Token_$", dbName);
+        var newConnection = connection.Replace("$_DbName_DoNotChangeIt_Its_A_Token_$", dbName);
 
         Configuration["ConnectionStrings:ApplicationDbConnection"] = newConnection;
         Configuration["ConnectionStrings:ReadonlyDbConnection"] = newConnection;

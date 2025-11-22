@@ -11,31 +11,28 @@ using System;
 using System.Threading.Tasks;
 
 namespace Application.Service.Services;
-public class BillingPaymentService : IBillingPaymentService
+public class BillingPaymentService(IMerchantBillingRepository merchantBillingRepository, IOutboxService outboxService, IApplicationDbContextUnitOfWork unitOfWork) : IBillingPaymentService
 {
-    private readonly IMerchantBillingRepository _merchantBillingRepository;
-    private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    private readonly IOutboxService _outboxService;
-
-    public BillingPaymentService(IMerchantBillingRepository merchantBillingRepository, IOutboxService outboxService)
-    {
-        _merchantBillingRepository = merchantBillingRepository;
-        _outboxService = outboxService;
-    }
-
     public bool IsMerchantBillingPayable(MerchantBillingPayableDto request)
     {
-        if (
-             request.Status == BillingStatus.Settled || request.Status == BillingStatus.Overdue ||
-             request.DueDate.AddDays(request.GracePeriod).Date < DateTime.Today
-            )
-        {
-            return false;
-        }
-
         if (request.PayAmount > request.PayableAmount)
         {
-            return false;
+            throw new ArgumentValidationException("BillingId", "مبلغ پرداختی بیشتر از مبلغ قابل پرداخت صورت حساب می باشد.");
+        }
+
+        if (request.Status == BillingStatus.Settled)
+        {
+            throw new ArgumentValidationException("BillingId", "صورت حساب قبلا پرداخت شده است.");
+        }
+
+        if (request.Status == BillingStatus.Overdue)
+        {
+            throw new ArgumentValidationException("BillingId", "صورت حساب معوق قابل پرداخت نمی باشد.");
+        }
+
+        if (request.DueDate.AddDays(request.GracePeriod).Date < DateTime.Today)
+        {
+            throw new ArgumentValidationException("BillingId", "صورت حساب قابل پرداخت نمی باشد.");
         }
 
         return true;
@@ -43,16 +40,14 @@ public class BillingPaymentService : IBillingPaymentService
 
     public async Task MerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent requset)
     {
-        var billing = await _merchantBillingRepository.GetAsync(requset.BillingId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
+        var billing = await merchantBillingRepository.GetAsync(requset.BillingId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
         var payableAmount = billing.GetPayableAmount();
 
         var merchantBillingPayableDto = new MerchantBillingPayableDto(
             billing.TenantId, billing.Status, billing.DueDate, billing.GracePeriod, payableAmount, requset.Amount);
 
-        if (!IsMerchantBillingPayable(merchantBillingPayableDto))
-        {
-            throw new ArgumentValidationException(nameof(requset.BillingId), "صورت حساب قابل پرداخت نمی باشد.");
-        }
+
+        IsMerchantBillingPayable(merchantBillingPayableDto);
 
         billing.AddBillingPayment(requset.BillingId, requset.PaymentId, requset.Amount, requset.PaymentDate);
 
@@ -65,15 +60,15 @@ public class BillingPaymentService : IBillingPaymentService
             billing.PartialPay();
         }
 
-        _outboxService.AddNewEvent(new PmBillingManualPaymentUpdateStateEvent
+        outboxService.AddNewEvent(new BmBillingManualPaymentSettledEvent
         {
             BillingId = requset.BillingId,
             PaymentId = requset.PaymentId,
             Amount = requset.Amount,
         });
 
-        _merchantBillingRepository.Update(billing);
+        merchantBillingRepository.Update(billing);
 
-        await _unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
     }
 }
