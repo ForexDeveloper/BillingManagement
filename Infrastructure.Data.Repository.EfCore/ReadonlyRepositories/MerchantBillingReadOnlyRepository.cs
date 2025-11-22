@@ -197,7 +197,7 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 FinalAmount = p.PurchaseTransactionsCommission,
                 TransactionsAmount = p.PurchaseTransactionsAmount,
                 TieredCalculatedLevels = p.TieredCalculatedLevels,
-                TieredTransactionsAmount = p.TieredTransactionsAmount ?? 0,
+                TieredTransactionsAmount = p.TieredTransactionsAmount,
                 CalculatedAmount = p.PurchaseTransactionsCalculatedCommission,
 
                 Contracts = dbContext.TenantMerchantContracts.OrderByDescending(q => q.Status).ThenByDescending(q => q.CreatedDateTime)

@@ -37,7 +37,7 @@ public abstract class Billing : BaseEntity<long>
 
     public decimal PreviousPenaltyAmount { get; protected set; }
 
-    public decimal? TieredTransactionsAmount { get; protected set; }
+    public decimal TieredTransactionsAmount { get; protected set; }
 
     public decimal AdditionsAmount { get; protected set; }
 
