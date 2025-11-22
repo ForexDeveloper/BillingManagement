@@ -38,7 +38,7 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.PreviousDebitAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.PreviousCreditAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.PreviousPenaltyAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
-        builder.Property(p => p.TieredTransactionsAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired(false);
+        builder.Property(p => p.TieredTransactionsAmount).HasColumnType(ColumnTypes.DECIMAL_32_10).IsRequired();
         builder.Property(p => p.CheckSum).HasMaxLength(500).IsRequired();
         builder.Property(e => e.RowVersion).IsRowVersion();
         builder.HasIndex(p => p.Code).IsUnique();
