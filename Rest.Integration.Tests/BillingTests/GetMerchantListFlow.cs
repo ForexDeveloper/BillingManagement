@@ -23,7 +23,7 @@ namespace Rest.Integration.Tests.BillingTests
         {
             // Arrange
             var tenant = _hostFixture.Tenant;
-            var merchand = _hostFixture.Merchant;
+            var merchant = _hostFixture.Merchant;
             const string requestUri = "api/tenant-panel/merchants";
             var httpClient = await _hostFixture.GetAuthenticatedHttpClientAsync(tenant.Id);
             
@@ -35,8 +35,8 @@ namespace Rest.Integration.Tests.BillingTests
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             result.Should().NotBeNull();
-            result.First().Id.Should().Be(merchand.Id);
-            result.First().Title.Should().Be(merchand.Title);
+            result.First().Id.Should().Be(merchant.Id);
+            result.First().Title.Should().Be(merchant.Title);
 
         }
 

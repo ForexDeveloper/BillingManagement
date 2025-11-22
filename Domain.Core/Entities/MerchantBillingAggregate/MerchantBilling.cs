@@ -30,11 +30,11 @@ public sealed class MerchantBilling : Billing
         TimeInterval periodType, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
         List<int> contractIds, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
         decimal purchaseTransactionsAmount, decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
-        decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission,
-        List<TieredCalculatedLevel> calculatedTieredLevels, Billing? debtor = null, Billing? creditor = null) : base(
+        decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission, decimal tieredTransactionsAmount,
+        List<TieredCalculatedLevel> tieredCalculatedLevels, Billing? debtor = null, Billing? creditor = null) : base(
         tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount,
         previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, mainContractId, contractIds,
-        calculatedTieredLevels, debtor, creditor)
+        tieredTransactionsAmount, tieredCalculatedLevels, debtor, creditor)
     {
         PurchaseTransactionsAmount = purchaseTransactionsAmount;
         RefundedTransactionsAmount = refundedTransactionsAmount;

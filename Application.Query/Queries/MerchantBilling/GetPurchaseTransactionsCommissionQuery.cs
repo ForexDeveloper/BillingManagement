@@ -39,6 +39,7 @@ public sealed class GetPurchaseTransactionsCommissionQueryHandler(IMerchantBilli
             CalculatedAmount = commission.CalculatedAmount,
             TransactionsCount = commission.TransactionsCount,
             TransactionsAmount = commission.TransactionsAmount,
+            TieredTransactionsAmount = commission.TieredTransactionsAmount,
             TieredCalculatedLevels = commission.TieredCalculatedLevels?.Select(p => new TieredCalculatedLevelVm()
             {
                 Number = p.Number,
@@ -62,9 +63,7 @@ public sealed class GetPurchaseTransactionsCommissionQueryHandler(IMerchantBilli
                 TransactionMinCommissionAmount = p.TransactionMinCommissionAmount,
                 TieredCommissions = p.TieredCommissions?.Select(tieredCommission =>
                 {
-                    var selected = commission.TieredCalculatedLevels?.Any(r => r.TieredCommission == tieredCommission) ?? false;
-
-                    if (p.Id != commission.MainContractId) selected = false;
+                    var selected = commission.TieredCalculatedLevels.Any(r => r.TieredCommission == tieredCommission && p.Id == commission.MainContractId);
 
                     return new TieredCommissionVm()
                     {

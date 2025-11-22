@@ -20,6 +20,8 @@ public sealed record GetPurchaseTransactionsCommissionVm
 
     public decimal TransactionsAmount { get; set; }
 
+    public decimal TieredTransactionsAmount { get; set; }
+
     public IEnumerable<TieredCalculatedLevelVm> TieredCalculatedLevels { get; set; }
 
     public IEnumerable<GetMerchantBillingContractVm> Contracts { get; set; }
