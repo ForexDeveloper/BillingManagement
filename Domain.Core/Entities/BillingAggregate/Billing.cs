@@ -37,6 +37,8 @@ public abstract class Billing : BaseEntity<long>
 
     public decimal PreviousPenaltyAmount { get; protected set; }
 
+    public decimal TieredTransactionsAmount { get; protected set; }
+
     public decimal AdditionsAmount { get; protected set; }
 
     public decimal DeductionsAmount { get; protected set; }
@@ -97,8 +99,8 @@ public abstract class Billing : BaseEntity<long>
     protected Billing(int tenantId, int fromBusinessIdentityId, int toBusinessIdentityId, BillingType type,
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
-        List<int> contractIds, List<TieredCalculatedLevel> tieredCalculatedLevels = null, Billing? debtor = null,
-        Billing? creditor = null)
+        List<int> contractIds, decimal tieredTransactionsAmount, List<TieredCalculatedLevel> tieredCalculatedLevels = null,
+        Billing? debtor = null, Billing? creditor = null)
     {
         Type = type;
         Debtor = debtor;
@@ -116,6 +118,7 @@ public abstract class Billing : BaseEntity<long>
         PreviousPenaltyAmount = previousPenaltyAmount;
         TieredCalculatedLevels = tieredCalculatedLevels;
         FromBusinessIdentityId = fromBusinessIdentityId;
+        TieredTransactionsAmount = tieredTransactionsAmount;
 
         SetContractIds(contractIds);
         SetBillingDates(startDate, endDate);
@@ -156,10 +159,33 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(additionsAmount), "مبلغ اضافات نمی تواند از 0 کوچکتر باشد");
         }
 
+        if (Status == BillingStatus.Overdue)
+        {
+            throw new ArgumentValidationException(nameof(additionsAmount), "امکان ثبت اضافات برای صورتحساب معوق شده وجود ندارد");
+        }
+
+        if (PaymentDeadlineDate < DateTime.Today)
+        {
+            throw new ArgumentValidationException(nameof(additionsAmount), "امکان ثبت اضافات برای صورتحسابی که مهلت بازپرداخت آن گذشته است وجود ندارد");
+        }
+
         ValidateCheckSum();
         AdditionsAmount = additionsAmount;
         AdditionsDescription = additionDescription;
         CalculateAmount();
+
+        if (PayableAmount > 0)
+        {
+            if (Status == BillingStatus.Settled)
+            {
+                Status = PaidAmount > 0 ? BillingStatus.PartiallyPaid : BillingStatus.Issued;
+            }
+        }
+        else
+        {
+            Status = BillingStatus.Settled;
+        }
+
         SetCheckSum();
         SetEditDateTime(DateTime.Now);
     }
@@ -171,18 +197,38 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از 0 کوچکتر باشد");
         }
 
-        Amount += DeductionsAmount;
-
-        if (Amount < deductionsAmount)
+        if (Status is BillingStatus.Overdue)
         {
-            throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از مبلغ کل صورتحساب بیشتر باشد");
+            throw new ArgumentValidationException(nameof(deductionsAmount), "امکان ثبت کسورات برای صورتحساب معوق شده وجود ندارد");
+        }
+
+        if (PayableAmount + DeductionsAmount < deductionsAmount)
+        {
+            throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از مبلغ قابل پرداخت صورتحساب بیشتر باشد");
+        }
+
+        if (PaymentDeadlineDate < DateTime.Today)
+        {
+            throw new ArgumentValidationException(nameof(deductionsAmount), "امکان ثبت کسورات برای صورتحسابی که مهلت بازپرداخت آن گذشته است وجود ندارد");
         }
 
         ValidateCheckSum();
         DeductionsAmount = deductionsAmount;
         DeductionsDescription = deductionDescription;
         CalculateAmount();
-        SetFinalStatus();
+
+        if (PayableAmount > 0)
+        {
+            if (Status == BillingStatus.Settled)
+            {
+                Status = PaidAmount > 0 ? BillingStatus.PartiallyPaid : BillingStatus.Issued;
+            }
+        }
+        else
+        {
+            Status = BillingStatus.Settled;
+        }
+
         SetCheckSum();
         SetEditDateTime(DateTime.Now);
     }
@@ -195,7 +241,7 @@ public abstract class Billing : BaseEntity<long>
     protected void Configure()
     {
         CalculateAmount();
-        SetFinalStatus();
+        InitiateStatus();
         GenerateCode();
         SetCheckSum();
     }
@@ -235,7 +281,7 @@ public abstract class Billing : BaseEntity<long>
         SetEditDateTime(DateTime.Now);
     }
 
-    private void SetFinalStatus()
+    private void InitiateStatus()
     {
         if (Amount > 0)
         {
@@ -249,7 +295,7 @@ public abstract class Billing : BaseEntity<long>
 
     private void SetContractIds(List<int> contractIds)
     {
-        if (contractIds == null || contractIds.Any() == false)
+        if (contractIds == null || contractIds.Count == 0)
         {
             throw new ArgumentValidationException(nameof(contractIds), "لیست شناسه قرارداد های صورتحساب نمی تواند خالی باشد");
         }
