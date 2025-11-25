@@ -12,27 +12,33 @@ namespace Domain.Core.Entities.TenantAggregate
         public string? CreditProjectName { get; set; }
         public string? BrandName { get; set; }
         public string? InternalProjectManagerName { get; set; }
-
+        public bool HasCoWallet { get; set; }
+        public bool HasAnonymous { get; set; }
         #endregion #region Property
 
         private Tenant()
         {
         }
 
-        public Tenant(int id, string title, string? creditProjectName, string? brandName, string internalProjectManagerName)
+        public Tenant(int id, string title, string? creditProjectName, string? brandName, string internalProjectManagerName, bool hasCoWallet, bool hasAnonymous)
         {
-            Id = id;
+                        Id = id;
             CreditProjectName = creditProjectName;
             BrandName = brandName;
             InternalProjectManagerName = internalProjectManagerName;
+            HasCoWallet = hasCoWallet;
+            HasAnonymous = hasAnonymous;
+
             SetTitle(title);
         }
 
-        public void Update(string title, string? creditProjectName, string? brandName, string internalProjectManagerName)
+        public void Update(string title, string? creditProjectName, string? brandName, string internalProjectManagerName, bool hasCoWallet, bool hasAnonymous)
         {
             CreditProjectName = creditProjectName;
             BrandName = brandName;
             InternalProjectManagerName = internalProjectManagerName;
+            HasCoWallet = hasCoWallet;
+            HasAnonymous = hasAnonymous;
             SetTitle(title);
         }
 

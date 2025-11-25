@@ -8,6 +8,7 @@ using Shared.Logging.Abstraction.Models;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Domain.Core.Enums;
 
 
 namespace Application.Service.EventConsumers;
@@ -73,14 +74,22 @@ public class OrganizationAddedOrUpdatedEventConsumer : IConsumer<CmOrganizationA
 
     private async Task CreateOrganization(ConsumeContext<CmOrganizationAddedOrUpdatedEvent> context)
     {
-        Organization organization = new(context.Message.Id, context.Message.Title, context.Message.TenantId, context.Message.ParentId);
+        Organization organization = new(context.Message.Id, context.Message.Title, context.Message.TenantId, 
+            (OrganizationTypeEnum)context.Message.OrganizationType, 
+            (OrganizationIdentityTypeEnum)context.Message.OrganizationIdentityType, 
+            (CoWalletNameEnum?)context.Message.CoWalletName, context.Message.ParentId);
+
         await _organizationRepository.AddAsync(organization);
         await _unitOfWork.SaveChangesAsync();
     }
 
     private async Task UpdateOrganization(ConsumeContext<CmOrganizationAddedOrUpdatedEvent> context, Organization organization)
     {
-        organization.Update(context.Message.TenantId, context.Message.Title, context.Message.ParentId);
+        organization.Update(context.Message.TenantId, context.Message.Title, 
+            (OrganizationTypeEnum)context.Message.OrganizationType,
+            (OrganizationIdentityTypeEnum)context.Message.OrganizationIdentityType,
+            (CoWalletNameEnum?)context.Message.CoWalletName, context.Message.ParentId);
+
         _organizationRepository.Update(organization);
         await _unitOfWork.SaveChangesAsync();
     }
