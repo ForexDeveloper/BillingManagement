@@ -173,7 +173,8 @@ namespace Application.Service.Services
                 MerchantId = contract.MerchantId,
                 StartDate = contract.StartDate,
                 EndDate = contract.EndDate,
-                Status = contract.Status
+                Status = contract.Status,
+                InstallmentsCount = contract.SettlementType == SettlementType.LumpSum ? 1 : contract.InstallmentsCount.Value
             });
         }
     }
