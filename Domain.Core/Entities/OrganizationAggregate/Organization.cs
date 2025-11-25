@@ -1,6 +1,7 @@
 ﻿using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -15,6 +16,10 @@ namespace Domain.Core.Entities.OrganizationAggregate
         public string Title { get; private set; }
         public int? ParentId { get; private set; }
         public Organization Parent { get; set; }
+        public OrganizationTypeEnum OrganizationType { get; set; }
+        public OrganizationIdentityTypeEnum OrganizationIdentityType { get; set; }
+        public CoWalletNameEnum? CoWalletName { get; set; }
+
         //public List<WalletContract> WalletContracts { get; private set; }
 
         #endregion #region Property
@@ -23,11 +28,15 @@ namespace Domain.Core.Entities.OrganizationAggregate
         {
         }
 
-        public Organization(int id, string title, int tenantId, int? parentId = null)
+        public Organization(int id, string title, int tenantId, OrganizationTypeEnum organizationType, OrganizationIdentityTypeEnum organizationIdentityType, CoWalletNameEnum? coWalletName=null, int? parentId = null)
         {
             Id = id;
             SetTitle(title);
             TenantId = tenantId;
+            CoWalletName = coWalletName;
+            OrganizationIdentityType = organizationIdentityType;
+            OrganizationType = organizationType;
+
             SetParentId(parentId);
         }
 
@@ -39,9 +48,13 @@ namespace Domain.Core.Entities.OrganizationAggregate
             Title = title;
         }
 
-        public void Update(int tenantId, string title, int? parentId = null)
+        public void Update(int tenantId, string title, OrganizationTypeEnum organizationType, OrganizationIdentityTypeEnum organizationIdentityType, CoWalletNameEnum? coWalletName, int? parentId = null)
         {
             TenantId = tenantId;
+            CoWalletName = coWalletName;
+            OrganizationIdentityType = organizationIdentityType;
+            OrganizationType = organizationType;
+
             SetTitle(title);
             SetParentId(parentId);
             SetEditDateTime(DateTime.Now);
