@@ -1,62 +1,48 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Text.Json;
 using Rest.Integration.Tests.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
-namespace Rest.Integration.Tests.Base
+namespace Rest.Integration.Tests.Base;
+
+public interface IAccessTokenManager
 {
-    public interface IAccessTokenManager
+    Task<string> GetAccessToken();
+}
+
+public class AccessTokenManager(IConfiguration configuration) : IAccessTokenManager
+{
+    public async Task<string> GetAccessToken()
     {
-        Task<string> GetAccessToken();
+        using (var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(30) })
+        {
+            var baseUrl = configuration["AccessTokenInfo:BaseUrl"];
+
+            httpClient.BaseAddress = new Uri(baseUrl!);
+
+            var content = CreateTokenRequestContent();
+
+            var response = await httpClient.PostAsync("connect/token", content);
+
+            response.EnsureSuccessStatusCode();
+
+            string result = await response.Content.ReadAsStringAsync();
+
+            var tokenResponse = JsonSerializer.Deserialize<LoginDto>(result);
+
+            return tokenResponse!.AccessToken;
+        }
     }
-    public class AccessTokenManager : IAccessTokenManager
+
+    private FormUrlEncodedContent CreateTokenRequestContent()
     {
-        private readonly IConfiguration _configuration;
-
-        public AccessTokenManager(IConfiguration configuration)
+        var parameters = new Dictionary<string, string>
         {
-            _configuration = configuration;
-        }
+            ["grant_type"] = "client_credentials",
+            ["client_id"] = configuration["AccessTokenInfo:ClientId"]!,
+            ["client_secret"] = configuration["AccessTokenInfo:ClientSecret"]!
 
-        public async Task<string> GetAccessToken()
-        {
+        };
 
-            using (var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(30) })
-            {
-                var baseUrl = _configuration["AccessTokenInfo:BaseUrl"];
-
-                httpClient.BaseAddress = new Uri(baseUrl!);
-
-                var content = CreateTokenRequestContent();
-
-                var response = await httpClient.PostAsync("connect/token", content);
-
-                response.EnsureSuccessStatusCode();
-
-                string result = await response.Content.ReadAsStringAsync();
-
-                var tokenResponse = JsonSerializer.Deserialize<LoginDto>(result);
-
-                return tokenResponse!.AccessToken;
-            }
-        }
-
-        private FormUrlEncodedContent CreateTokenRequestContent()
-        {
-            var parameters = new Dictionary<string, string>
-            {
-                ["grant_type"] = "client_credentials",
-                ["client_id"] = _configuration["AccessTokenInfo:ClientId"]!,
-                ["client_secret"] = _configuration["AccessTokenInfo:ClientSecret"]!
-                
-            };
-
-            return new FormUrlEncodedContent(parameters);
-        }
+        return new FormUrlEncodedContent(parameters);
     }
 }
