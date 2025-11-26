@@ -2,8 +2,8 @@
 using MassTransit;
 using Domain.Core.Enums;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Shared.EventBus.Events;
+using System.Threading.Tasks;
 using Application.Service.Helper;
 using Microsoft.Extensions.Logging;
 using Application.Service.Contracts;
@@ -12,6 +12,7 @@ using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Abstraction.Extensions;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Application.Service.EventConsumers;
 
@@ -19,6 +20,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     IApplicationDbContextUnitOfWork unitOfWork,
     IMerchantInstallmentService merchantInstallmentService,
     IFinancialDocumentRepository financialDocumentRepository,
+    ITenantMerchantContractRepository tenantMerchantContractRepository,
     ILogger<FinancialDocumentAddedOrUpdatedEventConsumer> logger) : IConsumer<FcmFinancialDocumentAddedOrUpdatedEvent>
 {
     public async Task Consume(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context)
@@ -32,38 +34,48 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
             if (financialDocument == null)
             {
-                decimal commission;
-
                 //purchase and refund
                 financialDocument = await CreateFinancialDocument(context);
 
-                if (financialDocument.Type == FinancialDocumentType.Purchase)
-                { 
-                    commission = await merchantInstallmentService.CreateInstallments(financialDocument);
-                }
-                else
+                if (financialDocument.TenantMerchantContractId.HasValue)
                 {
-                    var parentId = financialDocument.ParentId!.Value;
+                    decimal commission = 0;
 
-                    var purchaseCommission = await financialDocumentRepository.GetPurchaseCommission(parentId);
+                    var contractId = financialDocument.TenantMerchantContractId.Value;
 
-                    var purchaseTransaction = await financialDocumentRepository.GetPurchaseTransaction(parentId);
+                    var contract = await tenantMerchantContractRepository.GetAsync(contractId);
 
-                    var sumOfRefundTransactions = await financialDocumentRepository.GetSumOfRefundTransactions(parentId);
-
-                    if (purchaseTransaction ==  sumOfRefundTransactions + financialDocument.Amount)
+                    if (financialDocument.Type == FinancialDocumentType.Purchase)
                     {
-                        var sumOfRefundCommissions = await financialDocumentRepository.GetSumOfRefundCommissions(parentId);
-
-                        commission = purchaseCommission - sumOfRefundCommissions;
+                        commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
                     }
                     else
                     {
-                        commission = RoundHelper.RoundAmount(purchaseCommission * financialDocument.Amount / purchaseTransaction);
-                    }
-                }
+                        if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount or CommissionCalculationType.FixedPercentage)
+                        {
+                            var parentId = financialDocument.ParentId!.Value;
 
-                financialDocument.SetCommission(commission);
+                            var purchaseCommission = await financialDocumentRepository.GetPurchaseCommission(parentId);
+
+                            var purchaseTransaction = await financialDocumentRepository.GetPurchaseTransaction(parentId);
+
+                            var sumOfRefundTransactions = await financialDocumentRepository.GetSumOfRefundTransactions(parentId);
+
+                            if (purchaseTransaction == sumOfRefundTransactions + financialDocument.Amount)
+                            {
+                                var sumOfRefundCommissions = await financialDocumentRepository.GetSumOfRefundCommissions(parentId);
+
+                                commission = purchaseCommission - sumOfRefundCommissions;
+                            }
+                            else
+                            {
+                                commission = RoundHelper.RoundAmount(purchaseCommission * financialDocument.Amount / purchaseTransaction);
+                            }
+                        }
+                    }
+
+                    financialDocument.SetCommission(commission);
+                }
             }
             else
             {
