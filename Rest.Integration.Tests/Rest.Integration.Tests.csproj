@@ -54,7 +54,7 @@
 
 	<ItemGroup>
 	  <Folder Include="BillingTests\Merchants\" />
-	  <Folder Include="NewFolder\" />
+	  <Folder Include="InstallmentTests\" />
 	</ItemGroup>
 	
 </Project>
