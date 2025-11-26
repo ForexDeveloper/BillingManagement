@@ -4,6 +4,7 @@ using Domain.Core.Enums;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Shared.EventBus.Events;
+using Application.Service.Helper;
 using Microsoft.Extensions.Logging;
 using Application.Service.Contracts;
 using Domain.Core.UnitOfWorkContracts;
@@ -31,15 +32,38 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
             if (financialDocument == null)
             {
+                decimal commission;
+
                 //purchase and refund
                 financialDocument = await CreateFinancialDocument(context);
 
                 if (financialDocument.Type == FinancialDocumentType.Purchase)
-                {
-                    var commission = await merchantInstallmentService.CreateInstallments(financialDocument);
-
-                    financialDocument.SetCommission(commission);
+                { 
+                    commission = await merchantInstallmentService.CreateInstallments(financialDocument);
                 }
+                else
+                {
+                    var parentId = financialDocument.ParentId!.Value;
+
+                    var purchaseCommission = await financialDocumentRepository.GetPurchaseCommission(parentId);
+
+                    var purchaseTransaction = await financialDocumentRepository.GetPurchaseTransaction(parentId);
+
+                    var sumOfRefundTransactions = await financialDocumentRepository.GetSumOfRefundTransactions(parentId);
+
+                    if (purchaseTransaction ==  sumOfRefundTransactions + financialDocument.Amount)
+                    {
+                        var sumOfRefundCommissions = await financialDocumentRepository.GetSumOfRefundCommissions(parentId);
+
+                        commission = purchaseCommission - sumOfRefundCommissions;
+                    }
+                    else
+                    {
+                        commission = RoundHelper.RoundAmount(purchaseCommission * financialDocument.Amount / purchaseTransaction);
+                    }
+                }
+
+                financialDocument.SetCommission(commission);
             }
             else
             {
