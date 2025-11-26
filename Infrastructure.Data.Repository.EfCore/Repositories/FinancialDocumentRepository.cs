@@ -111,10 +111,15 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
     public async Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
-        return await applicationDbContext.FinancialDocuments
+        var commissions = await applicationDbContext.FinancialDocuments
+            .Where(p => p.ParentId.HasValue)
             .Where(p => p.Type == FinancialDocumentType.Refund)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
             .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
-            .SumAsync(p => p.Parent.Commission, cancellationToken);
+            .GroupBy(p => p.ParentId)
+            .Select(p => p.First().Parent.Commission)
+            .ToListAsync(cancellationToken);
+
+        return commissions.Sum(p => p);
     }
 }
