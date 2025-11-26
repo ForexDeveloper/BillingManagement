@@ -1,47 +1,33 @@
-﻿using System.Net;
+﻿using Xunit;
+using System.Net;
 using System.Text.Json;
-using Application.Query.ViewModels.Merchants;
 using FluentAssertions;
 using Rest.Integration.Tests.Base;
-using Xunit;
+using Application.Query.ViewModels.Merchants;
 
-namespace Rest.Integration.Tests.BillingTests
+namespace Rest.Integration.Tests.BillingTests;
+
+[Collection(nameof(SharedHostCollection))]
+public class GetMerchantListFlow(SharedHostFixture hostFixture)
 {
-
-    [Collection(nameof(SharedHostCollection))]
-    public class GetMerchantListFlow
+    [Fact]
+    public async Task GetMerchantList_ShouldReturnListItems()
     {
-        private readonly SharedHostFixture _hostFixture;
+        // Arrange
+        var tenant = hostFixture.Tenant;
+        var merchant = hostFixture.Merchant;
+        const string requestUri = "api/tenant-panel/merchants";
+        var httpClient = await hostFixture.GetAuthenticatedHttpClientAsync(tenant.Id);
 
-        public GetMerchantListFlow(SharedHostFixture hostFixture)
-        {
-            _hostFixture = hostFixture;
-        }
+        // Act
+        var response = await httpClient.GetAsync(requestUri);
+        var content = await response.Content.ReadAsStringAsync();
+        var result = JsonSerializer.Deserialize<List<GetMerchantListVm>>(content, hostFixture.SerializerOptions);
 
-        [Fact]
-        public async Task GetMerchantList_ShouldReturnListItems()
-        {
-            // Arrange
-            var tenant = _hostFixture.Tenant;
-            var merchand = _hostFixture.Merchant;
-            const string requestUri = "api/tenant-panel/merchants";
-            var httpClient = await _hostFixture.GetAuthenticatedHttpClientAsync(tenant.Id);
-            
-            // Act
-            var response = await httpClient.GetAsync(requestUri);
-            var content = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<List<GetMerchantListVm>>(content, _hostFixture.SerializerOptions);
-
-            // Assert
-            response.StatusCode.Should().Be(HttpStatusCode.OK);
-            result.Should().NotBeNull();
-            result.First().Id.Should().Be(merchand.Id);
-            result.First().Title.Should().Be(merchand.Title);
-
-        }
-
-
-
-
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        result.Should().NotBeNull();
+        result.First().Id.Should().Be(merchant.Id);
+        result.First().Title.Should().Be(merchant.Title);
     }
 }
