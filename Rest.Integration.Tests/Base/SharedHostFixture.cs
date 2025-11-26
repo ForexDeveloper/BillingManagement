@@ -1,47 +1,44 @@
-﻿using System.Net.Http.Headers;
+﻿using Service.Rest;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using Domain.Core.Entities.MerchantAggregate;
-using Domain.Core.Entities.TenantAggregate;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Service.Rest;
-
+using Microsoft.AspNetCore.TestHost;
+using System.Text.Json.Serialization;
+using Microsoft.Extensions.Configuration;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.MerchantAggregate;
+using Microsoft.Extensions.DependencyInjection;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Rest.Integration.Tests.Base;
 
 public class SharedHostFixture : IDisposable
 {
+    private bool _disposed;
+    private Tenant _tenant;
+    private bool _isExistDb;
+    private Merchant _merchant;
     private readonly IHost _host;
     private readonly TestServer _server;
     private readonly HttpClient _httpClient;
-    private readonly HttpMessageHandler _httpMessageHandler;
-    private readonly ILogger<SharedHostFixture> _logger;
-    private readonly IAccessTokenManager _tokenManager;
-    private static readonly SemaphoreSlim TestLock = new SemaphoreSlim(1, 1);
-    private bool _isExistDb;
     private ApplicationDbContext _mainContext;
+    private readonly IAccessTokenManager _tokenManager;
+    private readonly ILogger<SharedHostFixture> _logger;
+    private readonly HttpMessageHandler _httpMessageHandler;
     private readonly BaseTestDataBuilder _baseTestDataBuilder;
-    private bool _disposed;
-    private Tenant _tenant;
-    private Merchant _merchant;
+    private static readonly SemaphoreSlim TestLock = new(1, 1);
 
     public SharedHostFixture()
     {
         SetEnvironment("Local");
         _host = CreateAndStartHost();
-
-        _logger = _host.Services.GetRequiredService<ILogger<SharedHostFixture>>();
         _server = _host.GetTestServer();
-        _httpMessageHandler = _server.CreateHandler();
         _httpClient = _host.GetTestClient();
+        _httpMessageHandler = _server.CreateHandler();
         _tokenManager = new AccessTokenManager(Configuration);
-
+        _logger = _host.Services.GetRequiredService<ILogger<SharedHostFixture>>();
 
         InitializeDatabaseAsync().GetAwaiter().GetResult();
 
@@ -49,14 +46,14 @@ public class SharedHostFixture : IDisposable
 
         SetupCompleteTestData();
 
-
         _logger.LogInformation("Billing Management test server started");
     }
 
     public JsonSerializerOptions SerializerOptions { get; } = CreateJsonSerializerOptions();
+
     public IConfiguration Configuration => _host.Services.GetRequiredService<IConfiguration>();
 
-    private IHost CreateAndStartHost()
+    private static IHost CreateAndStartHost()
     {
         var hostBuilder = new HostBuilder()
             .ConfigureAppConfiguration(ConfigureAppConfiguration)
@@ -97,11 +94,9 @@ public class SharedHostFixture : IDisposable
         };
     }
 
-
     private async Task InitializeDatabaseAsync()
     {
         if (_isExistDb) return;
-
 
         await TestLock.WaitAsync();
 
@@ -123,7 +118,6 @@ public class SharedHostFixture : IDisposable
         }
     }
 
-
     private void GenerateTestSqlConnectionString()
     {
         var connection = Configuration.GetConnectionString("ApplicationDbConnection");
@@ -131,11 +125,10 @@ public class SharedHostFixture : IDisposable
             throw new InvalidOperationException("ApplicationDbConnection connection string is not configured");
 
         var dbName = GenerateUniqueDbName();
-        var newConnection = connection.Replace("$_DbName_DontChangeIt_Its_A_Token_$", dbName);
+        var newConnection = connection.Replace("$_DbName_DoNotChangeIt_Its_A_Token_$", dbName);
 
         Configuration["ConnectionStrings:ApplicationDbConnection"] = newConnection;
         Configuration["ConnectionStrings:ReadonlyDbConnection"] = newConnection;
-
     }
 
     private static string GenerateUniqueDbName()
@@ -162,8 +155,8 @@ public class SharedHostFixture : IDisposable
     public HttpClient CreateUnauthenticatedHttpClient => new HttpClient(_httpMessageHandler);
 
     public Tenant Tenant => _tenant;
-    public Merchant Merchant => _merchant;
 
+    public Merchant Merchant => _merchant;
 
     private void SetAccessToken(string token)
     {
@@ -206,9 +199,7 @@ public class SharedHostFixture : IDisposable
 
     public void SetupCompleteTestData()
     {
-
         _tenant = _baseTestDataBuilder.CreateTenant().Result;
         _merchant = _baseTestDataBuilder.CreateMerchant(_tenant.Id).Result;
-
     }
 }
