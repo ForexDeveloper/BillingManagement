@@ -9,6 +9,5 @@ public class CreateMerchantInstallments(SharedHostFixture hostFixture)
     [Fact]
     public async Task CreateMerchantInstallment_ShouldReturnList()
     {
-
     }
 }

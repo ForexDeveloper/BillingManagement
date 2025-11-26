@@ -6,9 +6,11 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
 using System.Text.Json.Serialization;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 using Microsoft.Extensions.Configuration;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.MerchantAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Microsoft.Extensions.DependencyInjection;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
@@ -17,9 +19,7 @@ namespace Rest.Integration.Tests.Base;
 public class SharedHostFixture : IDisposable
 {
     private bool _disposed;
-    private Tenant _tenant;
     private bool _isExistDb;
-    private Merchant _merchant;
     private readonly IHost _host;
     private readonly TestServer _server;
     private readonly HttpClient _httpClient;
@@ -154,9 +154,11 @@ public class SharedHostFixture : IDisposable
 
     public HttpClient CreateUnauthenticatedHttpClient => new HttpClient(_httpMessageHandler);
 
-    public Tenant Tenant => _tenant;
+    public Tenant Tenant { get; private set; }
 
-    public Merchant Merchant => _merchant;
+    public Merchant Merchant { get; private set; }
+
+    public FinancialDocument FinancialDocument { get; private set; }
 
     private void SetAccessToken(string token)
     {
@@ -199,7 +201,8 @@ public class SharedHostFixture : IDisposable
 
     public void SetupCompleteTestData()
     {
-        _tenant = _baseTestDataBuilder.CreateTenant().Result;
-        _merchant = _baseTestDataBuilder.CreateMerchant(_tenant.Id).Result;
+        Tenant = _baseTestDataBuilder.CreateTenant().Result;
+        Merchant = _baseTestDataBuilder.CreateMerchant(Tenant.Id).Result;
+        //FinancialDocument = _baseTestDataBuilder.CreateFinancialDocument().Result;
     }
 }
