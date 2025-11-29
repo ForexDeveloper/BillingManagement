@@ -28,7 +28,7 @@ public class SharedHostFixture : IDisposable
     private readonly ILogger<SharedHostFixture> _logger;
     private readonly HttpMessageHandler _httpMessageHandler;
     private readonly BaseTestDataBuilder _baseTestDataBuilder;
-    private static readonly SemaphoreSlim TestLock = new(1, 1);
+    private readonly SemaphoreSlim _syncDbCreationLock = new(1, 1);
 
     public SharedHostFixture()
     {
@@ -98,7 +98,8 @@ public class SharedHostFixture : IDisposable
     {
         if (_isExistDb) return;
 
-        await TestLock.WaitAsync();
+
+        await _syncDbCreationLock.WaitAsync();
 
         try
         {
@@ -114,7 +115,7 @@ public class SharedHostFixture : IDisposable
         }
         finally
         {
-            TestLock.Release();
+            _syncDbCreationLock.Release();
         }
     }
 

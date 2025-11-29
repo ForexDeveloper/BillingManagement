@@ -1,10 +1,10 @@
 ﻿using Domain.Core.Enums;
+using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Microsoft.EntityFrameworkCore;
 
 namespace Rest.Integration.Tests.Base;
 
@@ -27,7 +27,7 @@ public class BaseTestDataBuilder
 
         if (tenant != null) return tenant;
 
-        tenant = new Tenant(TENANT_ID, "tt", "tpn", "tbn", "p1");
+        tenant = new Tenant(TENANT_ID, "tt", "tpn", "tbn", "p1", false, false);
 
         _context.Add(tenant);
 
