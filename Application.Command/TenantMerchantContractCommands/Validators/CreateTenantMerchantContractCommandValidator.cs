@@ -1,11 +1,11 @@
 ﻿using Application.Command.Base;
 using Application.Service.Dtos.Shared;
 using Domain.Core.Enums;
+using Domain.Core.Helper;
 using FluentValidation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Domain.Core.Helper;
 
 namespace Application.Command.TenantMerchantContractCommands.Validators
 {
@@ -88,9 +88,14 @@ namespace Application.Command.TenantMerchantContractCommands.Validators
             .NotNull().WithMessage("نوع بازه صورت حساب اجباریست.")
             .IsInEnum().WithMessage("نوع بازه صورت حساب نامعتبر است.");
 
+
             RuleFor(x => x.BillingPeriod)
-                .GreaterThanOrEqualTo(0)
-                .WithMessage("روز بازه صورت حساب نامعتبر است.");
+            .Must((x, period) =>
+                x.BillingPeriodType == TimeInterval.Day
+                    ? period > 0
+                    : period >= 0)
+            .WithMessage("تعداد روز بازه صورت حساب نامعتبر است.");
+
 
             RuleFor(x => x.DailyBillingOriginDate)
                 .Must(x => x >= DateTime.Parse("1900/01/01")).WithMessage("تاریخ شروع صدور صورت حساب نامعتبر نیست.")
