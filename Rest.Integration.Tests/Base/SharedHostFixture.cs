@@ -98,7 +98,6 @@ public class SharedHostFixture : IDisposable
     {
         if (_isExistDb) return;
 
-
         await _syncDbCreationLock.WaitAsync();
 
         try
@@ -109,7 +108,7 @@ public class SharedHostFixture : IDisposable
 
             _mainContext ??= _host.Services.GetRequiredService<ApplicationDbContext>();
 
-            _mainContext.Database.EnsureCreated();
+            await _mainContext.Database.EnsureCreatedAsync();
 
             _isExistDb = true;
         }
