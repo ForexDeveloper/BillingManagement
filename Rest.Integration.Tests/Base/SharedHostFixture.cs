@@ -183,6 +183,7 @@ public class SharedHostFixture : IDisposable
             _logger.LogInformation("Payment test disposing resources");
 
             _httpMessageHandler?.Dispose();
+
             _httpClient?.Dispose();
 
             // You can comment this line to preserve the database for inspection
@@ -204,6 +205,6 @@ public class SharedHostFixture : IDisposable
     {
         Tenant = _baseTestDataBuilder.CreateTenant().Result;
         Merchant = _baseTestDataBuilder.CreateMerchant(Tenant.Id).Result;
-        //FinancialDocument = _baseTestDataBuilder.CreateFinancialDocument().Result;
+        FinancialDocument = _baseTestDataBuilder.CreateFinancialDocument().Result;
     }
 }

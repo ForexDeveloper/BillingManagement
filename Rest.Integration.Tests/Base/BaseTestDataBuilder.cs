@@ -57,32 +57,32 @@ public class BaseTestDataBuilder
         return merchant;
     }
 
-    //public async Task<FinancialDocument> CreateFinancialDocument()
-    //{
-    //    var contract = await CreateTenantMerchantContract();
+    public async Task<FinancialDocument> CreateFinancialDocument()
+    {
+        var contract = await CreateTenantMerchantContract();
 
-    //    var financialDocument = new FinancialDocument(1,
-    //        _hostFixture.Tenant.Id,
-    //        _hostFixture.Merchant.Id,
-    //        _hostFixture.Tenant.Id,
-    //        100000000,
-    //        40000000,
-    //        30000000,
-    //        30000000,
-    //        FinancialDocumentType.Purchase,
-    //        FinancialDocumentState.Verified,
-    //        PaymentGatewayType.Ipg,
-    //        null,
-    //        null,
-    //        contract.Id
-    //    );
+        var financialDocument = new FinancialDocument(1,
+            _hostFixture.Tenant.Id,
+            _hostFixture.Merchant.Id,
+            _hostFixture.Tenant.Id,
+            100000000,
+            40000000,
+            30000000,
+            30000000,
+            FinancialDocumentType.Purchase,
+            FinancialDocumentState.Verified,
+            PaymentGatewayType.Ipg,
+            null,
+            null,
+            contract.Id
+        );
 
-    //    await _context.FinancialDocuments.AddAsync(financialDocument);
+        await _context.FinancialDocuments.AddAsync(financialDocument);
 
-    //    await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync();
 
-    //    return financialDocument;
-    //}
+        return financialDocument;
+    }
 
     public async Task<TenantMerchantContract> CreateTenantMerchantContract()
     {
