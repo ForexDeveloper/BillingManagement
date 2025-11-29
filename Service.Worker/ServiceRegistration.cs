@@ -157,11 +157,12 @@ namespace Service.Worker
         }
         internal static void RegisterServices(this IServiceCollection services)
         {
-            services.AddScoped<IBackgroundJobService, BackgroundJobService>();
-            services.AddScoped<IMerchantBillingService, MerchantBillingService>();
-            services.AddScoped<IMerchantInstallmentService, MerchantInstallmentService>();
             services.AddScoped<IWalletContractService, WalletContractService>();
             services.AddScoped<IBillingPaymentService, BillingPaymentService>();
+            services.AddScoped<IBackgroundJobService, BackgroundJobService>();
+            services.AddScoped<IMerchantBillingService, MerchantBillingService>();
+            services.AddScoped<IFinancialDocumentService, FinancialDocumentService>();
+            services.AddScoped<IMerchantInstallmentService, MerchantInstallmentService>();
         }
     }
 }

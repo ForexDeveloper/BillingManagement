@@ -4,7 +4,6 @@ using Domain.Core.Enums;
 using System.Diagnostics;
 using Shared.EventBus.Events;
 using System.Threading.Tasks;
-using Application.Service.Helper;
 using Microsoft.Extensions.Logging;
 using Application.Service.Contracts;
 using Domain.Core.UnitOfWorkContracts;
@@ -18,6 +17,7 @@ namespace Application.Service.EventConsumers;
 
 public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     IApplicationDbContextUnitOfWork unitOfWork,
+    IFinancialDocumentService financialDocumentService,
     IMerchantInstallmentService merchantInstallmentService,
     IFinancialDocumentRepository financialDocumentRepository,
     ITenantMerchantContractRepository tenantMerchantContractRepository,
@@ -53,24 +53,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                     {
                         if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount or CommissionCalculationType.FixedPercentage)
                         {
-                            var parentId = financialDocument.ParentId!.Value;
-
-                            var purchaseCommission = await financialDocumentRepository.GetPurchaseCommission(parentId);
-
-                            var purchaseTransaction = await financialDocumentRepository.GetPurchaseTransaction(parentId);
-
-                            var sumOfRefundTransactions = await financialDocumentRepository.GetSumOfRefundTransactions(parentId);
-
-                            if (purchaseTransaction == sumOfRefundTransactions + financialDocument.Amount)
-                            {
-                                var sumOfRefundCommissions = await financialDocumentRepository.GetSumOfRefundCommissions(parentId);
-
-                                commission = purchaseCommission - sumOfRefundCommissions;
-                            }
-                            else
-                            {
-                                commission = RoundHelper.RoundAmount(purchaseCommission * financialDocument.Amount / purchaseTransaction);
-                            }
+                            commission = await financialDocumentService.CalculateRefundCommission(financialDocument);
                         }
                     }
 
