@@ -49,51 +49,65 @@ public sealed class MerchantBillingService(
     {
         Dictionary<BillingIdentifier, List<BillingDto>> billingsDtoSets = [];
 
-        foreach (var contract in contracts)
+        try
         {
-            var billingDtos = new List<BillingDto>();
-
-            var lastBillingDueDate = await merchantBillingRepository.GetLastBillingDueDate(contract.ContractIds, cancellationToken);
-
-            var installmentRange = await merchantInstallmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
-
-            var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, jobCreatedDateTime, cancellationToken);
-
-            var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
-
-            switch (contract.Status)
+            foreach (var contract in contracts)
             {
-                case true:
-                    await ScanPeriodsForActiveContract(contract, lastBillingDueDate, financialDataRange,
-                        billingDtos, cancellationToken);
-                    break;
+                var billingDtos = new List<BillingDto>();
 
-                case false:
-                    ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, financialDataRange, billingDtos);
-                    break;
+                var lastBillingDueDate = await merchantBillingRepository.GetLastBillingDueDate(contract.ContractIds, cancellationToken);
+
+                var installmentRange = await merchantInstallmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
+
+                var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, jobCreatedDateTime, cancellationToken);
+
+                var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
+
+                switch (contract.Status)
+                {
+                    case true:
+                        await ScanPeriodsForActiveContract(contract, lastBillingDueDate, financialDataRange,
+                            billingDtos, cancellationToken);
+                        break;
+
+                    case false:
+                        ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, financialDataRange, billingDtos);
+                        break;
+                }
+
+                if (billingDtos.Count == 0) continue;
+
+                var tenantToMerchantBillings = billingDtos.Where(p => p.Type == BillingType.TenantToMerchant).ToList();
+
+                var billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.TenantToMerchant);
+
+                if (!billingsDtoSets.TryAdd(billingIdentifier, tenantToMerchantBillings))
+                {
+                    billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(tenantToMerchantBillings);
+                }
+
+                var merchantToTenantBillings = billingDtos.Where(p => p.Type == BillingType.MerchantToTenant).ToList();
+
+                if (merchantToTenantBillings.Count == 0) continue;
+
+                billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.MerchantToTenant);
+
+                if (!billingsDtoSets.TryAdd(billingIdentifier, merchantToTenantBillings))
+                {
+                    billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(merchantToTenantBillings);
+                }
             }
-
-            if (billingDtos.Count == 0) continue;
-
-            var tenantToMerchantBillings = billingDtos.Where(p => p.Type == BillingType.TenantToMerchant).ToList();
-
-            var billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.TenantToMerchant);
-
-            if (!billingsDtoSets.TryAdd(billingIdentifier, tenantToMerchantBillings))
+        }
+        catch (Exception exception)
+        {
+            logger.LogCritical(new LogStruct()
             {
-                billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(tenantToMerchantBillings);
-            }
-
-            var merchantToTenantBillings = billingDtos.Where(p => p.Type == BillingType.MerchantToTenant).ToList();
-
-            if (merchantToTenantBillings.Count == 0) continue;
-
-            billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.MerchantToTenant);
-
-            if (!billingsDtoSets.TryAdd(billingIdentifier, merchantToTenantBillings))
-            {
-                billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(merchantToTenantBillings);
-            }
+                Results = "",
+                InputParams = "",
+                Exception = exception,
+                Message = "MerchantBillingService creating billing dtos failed",
+                ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateBillingDtos)}"
+            });
         }
 
         return billingsDtoSets;
