@@ -33,7 +33,7 @@ public static class ContractPeriodHelper
 
                 var originDate = dailyBillingOriginDate.Value;
 
-                if (specificDate.Date < originDate.Date)
+                if (specificDate.Date < originDate.Date || billingPeriod == 0)
                 {
                     startOfPeriod = DateTime.MaxValue;
                     endOfPeriod = DateTime.MaxValue;
