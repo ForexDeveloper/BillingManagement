@@ -8,28 +8,21 @@ using Application.Query.ViewModels.Merchants;
 namespace Rest.Integration.Tests.BillingTests;
 
 [Collection(nameof(SharedHostCollection))]
-public class GetMerchantListFlow
+public class GetMerchantListFlow(SharedHostFixture hostFixture)
 {
-    private readonly SharedHostFixture _hostFixture;
-
-    public GetMerchantListFlow(SharedHostFixture hostFixture)
-    {
-        _hostFixture = hostFixture;
-    }
-
     [Fact]
     public async Task GetMerchantList_ShouldReturnListItems()
     {
         // Arrange
-        var tenant = _hostFixture.Tenant;
-        var merchant = _hostFixture.Merchant;
+        var tenant = hostFixture.Tenant;
+        var merchant = hostFixture.Merchant;
         const string requestUri = "api/tenant-panel/merchants";
-        var httpClient = await _hostFixture.GetAuthenticatedHttpClientAsync(tenant.Id);
+        var httpClient = await hostFixture.GetAuthenticatedHttpClientAsync(tenant.Id);
 
         // Act
         var response = await httpClient.GetAsync(requestUri);
         var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<List<GetMerchantListVm>>(content, _hostFixture.SerializerOptions);
+        var result = JsonSerializer.Deserialize<List<GetMerchantListVm>>(content, hostFixture.SerializerOptions);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);

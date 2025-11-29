@@ -6,12 +6,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
 using System.Text.Json.Serialization;
-using Domain.Core.Entities.FinancialDocumentAggregate;
 using Microsoft.Extensions.Configuration;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.MerchantAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Microsoft.Extensions.DependencyInjection;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Rest.Integration.Tests.Base;
