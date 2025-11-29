@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
+using Application.Service.Contracts;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Domain.Core.Entities.TenantAggregate;
@@ -29,6 +30,7 @@ public class SharedHostFixture : IDisposable
     private readonly HttpMessageHandler _httpMessageHandler;
     private readonly BaseTestDataBuilder _baseTestDataBuilder;
     private readonly SemaphoreSlim _syncDbCreationLock = new(1, 1);
+    private readonly IMerchantInstallmentService _merchantInstallmentService;
 
     public SharedHostFixture()
     {
@@ -39,6 +41,7 @@ public class SharedHostFixture : IDisposable
         _httpMessageHandler = _server.CreateHandler();
         _tokenManager = new AccessTokenManager(Configuration);
         _logger = _host.Services.GetRequiredService<ILogger<SharedHostFixture>>();
+        _merchantInstallmentService = _host.Services.GetRequiredService<IMerchantInstallmentService>();
 
         InitializeDatabaseAsync().GetAwaiter().GetResult();
 
@@ -98,7 +101,6 @@ public class SharedHostFixture : IDisposable
     {
         if (_isExistDb) return;
 
-
         await _syncDbCreationLock.WaitAsync();
 
         try
@@ -109,7 +111,7 @@ public class SharedHostFixture : IDisposable
 
             _mainContext ??= _host.Services.GetRequiredService<ApplicationDbContext>();
 
-            _mainContext.Database.EnsureCreated();
+            await _mainContext.Database.EnsureCreatedAsync();
 
             _isExistDb = true;
         }
@@ -161,12 +163,16 @@ public class SharedHostFixture : IDisposable
 
     public FinancialDocument FinancialDocument { get; private set; }
 
+    public TenantMerchantContract TenantMerchantContract { get; private set; }
+
     private void SetAccessToken(string token)
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     public ApplicationDbContext GetMainContext() => _mainContext;
+
+    public IMerchantInstallmentService GetMerchantInstallmentService() => _merchantInstallmentService;
 
     public void Dispose()
     {
@@ -201,10 +207,11 @@ public class SharedHostFixture : IDisposable
         return (T)_host.Services.GetRequiredService(typeof(T));
     }
 
-    public void SetupCompleteTestData()
+    private void SetupCompleteTestData()
     {
         Tenant = _baseTestDataBuilder.CreateTenant().Result;
         Merchant = _baseTestDataBuilder.CreateMerchant(Tenant.Id).Result;
         FinancialDocument = _baseTestDataBuilder.CreateFinancialDocument().Result;
-    }
+        TenantMerchantContract = _baseTestDataBuilder.CreateTenantMerchantContract().Result;
+   }
 }

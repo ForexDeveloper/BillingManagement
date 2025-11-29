@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
@@ -59,23 +60,29 @@ public class BaseTestDataBuilder
 
     public async Task<FinancialDocument> CreateFinancialDocument()
     {
+        const long FINANCIAL_DOCUMENT_ID = 1;
+
+        var financialDocument = await _context.FinancialDocuments.FirstOrDefaultAsync(p => p.Id == FINANCIAL_DOCUMENT_ID);
+
+        if (financialDocument != null) return financialDocument;
+
         var contract = await CreateTenantMerchantContract();
 
-        var financialDocument = new FinancialDocument(1,
-            _hostFixture.Tenant.Id,
-            _hostFixture.Merchant.Id,
-            _hostFixture.Tenant.Id,
-            100000000,
-            40000000,
-            30000000,
-            30000000,
-            FinancialDocumentType.Purchase,
-            FinancialDocumentState.Verified,
-            PaymentGatewayType.Ipg,
-            null,
-            null,
-            contract.Id
-        );
+        financialDocument = new FinancialDocument(FINANCIAL_DOCUMENT_ID,
+           _hostFixture.Tenant.Id,
+           _hostFixture.Merchant.Id,
+           _hostFixture.Tenant.Id,
+           100000000,
+           40000000,
+           30000000,
+           30000000,
+           FinancialDocumentType.Purchase,
+           FinancialDocumentState.Verified,
+           PaymentGatewayType.Ipg,
+           null,
+           null,
+           contract.Id
+       );
 
         await _context.FinancialDocuments.AddAsync(financialDocument);
 
