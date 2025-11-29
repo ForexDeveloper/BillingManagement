@@ -14,6 +14,14 @@ public interface IFinancialDocumentRepository
 
     Task<FinancialDocument> GetByIdAsync(long id);
 
+    Task<decimal> GetPurchaseCommission(long id);
+
+    Task<decimal> GetPurchaseTransaction(long id);
+
+    Task<decimal> GetSumOfRefundCommissions(long id);
+
+    Task<decimal> GetSumOfRefundTransactions(long id);
+
     Task<bool> IsTenantPlatformContractUsedInTransaction(int tenantPlatformContractId);
 
     Task<List<int>> GetTenantPlatformContractIdsHasTransaction(List<int> tenantPlatformContractIds);

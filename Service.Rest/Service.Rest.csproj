@@ -13,10 +13,10 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Shared.ApiVersioning" Version="251110.1047.20" />
-		<PackageReference Include="Shared.Logging.Serilog" Version="251110.1047.20" />
-		<PackageReference Include="Shared.Middlewares" Version="251110.1047.20" />
-		<PackageReference Include="Shared.Swagger" Version="251110.1047.20" />
+		<PackageReference Include="Shared.ApiVersioning" Version="251125.530.25" />
+		<PackageReference Include="Shared.Logging.Serilog" Version="251125.530.25" />
+		<PackageReference Include="Shared.Middlewares" Version="251125.530.25" />
+		<PackageReference Include="Shared.Swagger" Version="251125.530.25" />
 	</ItemGroup>
 
 

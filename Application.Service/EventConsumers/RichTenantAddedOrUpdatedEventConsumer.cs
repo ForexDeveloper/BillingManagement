@@ -3,6 +3,7 @@ using Domain.Core.Entities.FinancierAggregate;
 using Domain.Core.Entities.GuarantorAggregate;
 using Domain.Core.Entities.OrganizationAggregate;
 using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Enums;
 using Domain.Core.UnitOfWorkContracts;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -90,10 +91,10 @@ public class RichTenantAddedOrUpdatedEventConsumer : IConsumer<CmRichTenantAdded
     }
     private async Task CreateRichTenant(CmRichTenantAddedOrUpdatedEvent message)
     {
-        Tenant tenant = new(message.Id, message.Title, message.CreditProjectName, message.BrandName, message.InternalProjectManagerName);
+        Tenant tenant = new(message.Id, message.Title, message.CreditProjectName, message.BrandName, message.InternalProjectManagerName,message.HasCoWallet,message.HasAnonymous);
         await _tenantRepository.AddAsync(tenant);
 
-        var organization = new Organization(message.OrganizationId, message.Title, message.Id);
+        var organization = new Organization(message.OrganizationId, message.Title, message.Id, OrganizationTypeEnum.Classic, OrganizationIdentityTypeEnum.Identified);
         await _organizationRepository.AddAsync(organization);
 
         var financier = new Financier(message.FinancierId, message.Title, message.Id, message.IdentityType, true);
@@ -108,7 +109,7 @@ public class RichTenantAddedOrUpdatedEventConsumer : IConsumer<CmRichTenantAdded
 
     private async Task UpdateRichTenant(CmRichTenantAddedOrUpdatedEvent message, Tenant tenant)
     {
-        tenant.Update(message.Title, message.CreditProjectName, message.BrandName, message.InternalProjectManagerName);
+        tenant.Update(message.Title, message.CreditProjectName, message.BrandName, message.InternalProjectManagerName,message.HasCoWallet, message.HasAnonymous);
         _tenantRepository.Update(tenant);
 
         var organization = await _organizationRepository.GetAsync(message.OrganizationId);

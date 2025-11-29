@@ -2,8 +2,8 @@
 using MassTransit;
 using Domain.Core.Enums;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using Shared.EventBus.Events;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Application.Service.Contracts;
 using Domain.Core.UnitOfWorkContracts;
@@ -11,13 +11,16 @@ using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Abstraction.Extensions;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Application.Service.EventConsumers;
 
 public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     IApplicationDbContextUnitOfWork unitOfWork,
+    IFinancialDocumentService financialDocumentService,
     IMerchantInstallmentService merchantInstallmentService,
     IFinancialDocumentRepository financialDocumentRepository,
+    ITenantMerchantContractRepository tenantMerchantContractRepository,
     ILogger<FinancialDocumentAddedOrUpdatedEventConsumer> logger) : IConsumer<FcmFinancialDocumentAddedOrUpdatedEvent>
 {
     public async Task Consume(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context)
@@ -34,9 +37,25 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 //purchase and refund
                 financialDocument = await CreateFinancialDocument(context);
 
-                if (financialDocument.Type == FinancialDocumentType.Purchase)
+                if (financialDocument.TenantMerchantContractId.HasValue)
                 {
-                    var commission = await merchantInstallmentService.CreateInstallments(financialDocument);
+                    decimal commission = 0;
+
+                    var contractId = financialDocument.TenantMerchantContractId.Value;
+
+                    var contract = await tenantMerchantContractRepository.GetAsync(contractId);
+
+                    if (financialDocument.Type == FinancialDocumentType.Purchase)
+                    {
+                        commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+                    }
+                    else
+                    {
+                        if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount or CommissionCalculationType.FixedPercentage)
+                        {
+                            commission = await financialDocumentService.CalculateRefundCommission(financialDocument);
+                        }
+                    }
 
                     financialDocument.SetCommission(commission);
                 }
