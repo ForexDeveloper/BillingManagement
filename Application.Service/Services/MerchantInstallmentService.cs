@@ -11,19 +11,11 @@ using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Application.Service.Services;
 
-public sealed class MerchantInstallmentService(
-    IMerchantInstallmentRepository merchantInstallmentRepository,
-    ITenantMerchantContractRepository tenantMerchantContractRepository) : IMerchantInstallmentService
+public sealed class MerchantInstallmentService(IMerchantInstallmentRepository merchantInstallmentRepository) : IMerchantInstallmentService
 {
-    public async Task<decimal> CreateInstallments(FinancialDocument financialDocument)
+    public async Task<decimal> CreateInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
     {
-        if (!financialDocument.TenantMerchantContractId.HasValue) return 0;
-
         var today = DateTime.Today;
-
-        var contractId = financialDocument.TenantMerchantContractId.Value;
-
-        var contract = await tenantMerchantContractRepository.GetAsync(contractId);
 
         var financialDocumentTargetAmount = financialDocument.Amount;
 
@@ -132,7 +124,7 @@ public sealed class MerchantInstallmentService(
             var installmentDate = installmentDates[i];
 
             var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
-                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contractId, amount, cashAmount,
+                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contract.Id, amount, cashAmount,
                 creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Purchase);
 
             installments.Add(installment);
