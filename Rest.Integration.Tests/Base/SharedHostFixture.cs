@@ -1,11 +1,13 @@
 ﻿using Service.Rest;
 using System.Text.Json;
+using Domain.Core.Enums;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
 using Application.Service.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Domain.Core.Entities.TenantAggregate;
@@ -161,10 +163,6 @@ public class SharedHostFixture : IDisposable
 
     public Merchant Merchant { get; private set; }
 
-    public FinancialDocument FinancialDocument { get; private set; }
-
-    public TenantMerchantContract TenantMerchantContract { get; private set; }
-
     private void SetAccessToken(string token)
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -211,7 +209,90 @@ public class SharedHostFixture : IDisposable
     {
         Tenant = _baseTestDataBuilder.CreateTenant().Result;
         Merchant = _baseTestDataBuilder.CreateMerchant(Tenant.Id).Result;
-        FinancialDocument = _baseTestDataBuilder.CreateFinancialDocument().Result;
-        TenantMerchantContract = _baseTestDataBuilder.CreateTenantMerchantContract().Result;
-   }
+    }
+
+    public async Task<TenantMerchantContract> CreateTenantMerchantContract(int tenantId, int merchantId,
+        SettlementType settlementType, bool isCommissionExchange, int installmentsCount,
+        CommissionDeductionMethodType commissionDeductionMethodType, List<InterestReferenceType> interestReferenceTypes,
+        TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? billingBreak,
+        CommissionCalculationType commissionCalculationType, decimal fixedAmountCommission,
+        decimal fixedPercentageCommission, List<CommissionReferenceType> commissionReferenceTypes,
+        decimal? transactionMinCommissionAmount, decimal? transactionMaxCommissionAmount,
+        decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount)
+    {
+        var tenantMerchantContract = new TenantMerchantContract(tenantId,
+            merchantId,
+            $"TN-MR{Random.Shared.Next(1,10000000)}",
+            DateTime.Now,
+            DateTime.Now.AddMonths(6),
+            settlementType,
+            isCommissionExchange,
+            installmentsCount,
+            commissionDeductionMethodType,
+            null,
+            interestReferenceTypes,
+            billingPeriodType,
+            billingPeriod,
+            dailyBillingOriginDate,
+            billingBreak,
+            PaymentMethodType.BankAccountDeposit,
+            GuaranteeType.House,
+            null,
+            commissionCalculationType,
+            fixedAmountCommission,
+            fixedPercentageCommission,
+            commissionReferenceTypes,
+            transactionMaxCommissionAmount,
+            transactionMaxCommissionAmount,
+            periodMinCommissionAmount,
+            periodMaxCommissionAmount
+        );
+
+        await _mainContext.TenantMerchantContracts.AddAsync(tenantMerchantContract);
+
+        await _mainContext.SaveChangesAsync();
+
+        return tenantMerchantContract;
+    }
+
+    public async Task<FinancialDocument> CreateFinancialDocument(TenantMerchantContract contract)
+    {
+        var FINANCIAL_DOCUMENT_ID = await GetUniqueFinancialDocumentId();
+
+        var financialDocument = new FinancialDocument(FINANCIAL_DOCUMENT_ID,
+            Tenant.Id,
+            Merchant.Id,
+            Tenant.Id,
+            100000000,
+            40000000,
+            30000000,
+            30000000,
+            FinancialDocumentType.Purchase,
+            FinancialDocumentState.Verified,
+            PaymentGatewayType.Ipg,
+            null,
+            null,
+            contract.Id
+        );
+
+        await _mainContext.FinancialDocuments.AddAsync(financialDocument);
+
+        await _mainContext.SaveChangesAsync();
+
+        return financialDocument;
+    }
+
+    private async Task<long> GetUniqueFinancialDocumentId()
+    {
+        var FINANCIAL_DOCUMENT_ID = Random.Shared.Next(1, 100000);
+
+        var found = await _mainContext.FinancialDocuments.AnyAsync(p => p.Id == FINANCIAL_DOCUMENT_ID);
+
+        if (found)
+        {
+            await GetUniqueFinancialDocumentId();
+        }
+
+        return FINANCIAL_DOCUMENT_ID;
+    }
 }

@@ -2,9 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.MerchantAggregate;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.MerchantInstallmentAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Rest.Integration.Tests.Base;
@@ -56,81 +53,5 @@ public class BaseTestDataBuilder
         await _context.SaveChangesAsync();
 
         return merchant;
-    }
-
-    public async Task<FinancialDocument> CreateFinancialDocument()
-    {
-        const long FINANCIAL_DOCUMENT_ID = 1;
-
-        var financialDocument = await _context.FinancialDocuments.FirstOrDefaultAsync(p => p.Id == FINANCIAL_DOCUMENT_ID);
-
-        if (financialDocument != null) return financialDocument;
-
-        var contract = await CreateTenantMerchantContract();
-
-        financialDocument = new FinancialDocument(FINANCIAL_DOCUMENT_ID,
-           _hostFixture.Tenant.Id,
-           _hostFixture.Merchant.Id,
-           _hostFixture.Tenant.Id,
-           100000000,
-           40000000,
-           30000000,
-           30000000,
-           FinancialDocumentType.Purchase,
-           FinancialDocumentState.Verified,
-           PaymentGatewayType.Ipg,
-           null,
-           null,
-           contract.Id
-       );
-
-        await _context.FinancialDocuments.AddAsync(financialDocument);
-
-        await _context.SaveChangesAsync();
-
-        return financialDocument;
-    }
-
-    public async Task<TenantMerchantContract> CreateTenantMerchantContract()
-    {
-        var tenantMerchantContract = new TenantMerchantContract(_hostFixture.Tenant.Id,
-            _hostFixture.Merchant.Id,
-            "TN-MR12349456547",
-            DateTime.Now,
-            DateTime.Now.AddMonths(6),
-            SettlementType.Installments,
-            true,
-            13,
-            CommissionDeductionMethodType.DeductEquallyFromInstallments,
-            null,
-            [
-                InterestReferenceType.CreditAmount, InterestReferenceType.CashAmount,
-                InterestReferenceType.PrepaymentAmount
-            ],
-            TimeInterval.Day,
-            1,
-            DateTime.Now.AddDays(-100),
-            0,
-            PaymentMethodType.BankAccountDeposit,
-            GuaranteeType.House,
-            null,
-            CommissionCalculationType.FixedAmount,
-            140000,
-            13,
-            [
-                CommissionReferenceType.CashAmount, CommissionReferenceType.CreditAmount,
-                CommissionReferenceType.PrepaymentAmount
-            ],
-            10000,
-            50000,
-            100000,
-            500000
-        );
-
-        await _context.TenantMerchantContracts.AddAsync(tenantMerchantContract);
-
-        await _context.SaveChangesAsync();
-
-        return tenantMerchantContract;
     }
 }
