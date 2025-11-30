@@ -4,6 +4,7 @@ using Domain.Core.Enums;
 using System.Globalization;
 using Rest.Integration.Tests.Base;
 using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Rest.Integration.Tests.MerchantInstallmentTests;
 
@@ -367,5 +368,17 @@ public class CreateMerchantInstallments(SharedHostFixture hostFixture)
         installments.Should().HaveCount(installmentsCount);
         installments.Should().AllSatisfy(p => p.Commission.Should().Be(0));
         installments.Sum(p => p.Commission).Should().Be(financialDocument.Commission);
+    }
+}
+
+public static class PropertySetter
+{
+    public static void SetProperty(string property, object value)
+    {
+        TenantMerchantContract contract = null;
+
+        var entityType = typeof(TenantMerchantContract);
+
+        entityType.GetProperty(property)?.SetValue(contract, value);
     }
 }
