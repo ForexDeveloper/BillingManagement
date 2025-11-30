@@ -212,7 +212,7 @@ public class SharedHostFixture : IDisposable
     }
 
     public async Task<TenantMerchantContract> CreateTenantMerchantContract(int tenantId, int merchantId,
-        SettlementType settlementType, bool isCommissionExchange, int installmentsCount,
+        SettlementType settlementType, bool isCommissionExchange, int? installmentsCount,
         CommissionDeductionMethodType commissionDeductionMethodType, List<InterestReferenceType> interestReferenceTypes,
         TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? billingBreak,
         CommissionCalculationType commissionCalculationType, decimal fixedAmountCommission,

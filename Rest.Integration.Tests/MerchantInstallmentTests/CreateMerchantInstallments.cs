@@ -201,4 +201,116 @@ public class CreateMerchantInstallments(SharedHostFixture hostFixture)
             installment.DueDate.Should().Be(nextDueDate);
         }
     }
+
+    [Fact]
+    public async Task CreateMerchantInstallment_ShouldSetCommissionOnFirstInstallment()
+    {
+        var dbContext = hostFixture.GetMainContext();
+
+        var contract = await hostFixture.CreateTenantMerchantContract(
+            hostFixture.Tenant.Id,
+            hostFixture.Merchant.Id,
+            SettlementType.Installments,
+            true,
+            13,
+            CommissionDeductionMethodType.DeductFromFirstInstallment,
+            [
+                InterestReferenceType.CashAmount, InterestReferenceType.CreditAmount,
+                InterestReferenceType.PrepaymentAmount
+            ],
+            TimeInterval.Day,
+            5,
+            DateTime.Today.AddDays(-100),
+            0,
+            CommissionCalculationType.FixedPercentage,
+            45000,
+            13,
+            [
+                CommissionReferenceType.CashAmount, CommissionReferenceType.CreditAmount,
+                CommissionReferenceType.InterestAmount, CommissionReferenceType.PrepaymentAmount
+            ],
+            10000,
+            50000,
+            100000,
+            500000);
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract);
+
+        var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
+
+        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+
+        financialDocument.SetCommission(commission);
+
+        await dbContext.SaveChangesAsync();
+
+        var installments = await dbContext.MerchantInstallments
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+        var installmentsCount = contract.InstallmentsCount ?? 1;
+
+        installments.Should().NotBeNull();
+        installments.Should().HaveCount(installmentsCount);
+
+        installments[0].Commission.Should().BePositive();
+        installments[0].Commission.Should().Be(financialDocument.Commission);
+
+        installments.Skip(1).Should().AllSatisfy(p => p.Commission.Should().Be(0));
+        installments.Sum(p => p.Commission).Should().Be(financialDocument.Commission);
+    }
+
+    [Fact]
+    public async Task CreateMerchantInstallment_ShouldHaveOnlyOneInstallment()
+    {
+        var dbContext = hostFixture.GetMainContext();
+
+        var contract = await hostFixture.CreateTenantMerchantContract(
+            hostFixture.Tenant.Id,
+            hostFixture.Merchant.Id,
+            SettlementType.LumpSum,
+            true,
+            null,
+            CommissionDeductionMethodType.DeductFromFirstInstallment,
+            [
+                InterestReferenceType.CashAmount, InterestReferenceType.CreditAmount,
+                InterestReferenceType.PrepaymentAmount
+            ],
+            TimeInterval.Day,
+            5,
+            DateTime.Today.AddDays(-100),
+            0,
+            CommissionCalculationType.FixedPercentage,
+            45000,
+            13,
+            [
+                CommissionReferenceType.CashAmount, CommissionReferenceType.CreditAmount,
+                CommissionReferenceType.InterestAmount, CommissionReferenceType.PrepaymentAmount
+            ],
+            10000,
+            50000,
+            100000,
+            500000);
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract);
+
+        var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
+
+        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+
+        financialDocument.SetCommission(commission);
+
+        await dbContext.SaveChangesAsync();
+
+        var installments = await dbContext.MerchantInstallments
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+        installments.Should().NotBeNull();
+        installments.Should().HaveCount(1);
+
+        installments[0].Commission.Should().BePositive();
+        installments[0].Commission.Should().Be(financialDocument.Commission);
+
+        installments.Should().AllSatisfy(p => p.Commission.Should().BePositive());
+        installments.Sum(p => p.Commission).Should().Be(financialDocument.Commission);
+    }
 }
