@@ -16,5 +16,5 @@ public interface IMerchantBillingRepository : IRepository<MerchantBilling, long>
 
     Task<DateTime?> GetLastBillingDueDate(IEnumerable<int> contractIds, CancellationToken cancellationToken);
 
-    Task<bool> FindAnotherBillingOnEndOfPeriod(int tenantId, int merchantId, DateTime endOfPeriod, CancellationToken cancellationToken);
+    Task<bool> HasIntersectionWithAnotherBillingPeriod(int tenantId, int merchantId, DateTime endOfPeriod, CancellationToken cancellationToken);
 }
