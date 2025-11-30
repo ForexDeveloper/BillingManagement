@@ -107,7 +107,7 @@ public class CreateMerchantInstallments(SharedHostFixture hostFixture)
     }
 
     [Fact]
-    public async Task CreateMerchantInstallment_ShouldReturnList2()
+    public async Task CreateMerchantInstallment_ShouldSetCommission()
     {
         var pc = new PersianCalendar();
 
