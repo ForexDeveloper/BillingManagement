@@ -10,13 +10,11 @@ using Domain.Core.Entities.TenantMerchantContractAggregate;
 namespace Rest.Integration.Tests.MerchantInstallmentTests;
 
 [Collection(nameof(SharedHostCollection))]
-public class CreateMerchantInstallments(SharedHostFixture hostFixture)
+public class MerchantInstallmentTests(SharedHostFixture hostFixture)
 {
     [Fact]
-    public async Task WhenInstallmentsAreCreated_AllInstallments_ShouldBeTypeOfPurchase()
+    public async Task WhenInstallmentsAreCreated_ShouldSetAllInstallmentTypesToPurchase()
     {
-        var pc = new PersianCalendar();
-
         var dbContext = hostFixture.GetMainContext();
 
         var contract = await hostFixture.CreateTenantMerchantContract();
@@ -40,8 +38,6 @@ public class CreateMerchantInstallments(SharedHostFixture hostFixture)
     [Fact]
     public async Task WhenInstallmentsAreCreated_SumOfInstallmentsAmount_ShouldBeEqualToFinancialDocumentAmounts()
     {
-        var pc = new PersianCalendar();
-
         var dbContext = hostFixture.GetMainContext();
 
         var contract = await hostFixture.CreateTenantMerchantContract();
@@ -260,8 +256,6 @@ public class CreateMerchantInstallments(SharedHostFixture hostFixture)
     [Fact]
     public async Task WhenSettlementType_Is_Installments_NumberOfInstallments_ShouldBeEqualToContractInstallmentsCount()
     {
-        var pc = new PersianCalendar();
-
         var dbContext = hostFixture.GetMainContext();
 
         var contract = await hostFixture.CreateTenantMerchantContract();
