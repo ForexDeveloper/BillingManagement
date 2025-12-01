@@ -15,4 +15,11 @@ public static class UtilityExtension
     {
         return $"int-test-{DateTime.UtcNow:HHmmssfff}";
     }
+
+    public static void SetProperty(this object entity, string property, object? value)
+    {
+        var entityType = entity.GetType();
+
+        entityType.GetProperty(property)?.SetValue(entity, value);
+    }
 }

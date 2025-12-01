@@ -211,41 +211,40 @@ public class SharedHostFixture : IDisposable
         Merchant = _baseTestDataBuilder.CreateMerchant(Tenant.Id).Result;
     }
 
-    public async Task<TenantMerchantContract> CreateTenantMerchantContract(int tenantId, int merchantId,
-        SettlementType settlementType, bool isCommissionExchange, int? installmentsCount,
-        CommissionDeductionMethodType commissionDeductionMethodType, List<InterestReferenceType> interestReferenceTypes,
-        TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? billingBreak,
-        CommissionCalculationType commissionCalculationType, decimal fixedAmountCommission,
-        decimal fixedPercentageCommission, List<CommissionReferenceType> commissionReferenceTypes,
-        decimal? transactionMinCommissionAmount, decimal? transactionMaxCommissionAmount,
-        decimal? periodMinCommissionAmount, decimal? periodMaxCommissionAmount)
+    public async Task<TenantMerchantContract> CreateTenantMerchantContract()
     {
-        var tenantMerchantContract = new TenantMerchantContract(tenantId,
-            merchantId,
-            $"TN-MR{Random.Shared.Next(1,10000000)}",
+        var tenantMerchantContract = new TenantMerchantContract(Tenant.Id,
+            Merchant.Id,
+            $"TN-MR{Random.Shared.Next(1, 10000000)}",
             DateTime.Now,
             DateTime.Now.AddMonths(6),
-            settlementType,
-            isCommissionExchange,
-            installmentsCount,
-            commissionDeductionMethodType,
+            SettlementType.Installments,
+            true,
+            13,
+            CommissionDeductionMethodType.DeductEquallyFromInstallments,
             null,
-            interestReferenceTypes,
-            billingPeriodType,
-            billingPeriod,
-            dailyBillingOriginDate,
-            billingBreak,
+            [
+                InterestReferenceType.CashAmount, InterestReferenceType.CreditAmount,
+                InterestReferenceType.PrepaymentAmount
+            ],
+            TimeInterval.Day,
+            17,
+            DateTime.Today.AddDays(-100),
+            0,
             PaymentMethodType.BankAccountDeposit,
             GuaranteeType.House,
             null,
-            commissionCalculationType,
-            fixedAmountCommission,
-            fixedPercentageCommission,
-            commissionReferenceTypes,
-            transactionMaxCommissionAmount,
-            transactionMaxCommissionAmount,
-            periodMinCommissionAmount,
-            periodMaxCommissionAmount
+            CommissionCalculationType.FixedAmount,
+            45000,
+            13,
+            [
+                CommissionReferenceType.CashAmount, CommissionReferenceType.CreditAmount,
+                CommissionReferenceType.InterestAmount, CommissionReferenceType.PrepaymentAmount
+            ],
+            10000,
+            50000,
+            100000,
+            500000
         );
 
         await _mainContext.TenantMerchantContracts.AddAsync(tenantMerchantContract);
