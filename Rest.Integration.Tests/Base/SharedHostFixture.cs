@@ -32,6 +32,7 @@ public class SharedHostFixture : IDisposable
     private readonly HttpMessageHandler _httpMessageHandler;
     private readonly BaseTestDataBuilder _baseTestDataBuilder;
     private readonly SemaphoreSlim _syncDbCreationLock = new(1, 1);
+    private readonly IMerchantBillingService _merchantBillingService;
     private readonly IMerchantInstallmentService _merchantInstallmentService;
 
     public SharedHostFixture()
@@ -43,6 +44,7 @@ public class SharedHostFixture : IDisposable
         _httpMessageHandler = _server.CreateHandler();
         _tokenManager = new AccessTokenManager(Configuration);
         _logger = _host.Services.GetRequiredService<ILogger<SharedHostFixture>>();
+        _merchantBillingService = _host.Services.GetRequiredService<IMerchantBillingService>();
         _merchantInstallmentService = _host.Services.GetRequiredService<IMerchantInstallmentService>();
 
         InitializeDatabaseAsync().GetAwaiter().GetResult();
@@ -169,6 +171,8 @@ public class SharedHostFixture : IDisposable
     }
 
     public ApplicationDbContext GetMainContext() => _mainContext;
+
+    public IMerchantBillingService GetMerchantBillingService() => _merchantBillingService;
 
     public IMerchantInstallmentService GetMerchantInstallmentService() => _merchantInstallmentService;
 

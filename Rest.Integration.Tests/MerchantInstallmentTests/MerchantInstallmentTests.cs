@@ -10,7 +10,7 @@ using Domain.Core.Entities.TenantMerchantContractAggregate;
 namespace Rest.Integration.Tests.MerchantInstallmentTests;
 
 [Collection(nameof(SharedHostCollection))]
-public class MerchantInstallmentTests(SharedHostFixture hostFixture)
+public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 {
     [Fact]
     public async Task WhenInstallmentsAreCreated_ShouldSetAllInstallmentTypesToPurchase()
