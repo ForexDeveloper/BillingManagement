@@ -69,6 +69,41 @@ public class CreateMerchantInstallments(SharedHostFixture hostFixture)
     }
 
     [Fact]
+    public async Task WhenInstallmentsAreCreated_ShouldSetAllAmountsEquallyOnInstallments()
+    {
+        var dbContext = hostFixture.GetMainContext();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract);
+
+        var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
+
+        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+
+        financialDocument.SetCommission(commission);
+
+        await dbContext.SaveChangesAsync();
+
+        var installments = await dbContext.MerchantInstallments
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+        foreach (var installment in installments)
+        {
+            var index = installments.IndexOf(installment);
+
+            if (index == 0 || index == installments.Count - 1) continue;
+
+            var previousInstallment = installments[index - 1];
+
+            installment.Amount.Should().Be(previousInstallment.Amount);
+            installment.CashAmount.Should().Be(previousInstallment.CashAmount);
+            installment.CreditAmount.Should().Be(previousInstallment.CreditAmount);
+            installment.PrepaymentAmount.Should().Be(previousInstallment.PrepaymentAmount);
+        }
+    }
+
+    [Fact]
     public async Task WhenBillingPeriodType_Is_Daily_DurationBetweenDueDates_ShouldBeEqualToBillingPeriod()
     {
         var pc = new PersianCalendar();
