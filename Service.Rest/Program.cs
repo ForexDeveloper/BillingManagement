@@ -67,7 +67,7 @@ try
     builder.Services.RegisterServices();
     builder.Services.RegisterPublicAppConfiguration(configuration);
     builder.Services.RegisterUnitOfWorks();
-    builder.Services.RegisteRedisServices(configuration);
+    builder.Services.RegisterRedisServices(configuration);
     builder.Services.RegisterOutBoxServices(configuration);
     builder.Services.RegisterMinIoServices(configuration);
     builder.Services.RegisterEncryptionServices(configuration);

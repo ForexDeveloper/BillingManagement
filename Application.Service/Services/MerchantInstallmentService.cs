@@ -15,8 +15,6 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
 {
     public async Task<decimal> CreateInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
     {
-        var today = DateTime.Today;
-
         var financialDocumentTargetAmount = financialDocument.Amount;
 
         if (contract.CommissionReferenceTypes != null && contract.CommissionReferenceTypes.Any())
@@ -91,7 +89,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
         var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
         var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
 
-        var installmentDates = DateHelper.CalculateInstallments(today, installmentCount,
+        var installmentDates = DateHelper.CalculateInstallments(financialDocument.CreatedDateTime, installmentCount,
             TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
 
         List<MerchantInstallment> installments = [];
