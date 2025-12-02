@@ -1,20 +1,24 @@
-﻿using Application.Service.Contracts;
-using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using System.Threading;
+using System.Diagnostics;
+using Service.Worker.Config;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Shared.Logging.Abstraction.Extensions;
+using Application.Service.Contracts;
 using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Serilog.Extensions;
-using System;
-using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
+using Shared.Logging.Abstraction.Extensions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Service.Worker.Workers;
 
-public class MerchantBillingServiceWorker(IServiceProvider services) : BackgroundService
+public sealed class MerchantBillingServiceWorker(IServiceProvider services,
+    IOptions<MerchantBillingJobConfiguration> options) : BackgroundService
 {
     private readonly Stopwatch _stopwatch = new();
+    private readonly MerchantBillingJobConfiguration _configuration = options.Value;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -57,8 +61,40 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
 
                 _stopwatch.Reset();
 
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(_configuration.DelayInMinute), stoppingToken);
             }
         }
+    }
+
+    public override Task StartAsync(CancellationToken cancellationToken)
+    {
+        using var scope = services.CreateScope();
+
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<MerchantBillingServiceWorker>>();
+
+        logger.LogTrace(new LogStruct()
+        {
+            ResponseTimeStopWatcher = _stopwatch,
+            Message = "MerchantBillingServiceWorker StartAsync",
+            ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(StartAsync)}"
+        });
+
+        return base.StartAsync(cancellationToken);
+    }
+
+    public override Task StopAsync(CancellationToken cancellationToken)
+    {
+        using var scope = services.CreateScope();
+
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<MerchantBillingServiceWorker>>();
+
+        logger.LogCritical(new LogStruct()
+        {
+            ResponseTimeStopWatcher = _stopwatch,
+            Message = "MerchantBillingServiceWorker StopAsync",
+            ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(StopAsync)}"
+        });
+
+        return base.StopAsync(cancellationToken);
     }
 }

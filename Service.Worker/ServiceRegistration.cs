@@ -29,7 +29,9 @@ using Shared.EventBus.Configurations;
 using Shared.EventBus.Contracts;
 using Shared.EventBus.Services;
 using Shared.Redis;
+using SixLabors.ImageSharp;
 using System;
+using Service.Worker.Config;
 
 namespace Service.Worker
 {
@@ -147,6 +149,7 @@ namespace Service.Worker
             services.AddScoped<ICustomerRepository, CustomerRepository>();
 
         }
+
         internal static void RegisterRedisServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddRedisWithRedLockService(options =>
@@ -155,6 +158,12 @@ namespace Service.Worker
                 options.InstanceName = configuration["RedisConfiguration:InstanceName"] ?? throw new ArgumentNullException($"RedisInstanceName {options.Configuration} is not set");
             });
         }
+
+        internal static void RegisterConfigurations(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<MerchantBillingJobConfiguration>(configuration.GetSection(nameof(MerchantBillingJobConfiguration)));
+        }
+
         internal static void RegisterServices(this IServiceCollection services)
         {
             services.AddScoped<IWalletContractService, WalletContractService>();
