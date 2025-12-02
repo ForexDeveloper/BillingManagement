@@ -108,8 +108,8 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(nameof(TenantMerchantContract.BillingPeriodType), TimeInterval.Day);
-        contract.SetProperty(nameof(TenantMerchantContract.BillingPeriod), Random.Shared.Next(1, 100));
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+        contract.SetProperty(p => p.BillingPeriod, Random.Shared.Next(1, 100));
 
         var financialDocument = await hostFixture.CreateFinancialDocument(contract);
 
@@ -149,7 +149,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(nameof(TenantMerchantContract.BillingPeriodType), TimeInterval.Week);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Week);
 
         var financialDocument = await hostFixture.CreateFinancialDocument(contract);
 
@@ -189,7 +189,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(nameof(TenantMerchantContract.BillingPeriodType), TimeInterval.Month);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
 
         var financialDocument = await hostFixture.CreateFinancialDocument(contract);
 
@@ -227,8 +227,8 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(nameof(TenantMerchantContract.InstallmentsCount), null);
-        contract.SetProperty(nameof(TenantMerchantContract.SettlementType), SettlementType.LumpSum);
+        contract.SetProperty(p => p.InstallmentsCount, null);
+        contract.SetProperty(p => p.SettlementType, SettlementType.LumpSum);
 
         var financialDocument = await hostFixture.CreateFinancialDocument(contract);
 
@@ -286,8 +286,8 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(nameof(TenantMerchantContract.CommissionDeductionMethodType),
-                CommissionDeductionMethodType.DeductFromFirstInstallment);
+        contract.SetProperty(p => p.CommissionDeductionMethodType, 
+            CommissionDeductionMethodType.DeductFromFirstInstallment);
 
         var financialDocument = await hostFixture.CreateFinancialDocument(contract);
 
@@ -316,7 +316,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(nameof(TenantMerchantContract.CommissionDeductionMethodType),
+        contract.SetProperty(p => p.CommissionDeductionMethodType, 
             CommissionDeductionMethodType.DeductEquallyFromInstallments);
 
         var financialDocument = await hostFixture.CreateFinancialDocument(contract);
@@ -356,7 +356,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(nameof(TenantMerchantContract.CommissionCalculationType), commissionCalculationType);
+        contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
 
         var financialDocument = await hostFixture.CreateFinancialDocument(contract);
 
@@ -391,8 +391,8 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(nameof(TenantMerchantContract.CommissionReferenceTypes), commissionReferenceTypes.ToList());
-        contract.SetProperty(nameof(TenantMerchantContract.CommissionCalculationType), CommissionCalculationType.FixedPercentage);
+        contract.SetProperty(p => p.CommissionReferenceTypes, commissionReferenceTypes.ToList());
+        contract.SetProperty(p => p.CommissionCalculationType, CommissionCalculationType.FixedPercentage);
 
         var financialDocument = await hostFixture.CreateFinancialDocument(contract);
 
