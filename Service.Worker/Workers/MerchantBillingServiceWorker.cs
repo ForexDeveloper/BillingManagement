@@ -1,14 +1,14 @@
-﻿using System;
-using System.Threading;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using Application.Service.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Application.Service.Contracts;
+using Microsoft.Extensions.Logging;
+using Shared.Logging.Abstraction.Extensions;
 using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Serilog.Extensions;
-using Shared.Logging.Abstraction.Extensions;
-using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Service.Worker.Workers;
 
@@ -29,16 +29,6 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<MerchantBillingServiceWorker>>();
 
             logger.AddTraceId(Guid.NewGuid().ToString());
-
-            logger.LogTrace(new LogStruct()
-            {
-                Results = "",
-                InputParams = "",
-                Exception = null,
-                ResponseTimeStopWatcher = _stopwatch,
-                Message = "MerchantBillingServiceWorker started",
-                ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
-            });
 
             try
             {
@@ -62,9 +52,6 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
             {
                 logger.LogTrace(new LogStruct()
                 {
-                    Results = "",
-                    InputParams = "",
-                    Exception = null,
                     ResponseTimeStopWatcher = _stopwatch,
                     Message = "MerchantBillingServiceWorker executed successfully",
                     ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
