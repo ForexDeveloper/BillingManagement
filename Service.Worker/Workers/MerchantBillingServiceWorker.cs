@@ -50,12 +50,15 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
             }
             finally
             {
-                logger.LogTrace(new LogStruct()
-                {
-                    ResponseTimeStopWatcher = _stopwatch,
-                    Message = "MerchantBillingServiceWorker executed successfully",
-                    ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
-                });
+                //logger.LogTrace(new LogStruct()
+                //{
+                //    Results = "",
+                //    InputParams = "",
+                //    Exception = null,
+                //    ResponseTimeStopWatcher = _stopwatch,
+                //    Message = "MerchantBillingServiceWorker executed successfully",
+                //    ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
+                //});
 
                 _stopwatch.Reset();
 
