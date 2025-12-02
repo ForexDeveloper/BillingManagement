@@ -40,8 +40,6 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
             {
                 logger.LogCritical(new LogStruct()
                 {
-                    Results = "",
-                    InputParams = "",
                     Exception = exception,
                     Message = exception.Message,
                     ResponseTimeStopWatcher = _stopwatch,
@@ -50,19 +48,16 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
             }
             finally
             {
-                //logger.LogTrace(new LogStruct()
-                //{
-                //    Results = "",
-                //    InputParams = "",
-                //    Exception = null,
-                //    ResponseTimeStopWatcher = _stopwatch,
-                //    Message = "MerchantBillingServiceWorker executed successfully",
-                //    ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
-                //});
+                logger.LogTrace(new LogStruct()
+                {
+                    ResponseTimeStopWatcher = _stopwatch,
+                    Message = "MerchantBillingServiceWorker executed successfully",
+                    ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
+                });
 
                 _stopwatch.Reset();
 
-                await Task.Delay(TimeSpan.FromHours(3), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
     }
