@@ -1,14 +1,14 @@
-﻿using System;
-using System.Threading;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using Application.Service.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Application.Service.Contracts;
+using Microsoft.Extensions.Logging;
+using Shared.Logging.Abstraction.Extensions;
 using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Serilog.Extensions;
-using Shared.Logging.Abstraction.Extensions;
-using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Service.Worker.Workers;
 
@@ -30,16 +30,6 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
 
             logger.AddTraceId(Guid.NewGuid().ToString());
 
-            logger.LogTrace(new LogStruct()
-            {
-                Results = "",
-                InputParams = "",
-                Exception = null,
-                ResponseTimeStopWatcher = _stopwatch,
-                Message = "MerchantBillingServiceWorker started",
-                ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
-            });
-
             try
             {
                 var jobCreatedDateTime = await backgroundJobService.CreateMerchantBillingJobAsync(stoppingToken);
@@ -50,8 +40,6 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
             {
                 logger.LogCritical(new LogStruct()
                 {
-                    Results = "",
-                    InputParams = "",
                     Exception = exception,
                     Message = exception.Message,
                     ResponseTimeStopWatcher = _stopwatch,
@@ -62,9 +50,6 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
             {
                 logger.LogTrace(new LogStruct()
                 {
-                    Results = "",
-                    InputParams = "",
-                    Exception = null,
                     ResponseTimeStopWatcher = _stopwatch,
                     Message = "MerchantBillingServiceWorker executed successfully",
                     ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
@@ -72,7 +57,7 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
 
                 _stopwatch.Reset();
 
-                await Task.Delay(TimeSpan.FromHours(3), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
             }
         }
     }
