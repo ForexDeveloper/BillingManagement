@@ -81,8 +81,8 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 ResponseTimeStopWatcher = stopWatch,
                 Tags = LogMessageTag.EventBus
             });
-            //TO Do: Idempotency(cause or error : financialDocumentId 10264)
-            //throw;
+
+            throw;
         }
         finally
         {

@@ -58,8 +58,8 @@ public class BillingManualPaymentUpdateStateEventConsumer : IConsumer<PmBillingM
                 ResponseTimeStopWatcher = stopWatch,
                 Tags = LogMessageTag.EventBus
             });
-            //TO Do: Idempotency(cause or error : billingId 71)
-            //throw;
+
+            throw;
         }
         finally
         {
