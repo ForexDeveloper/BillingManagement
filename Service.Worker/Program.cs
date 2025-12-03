@@ -54,8 +54,7 @@ try
             services.RegisterRedisServices(configuration);
             services.RegisterRepositories();
             services.RegisterServices();
-
-
+            services.RegisterConfigurations(configuration);
             services.AddHostedService<OutboxPublisherServiceWorker>();
             services.AddHostedService<MerchantBillingServiceWorker>();
             //services.AddHostedService<CustomerWalletServiceWorker>();

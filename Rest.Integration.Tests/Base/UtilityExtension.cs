@@ -1,5 +1,10 @@
-﻿using System.Text;
+﻿using Domain.Base;
+using System;
+using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
 using System.Text.Json;
+using Xunit;
 
 namespace Rest.Integration.Tests.Base;
 
@@ -14,5 +19,16 @@ public static class UtilityExtension
     public static string GenerateUniqueInvoiceNumber()
     {
         return $"int-test-{DateTime.UtcNow:HHmmssfff}";
+    }
+
+    public static void SetProperty<TEntity, TProperty>(this TEntity entity, Expression<Func<TEntity, TProperty>> propertyExpression, object? value) where TEntity : class
+    {
+        var entityType = entity.GetType();
+
+        var expression = (MemberExpression)propertyExpression.Body;
+
+        var property = expression.Member.Name;
+
+        entityType.GetProperty(property)?.SetValue(entity, value);
     }
 }

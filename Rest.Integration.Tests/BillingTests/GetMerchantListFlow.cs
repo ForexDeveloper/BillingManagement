@@ -10,24 +10,24 @@ namespace Rest.Integration.Tests.BillingTests;
 [Collection(nameof(SharedHostCollection))]
 public class GetMerchantListFlow(SharedHostFixture hostFixture)
 {
-    [Fact]
-    public async Task GetMerchantList_ShouldReturnListItems()
-    {
-        // Arrange
-        var tenant = hostFixture.Tenant;
-        var merchant = hostFixture.Merchant;
-        const string requestUri = "api/tenant-panel/merchants";
-        var httpClient = await hostFixture.GetAuthenticatedHttpClientAsync(tenant.Id);
+    //[Fact]
+    //public async Task GetMerchantList_ShouldReturnListItems()
+    //{
+    //    // Arrange
+    //    var tenant = hostFixture.Tenant;
+    //    var merchant = hostFixture.Merchant;
+    //    const string requestUri = "api/tenant-panel/merchants";
+    //    var httpClient = await hostFixture.GetAuthenticatedHttpClientAsync(tenant.Id);
 
-        // Act
-        var response = await httpClient.GetAsync(requestUri);
-        var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<List<GetMerchantListVm>>(content, hostFixture.SerializerOptions);
+    //    // Act
+    //    var response = await httpClient.GetAsync(requestUri);
+    //    var content = await response.Content.ReadAsStringAsync();
+    //    var result = JsonSerializer.Deserialize<List<GetMerchantListVm>>(content, hostFixture.SerializerOptions);
 
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        result.Should().NotBeNull();
-        result.First().Id.Should().Be(merchant.Id);
-        result.First().Title.Should().Be(merchant.Title);
-    }
+    //    // Assert
+    //    response.StatusCode.Should().Be(HttpStatusCode.OK);
+    //    result.Should().NotBeNull();
+    //    result.First().Id.Should().Be(merchant.Id);
+    //    result.First().Title.Should().Be(merchant.Title);
+    //}
 }

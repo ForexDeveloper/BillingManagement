@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Diagnostics;
+using Service.Worker.Config;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Application.Service.Contracts;
 using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Serilog.Extensions;
@@ -12,9 +14,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Service.Worker.Workers;
 
-public class MerchantBillingServiceWorker(IServiceProvider services) : BackgroundService
+public sealed class MerchantBillingServiceWorker(IServiceProvider services,
+    IOptions<MerchantBillingJobConfiguration> options) : BackgroundService
 {
     private readonly Stopwatch _stopwatch = new();
+    private readonly MerchantBillingJobConfiguration _configuration = options.Value;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -30,16 +34,6 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
 
             logger.AddTraceId(Guid.NewGuid().ToString());
 
-            logger.LogTrace(new LogStruct()
-            {
-                Results = "",
-                InputParams = "",
-                Exception = null,
-                ResponseTimeStopWatcher = _stopwatch,
-                Message = "MerchantBillingServiceWorker started",
-                ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
-            });
-
             try
             {
                 var jobCreatedDateTime = await backgroundJobService.CreateMerchantBillingJobAsync(stoppingToken);
@@ -50,8 +44,6 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
             {
                 logger.LogCritical(new LogStruct()
                 {
-                    Results = "",
-                    InputParams = "",
                     Exception = exception,
                     Message = exception.Message,
                     ResponseTimeStopWatcher = _stopwatch,
@@ -62,9 +54,6 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
             {
                 logger.LogTrace(new LogStruct()
                 {
-                    Results = "",
-                    InputParams = "",
-                    Exception = null,
                     ResponseTimeStopWatcher = _stopwatch,
                     Message = "MerchantBillingServiceWorker executed successfully",
                     ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(ExecuteAsync)}",
@@ -72,8 +61,40 @@ public class MerchantBillingServiceWorker(IServiceProvider services) : Backgroun
 
                 _stopwatch.Reset();
 
-                await Task.Delay(TimeSpan.FromHours(3), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(_configuration.DelayInMinute), stoppingToken);
             }
         }
+    }
+
+    public override Task StartAsync(CancellationToken cancellationToken)
+    {
+        using var scope = services.CreateScope();
+
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<MerchantBillingServiceWorker>>();
+
+        logger.LogTrace(new LogStruct()
+        {
+            ResponseTimeStopWatcher = _stopwatch,
+            Message = "MerchantBillingServiceWorker StartAsync",
+            ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(StartAsync)}"
+        });
+
+        return base.StartAsync(cancellationToken);
+    }
+
+    public override Task StopAsync(CancellationToken cancellationToken)
+    {
+        using var scope = services.CreateScope();
+
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<MerchantBillingServiceWorker>>();
+
+        logger.LogCritical(new LogStruct()
+        {
+            ResponseTimeStopWatcher = _stopwatch,
+            Message = "MerchantBillingServiceWorker StopAsync",
+            ServiceName = $"{nameof(MerchantBillingServiceWorker)}_{nameof(StopAsync)}"
+        });
+
+        return base.StopAsync(cancellationToken);
     }
 }

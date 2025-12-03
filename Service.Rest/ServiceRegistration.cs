@@ -158,7 +158,7 @@ namespace Service.Rest
             services.Configure<PublicAppConfiguration>(configuration.GetSection(nameof(PublicAppConfiguration)));
         }
 
-        internal static void RegisteRedisServices(this IServiceCollection services, IConfiguration configuration)
+        internal static void RegisterRedisServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddRedisWithRedLockService(options =>
             {

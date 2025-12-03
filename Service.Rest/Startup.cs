@@ -56,7 +56,7 @@ namespace Service.Rest
             services.RegisterServices();
             services.RegisterPublicAppConfiguration(configuration);
             services.RegisterUnitOfWorks();
-            services.RegisteRedisServices(configuration);
+            services.RegisterRedisServices(configuration);
             services.RegisterOutBoxServices(configuration);
             services.RegisterMinIoServices(configuration);
             services.RegisterEncryptionServices(configuration);
@@ -64,9 +64,6 @@ namespace Service.Rest
 
             services.AddCustomApiVersioning();
             services.AddHealthChecks().AddCheck<DatabaseConnectionHealthCheck>("database_health_check");
-
-
-
         }
 
         public void Configure(IApplicationBuilder app, ILogger<Startup> logger)

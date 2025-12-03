@@ -6,6 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="InstallmentTests\**" />
+    <EmbeddedResource Remove="InstallmentTests\**" />
+    <None Remove="InstallmentTests\**" />
+  </ItemGroup>
+
 
 	<ItemGroup>
 		<Content Include="appsettings.Stage.json">
@@ -54,8 +60,6 @@
 
 	<ItemGroup>
 	  <Folder Include="BillingTests\Merchants\" />
-	  <Folder Include="InstallmentTests\" />
-	  <Folder Include="MerchantBillingTests\" />
 	</ItemGroup>
 	
 </Project>

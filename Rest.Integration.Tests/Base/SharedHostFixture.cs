@@ -1,10 +1,13 @@
 ﻿using Service.Rest;
 using System.Text.Json;
+using Domain.Core.Enums;
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
+using Application.Service.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Domain.Core.Entities.TenantAggregate;
@@ -29,6 +32,8 @@ public class SharedHostFixture : IDisposable
     private readonly HttpMessageHandler _httpMessageHandler;
     private readonly BaseTestDataBuilder _baseTestDataBuilder;
     private readonly SemaphoreSlim _syncDbCreationLock = new(1, 1);
+    private readonly IMerchantBillingService _merchantBillingService;
+    private readonly IMerchantInstallmentService _merchantInstallmentService;
 
     public SharedHostFixture()
     {
@@ -39,6 +44,8 @@ public class SharedHostFixture : IDisposable
         _httpMessageHandler = _server.CreateHandler();
         _tokenManager = new AccessTokenManager(Configuration);
         _logger = _host.Services.GetRequiredService<ILogger<SharedHostFixture>>();
+        _merchantBillingService = _host.Services.GetRequiredService<IMerchantBillingService>();
+        _merchantInstallmentService = _host.Services.GetRequiredService<IMerchantInstallmentService>();
 
         InitializeDatabaseAsync().GetAwaiter().GetResult();
 
@@ -158,8 +165,6 @@ public class SharedHostFixture : IDisposable
 
     public Merchant Merchant { get; private set; }
 
-    public FinancialDocument FinancialDocument { get; private set; }
-
     private void SetAccessToken(string token)
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -167,10 +172,29 @@ public class SharedHostFixture : IDisposable
 
     public ApplicationDbContext GetMainContext() => _mainContext;
 
+    public IMerchantBillingService GetMerchantBillingService() => _merchantBillingService;
+
+    public IMerchantInstallmentService GetMerchantInstallmentService() => _merchantInstallmentService;
+
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
+    }
+
+    public async Task FlushAsync()
+    {
+        var billings = await _mainContext.Billings.ToListAsync();
+        var installments = await _mainContext.Installments.ToListAsync();
+        var contracts = await _mainContext.TenantMerchantContracts.ToListAsync();
+        var financialDocuments = await _mainContext.FinancialDocuments.ToListAsync();
+
+        _mainContext.Billings.RemoveRange(billings);
+        _mainContext.Installments.RemoveRange(installments);
+        _mainContext.TenantMerchantContracts.RemoveRange(contracts);
+        _mainContext.FinancialDocuments.RemoveRange(financialDocuments);
+
+        await _mainContext.SaveChangesAsync();
     }
 
     protected virtual void Dispose(bool disposing)
@@ -200,10 +224,93 @@ public class SharedHostFixture : IDisposable
         return (T)_host.Services.GetRequiredService(typeof(T));
     }
 
-    public void SetupCompleteTestData()
+    private void SetupCompleteTestData()
     {
         Tenant = _baseTestDataBuilder.CreateTenant().Result;
         Merchant = _baseTestDataBuilder.CreateMerchant(Tenant.Id).Result;
-        FinancialDocument = _baseTestDataBuilder.CreateFinancialDocument().Result;
+    }
+
+    public async Task<TenantMerchantContract> CreateTenantMerchantContract()
+    {
+        var tenantMerchantContract = new TenantMerchantContract(Tenant.Id,
+            Merchant.Id,
+            $"TN-MR{Random.Shared.Next(1, 10000000)}",
+            DateTime.Now,
+            DateTime.Now.AddMonths(6),
+            SettlementType.Installments,
+            true,
+            13,
+            CommissionDeductionMethodType.DeductEquallyFromInstallments,
+            null,
+            [
+                InterestReferenceType.CashAmount, InterestReferenceType.CreditAmount,
+                InterestReferenceType.PrepaymentAmount
+            ],
+            TimeInterval.Day,
+            17,
+            DateTime.MinValue,
+            0,
+            PaymentMethodType.BankAccountDeposit,
+            GuaranteeType.House,
+            null,
+            CommissionCalculationType.FixedAmount,
+            45000,
+            13,
+            [
+                CommissionReferenceType.CashAmount, CommissionReferenceType.CreditAmount,
+                CommissionReferenceType.InterestAmount, CommissionReferenceType.PrepaymentAmount
+            ],
+            10000,
+            50000,
+            100000,
+            500000
+        );
+
+        await _mainContext.TenantMerchantContracts.AddAsync(tenantMerchantContract);
+
+        await _mainContext.SaveChangesAsync();
+
+        return tenantMerchantContract;
+    }
+
+    public async Task<FinancialDocument> CreateFinancialDocument(TenantMerchantContract contract)
+    {
+        var FINANCIAL_DOCUMENT_ID = await GetUniqueFinancialDocumentId();
+
+        var financialDocument = new FinancialDocument(FINANCIAL_DOCUMENT_ID,
+            Tenant.Id,
+            Merchant.Id,
+            Tenant.Id,
+            100000000,
+            40000000,
+            30000000,
+            30000000,
+            FinancialDocumentType.Purchase,
+            FinancialDocumentState.Verified,
+            PaymentGatewayType.Ipg,
+            null,
+            null,
+            contract.Id
+        );
+
+        await _mainContext.FinancialDocuments.AddAsync(financialDocument);
+
+        await _mainContext.SaveChangesAsync();
+
+        return financialDocument;
+    }
+
+    private async Task<long> GetUniqueFinancialDocumentId()
+    {
+        var FINANCIAL_DOCUMENT_ID = Random.Shared.Next(1, 100000);
+
+        var found = await _mainContext.FinancialDocuments.AnyAsync(p => p.Id == FINANCIAL_DOCUMENT_ID);
+
+        if (found)
+        {
+            await GetUniqueFinancialDocumentId();
+        }
+
+        return FINANCIAL_DOCUMENT_ID;
     }
 }

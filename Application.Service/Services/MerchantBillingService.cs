@@ -51,48 +51,62 @@ public sealed class MerchantBillingService(
 
         foreach (var contract in contracts)
         {
-            var billingDtos = new List<BillingDto>();
-
-            var lastBillingDueDate = await merchantBillingRepository.GetLastBillingDueDate(contract.ContractIds, cancellationToken);
-
-            var installmentRange = await merchantInstallmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
-
-            var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, jobCreatedDateTime, cancellationToken);
-
-            var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
-
-            switch (contract.Status)
+            try
             {
-                case true:
-                    await ScanPeriodsForActiveContract(contract, lastBillingDueDate, financialDataRange,
-                        billingDtos, cancellationToken);
-                    break;
+                var billingDtos = new List<BillingDto>();
 
-                case false:
-                    ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, financialDataRange, billingDtos);
-                    break;
+                var lastBillingDueDate = await merchantBillingRepository.GetLastBillingDueDate(contract.ContractIds, cancellationToken);
+
+                var installmentRange = await merchantInstallmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
+
+                var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, jobCreatedDateTime, cancellationToken);
+
+                var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
+
+                switch (contract.Status)
+                {
+                    case true:
+                        await ScanPeriodsForActiveContract(contract, lastBillingDueDate, financialDataRange,
+                            billingDtos, cancellationToken);
+                        break;
+
+                    case false:
+                        ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, financialDataRange, billingDtos);
+                        break;
+                }
+
+                if (billingDtos.Count == 0) continue;
+
+                var tenantToMerchantBillings = billingDtos.Where(p => p.Type == BillingType.TenantToMerchant).ToList();
+
+                var billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.TenantToMerchant);
+
+                if (!billingsDtoSets.TryAdd(billingIdentifier, tenantToMerchantBillings))
+                {
+                    billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(tenantToMerchantBillings);
+                }
+
+                var merchantToTenantBillings = billingDtos.Where(p => p.Type == BillingType.MerchantToTenant).ToList();
+
+                if (merchantToTenantBillings.Count == 0) continue;
+
+                billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.MerchantToTenant);
+
+                if (!billingsDtoSets.TryAdd(billingIdentifier, merchantToTenantBillings))
+                {
+                    billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(merchantToTenantBillings);
+                }
             }
-
-            if (billingDtos.Count == 0) continue;
-
-            var tenantToMerchantBillings = billingDtos.Where(p => p.Type == BillingType.TenantToMerchant).ToList();
-
-            var billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.TenantToMerchant);
-
-            if (!billingsDtoSets.TryAdd(billingIdentifier, tenantToMerchantBillings))
+            catch (Exception exception)
             {
-                billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(tenantToMerchantBillings);
-            }
-
-            var merchantToTenantBillings = billingDtos.Where(p => p.Type == BillingType.MerchantToTenant).ToList();
-
-            if (merchantToTenantBillings.Count == 0) continue;
-
-            billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.MerchantToTenant);
-
-            if (!billingsDtoSets.TryAdd(billingIdentifier, merchantToTenantBillings))
-            {
-                billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(merchantToTenantBillings);
+                logger.LogCritical(new LogStruct()
+                {
+                    Results = "",
+                    InputParams = "",
+                    Exception = exception,
+                    Message = "MerchantBillingService creating billing dtos failed",
+                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateBillingDtos)}"
+                });
             }
         }
 
@@ -103,9 +117,9 @@ public sealed class MerchantBillingService(
         List<NotSettledBilling> overdueBillings, List<NegativeSettledBilling> negativeBillings,
         CancellationToken cancellationToken)
     {
-        try
+        foreach (var (_, billingDtos) in billingDtoGroups)
         {
-            foreach (var (_, billingDtos) in billingDtoGroups)
+            try
             {
                 var oneDeactiveContractHasBilling = false;
 
@@ -208,8 +222,9 @@ public sealed class MerchantBillingService(
                         }
                     }
 
-                    var purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(
-                         contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
+                    var purchaseTransactionsAmount =
+                        await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(
+                            contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                     var refundedTransactionsAmount = refundedTransactions.RefundedTransactionsAmount;
                     var refundedTransactionsCommission = refundedTransactions.RefundedTransactionsCommission;
@@ -217,7 +232,8 @@ public sealed class MerchantBillingService(
                     var tieredCalculatedLevels = purchaseCommission.TieredCalculatedLevels;
                     var tieredTransactionsAmount = purchaseCommission.TieredTransactionsAmount;
                     var purchaseTransactionsCommission = purchaseCommission.PurchaseTransactionsCommission;
-                    var purchaseTransactionsCalculatedCommission = purchaseCommission.PurchaseTransactionsCalculatedCommission;
+                    var purchaseTransactionsCalculatedCommission =
+                        purchaseCommission.PurchaseTransactionsCalculatedCommission;
 
                     var billing = new MerchantBilling(contract.TenantId,
                         billingDto.FromBusinessIdentityId,
@@ -267,28 +283,29 @@ public sealed class MerchantBillingService(
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
             }
-        }
-        catch (Exception exception)
-        {
-            logger.LogCritical(new LogStruct()
+
+            catch (Exception exception)
             {
-                Results = "",
-                InputParams = "",
-                Exception = exception,
-                Message = "MerchantBillingService billings issue failed",
-                ServiceName = $"{nameof(MerchantBillingService)}_{nameof(OverdueExpiredBillings)}"
-            });
-        }
-        finally
-        {
-            logger.LogTrace(new LogStruct()
+                logger.LogCritical(new LogStruct()
+                {
+                    Results = "",
+                    InputParams = "",
+                    Exception = exception,
+                    Message = "MerchantBillingService billings issue failed",
+                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(OverdueExpiredBillings)}"
+                });
+            }
+            finally
             {
-                Results = "",
-                InputParams = "",
-                Exception = null,
-                Message = "MerchantBillingService billings issue completed",
-                ServiceName = $"{nameof(MerchantBillingService)}_{nameof(OverdueExpiredBillings)}"
-            });
+                logger.LogTrace(new LogStruct()
+                {
+                    Results = "",
+                    InputParams = "",
+                    Exception = null,
+                    Message = "MerchantBillingService billings issue completed",
+                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(OverdueExpiredBillings)}"
+                });
+            }
         }
     }
 
@@ -312,10 +329,10 @@ public sealed class MerchantBillingService(
 
             currentPeriod = endOfPeriod == today;
 
-            var anotherBillingFound = await merchantBillingRepository.FindAnotherBillingOnEndOfPeriod(contract.TenantId,
+            var hasIntersection = await merchantBillingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId,
                 contract.MerchantId, endOfPeriod, cancellationToken);
 
-            if (anotherBillingFound == false)
+            if (hasIntersection == false)
             {
                 CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
             }
