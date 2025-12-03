@@ -182,6 +182,21 @@ public class SharedHostFixture : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    public async Task FlushAsync()
+    {
+        var billings = await _mainContext.Billings.ToListAsync();
+        var installments = await _mainContext.Installments.ToListAsync();
+        var contracts = await _mainContext.TenantMerchantContracts.ToListAsync();
+        var financialDocuments = await _mainContext.FinancialDocuments.ToListAsync();
+
+        _mainContext.Billings.RemoveRange(billings);
+        _mainContext.Installments.RemoveRange(installments);
+        _mainContext.TenantMerchantContracts.RemoveRange(contracts);
+        _mainContext.FinancialDocuments.RemoveRange(financialDocuments);
+
+        await _mainContext.SaveChangesAsync();
+    }
+
     protected virtual void Dispose(bool disposing)
     {
         if (_disposed) return;
@@ -233,7 +248,7 @@ public class SharedHostFixture : IDisposable
             ],
             TimeInterval.Day,
             17,
-            DateTime.Today.AddDays(-100),
+            DateTime.MinValue,
             0,
             PaymentMethodType.BankAccountDeposit,
             GuaranteeType.House,
