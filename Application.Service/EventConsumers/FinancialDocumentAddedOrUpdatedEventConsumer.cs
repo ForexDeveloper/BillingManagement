@@ -1,17 +1,17 @@
-﻿using System;
-using MassTransit;
-using Domain.Core.Enums;
-using System.Diagnostics;
-using Shared.EventBus.Events;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Application.Service.Contracts;
-using Domain.Core.UnitOfWorkContracts;
-using Shared.Logging.Abstraction.Models;
-using Shared.Logging.Abstraction.Extensions;
-using Domain.Core.Entities.Shared.Exceptions;
+﻿using Application.Service.Contracts;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Enums;
+using Domain.Core.UnitOfWorkContracts;
+using MassTransit;
+using Microsoft.Extensions.Logging;
+using Shared.EventBus.Events;
+using Shared.Logging.Abstraction.Extensions;
+using Shared.Logging.Abstraction.Models;
+using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace Application.Service.EventConsumers;
 
@@ -81,7 +81,8 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 ResponseTimeStopWatcher = stopWatch,
                 Tags = LogMessageTag.EventBus
             });
-            throw;
+            //TO Do: Idempotency(cause or error : financialDocumentId 10264)
+            //throw;
         }
         finally
         {
