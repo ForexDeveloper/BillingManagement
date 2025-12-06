@@ -47,7 +47,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                     if (financialDocument.Type == FinancialDocumentType.Purchase)
                     {
-                        commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+                        commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
                     }
                     else
                     {
