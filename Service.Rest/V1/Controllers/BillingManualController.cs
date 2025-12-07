@@ -37,7 +37,7 @@ public class BillingManualController(
 
             var installments = new List<MerchantInstallment>();
 
-            var installmentDates = DateHelper.CalculateInstallments(depositDate, 24,
+            var installmentDates = DateHelper.CalculateInstallmentDates(depositDate, 24,
                 TimeInterval.Day, 5, 4, TimeInterval.Month);
 
             for (int i = 0; i < day; i++)
@@ -65,9 +65,9 @@ public class BillingManualController(
     {
         try
         {
-            var jobCreatedDateTime = await backgroundJobService.CreateMerchantBillingJobAsync(cancellationToken);
+            await merchantBillingService.IssueOrOverdueBilling(cancellationToken);
 
-            await merchantBillingService.IssueOrOverdueBilling(jobCreatedDateTime, cancellationToken);
+            await backgroundJobService.CreateMerchantBillingJobAsync(cancellationToken);
 
             return Ok("Billings Created");
         }
@@ -152,7 +152,7 @@ public class BillingManualController(
 
         var installmentCount = contract.InstallmentsCount ?? 1;
 
-        var installmentDates = DateHelper.CalculateInstallments(today, installmentCount,
+        var installmentDates = DateHelper.CalculateInstallmentDates(today, installmentCount,
             TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
 
         var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);

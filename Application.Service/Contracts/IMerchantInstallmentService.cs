@@ -6,5 +6,7 @@ namespace Application.Service.Contracts;
 
 public interface IMerchantInstallmentService
 {
-    Task<decimal> CreateInstallments(TenantMerchantContract contract, FinancialDocument financialDocument);
+    Task<decimal> CreatePurchaseInstallments(TenantMerchantContract contract, FinancialDocument financialDocument);
+
+    Task<decimal> CreateRefundInstallments(TenantMerchantContract contract, FinancialDocument financialDocument);
 }

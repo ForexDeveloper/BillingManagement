@@ -8,13 +8,12 @@ using Application.Service.Helper;
 using Domain.Core.Entities.Shared;
 using Microsoft.Extensions.Logging;
 using Application.Service.Contracts;
-using Application.Service.Dtos.Shared;
 using Domain.Core.UnitOfWorkContracts;
 using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Abstraction.Extensions;
 using Domain.Core.Entities.BillingAggregate.Dtos;
 using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.InstallmentAggregate.Dtos;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
@@ -25,11 +24,10 @@ public sealed class MerchantBillingService(
     ILogger<MerchantBillingService> logger,
     IApplicationDbContextUnitOfWork unitOfWork,
     IMerchantBillingRepository merchantBillingRepository,
-    IFinancialDocumentRepository financialDocumentRepository,
     IMerchantInstallmentRepository merchantInstallmentRepository,
     ITenantMerchantContractRepository tenantMerchantContractRepository) : IMerchantBillingService
 {
-    public async Task IssueOrOverdueBilling(DateTime jobCreatedDateTime, CancellationToken cancellationToken)
+    public async Task IssueOrOverdueBilling(CancellationToken cancellationToken)
     {
         var negativeBillings = await merchantBillingRepository.GetNegativeSettledBillings(cancellationToken);
 
@@ -39,13 +37,13 @@ public sealed class MerchantBillingService(
 
         var groupContracts = await tenantMerchantContractRepository.GetAllGroupContractAsync(cancellationToken);
 
-        var billingsDtoSets = await CreateBillingDtos(groupContracts, jobCreatedDateTime, cancellationToken);
+        var billingsDtoSets = await CreateBillingDtos(groupContracts, cancellationToken);
 
         await CreateMerchantBillings(billingsDtoSets, overdueBillings, negativeBillings, cancellationToken);
     }
 
     private async Task<Dictionary<BillingIdentifier, List<BillingDto>>> CreateBillingDtos(
-        List<ContractGroup> contracts, DateTime jobCreatedDateTime, CancellationToken cancellationToken)
+        List<ContractGroup> contracts, CancellationToken cancellationToken)
     {
         Dictionary<BillingIdentifier, List<BillingDto>> billingsDtoSets = [];
 
@@ -59,19 +57,15 @@ public sealed class MerchantBillingService(
 
                 var installmentRange = await merchantInstallmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
 
-                var financialDocumentRange = await financialDocumentRepository.GetFinancialDocumentRange(contract.ContractIds, lastBillingDueDate, jobCreatedDateTime, cancellationToken);
-
-                var financialDataRange = FinancialDataRange.Create(installmentRange, financialDocumentRange);
-
                 switch (contract.Status)
                 {
                     case true:
-                        await ScanPeriodsForActiveContract(contract, lastBillingDueDate, financialDataRange,
+                        await ScanPeriodsForActiveContract(contract, lastBillingDueDate, installmentRange,
                             billingDtos, cancellationToken);
                         break;
 
                     case false:
-                        ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, financialDataRange, billingDtos);
+                        ScanPeriodsForDeactiveContract(contract, lastBillingDueDate, installmentRange, billingDtos);
                         break;
                 }
 
@@ -223,7 +217,7 @@ public sealed class MerchantBillingService(
                     }
 
                     var purchaseTransactionsAmount =
-                        await merchantInstallmentRepository.GetSumOfTransactionsInSpecificPeriod(
+                        await merchantInstallmentRepository.GetSumOfPurchaseTransactionsInSpecificPeriod(
                             contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                     var refundedTransactionsAmount = refundedTransactions.RefundedTransactionsAmount;
@@ -310,7 +304,7 @@ public sealed class MerchantBillingService(
     }
 
     private async Task ScanPeriodsForActiveContract(ContractGroup contract, DateTime? lastBillingDueDate,
-        FinancialDataRange financialDataRange, List<BillingDto> billingDtos,
+        InstallmentRange installmentRange, List<BillingDto> billingDtos,
         CancellationToken cancellationToken)
     {
         bool currentPeriod;
@@ -337,13 +331,13 @@ public sealed class MerchantBillingService(
                 CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
             }
 
-            await ScanPeriodsForActiveContract(contract, endOfPeriod, financialDataRange, billingDtos, cancellationToken);
+            await ScanPeriodsForActiveContract(contract, endOfPeriod, installmentRange, billingDtos, cancellationToken);
         }
 
-        else if (financialDataRange != null)
+        else if (installmentRange != null)
         {
             (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
-                contract.BillingPeriodType, contract.DailyBillingOriginDate, financialDataRange.MinDate);
+                contract.BillingPeriodType, contract.DailyBillingOriginDate, installmentRange.MinDueDate);
 
             if (endOfPeriod > today) return;
 
@@ -351,10 +345,10 @@ public sealed class MerchantBillingService(
 
             CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
 
-            await ScanPeriodsForActiveContract(contract, endOfPeriod, financialDataRange, billingDtos, cancellationToken);
+            await ScanPeriodsForActiveContract(contract, endOfPeriod, installmentRange, billingDtos, cancellationToken);
         }
 
-        if (!lastBillingDueDate.HasValue && financialDataRange == null)
+        if (!lastBillingDueDate.HasValue && installmentRange == null)
         {
             (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
                 contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
@@ -369,14 +363,14 @@ public sealed class MerchantBillingService(
     }
 
     private static void ScanPeriodsForDeactiveContract(ContractGroup contract, DateTime? lastBillingDueDate,
-        FinancialDataRange financialDataRange, List<BillingDto> billingDtos)
+        InstallmentRange installmentRange, List<BillingDto> billingDtos)
     {
         DateTime endOfPeriod;
         DateTime startOfPeriod;
 
         var today = DateTime.Today;
 
-        if (financialDataRange == null) return;
+        if (installmentRange == null) return;
 
         if (lastBillingDueDate.HasValue)
         {
@@ -386,14 +380,14 @@ public sealed class MerchantBillingService(
         else
         {
             (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
-                contract.BillingPeriodType, contract.DailyBillingOriginDate, financialDataRange.MinDate);
+                contract.BillingPeriodType, contract.DailyBillingOriginDate, installmentRange.MinDueDate);
         }
 
         if (endOfPeriod > today) return;
 
         var currentPeriod = endOfPeriod == today;
 
-        if (endOfPeriod > financialDataRange.MaxDate)
+        if (endOfPeriod > installmentRange.MaxDueDate)
         {
             CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
         }
@@ -401,7 +395,7 @@ public sealed class MerchantBillingService(
         {
             CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
 
-            ScanPeriodsForDeactiveContract(contract, endOfPeriod, financialDataRange, billingDtos);
+            ScanPeriodsForDeactiveContract(contract, endOfPeriod, installmentRange, billingDtos);
         }
     }
 
@@ -716,10 +710,10 @@ public sealed class MerchantBillingService(
     {
         var contract = billingDto.ContractGroup;
 
-        var refundedTransactionsAmount = await financialDocumentRepository.GetSumOfRefundTransactionsInSpecificPeriod(
+        var refundedTransactionsAmount = await merchantInstallmentRepository.GetSumOfRefundTransactionsInSpecificPeriod(
             contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-        var refundedTransactionsCommission = await financialDocumentRepository.GetSumOfRefundCommissionsInSpecificPeriod(
+        var refundedTransactionsCommission = await merchantInstallmentRepository.GetSumOfRefundCommissionsInSpecificPeriod(
             contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
         return new Transactions()
@@ -739,7 +733,7 @@ public sealed class MerchantBillingService(
 
         if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount or CommissionCalculationType.FixedPercentage)
         {
-            purchaseTransactionsCalculatedCommission = await merchantInstallmentRepository.GetSumOfCommissionsInSpecificPeriod(contract.ContractIds,
+            purchaseTransactionsCalculatedCommission = await merchantInstallmentRepository.GetSumOfPurchaseCommissionsInSpecificPeriod(contract.ContractIds,
                 billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
         }
 

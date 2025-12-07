@@ -86,28 +86,6 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
             .Where(p => p.ParentId == id).SumAsync(p => p.Commission);
     }
 
-    public async Task<FinancialDocumentRange> GetFinancialDocumentRange(IEnumerable<int> contractIds,
-        DateTime? lastBillingDueDate, DateTime jobCreatedDateTime, CancellationToken cancellationToken)
-    {
-        var query = applicationDbContext.FinancialDocuments.AsNoTracking()
-            .Where(p => p.Type == FinancialDocumentType.Refund)
-            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value));
-
-        query = lastBillingDueDate.HasValue ?
-            query.Where(p => lastBillingDueDate <= p.CreatedDateTime && p.CreatedDateTime < DateTime.Today) :
-            query.Where(p => jobCreatedDateTime <= p.CreatedDateTime && p.CreatedDateTime < DateTime.Today);
-
-        var found = await query.AnyAsync(cancellationToken);
-
-        if (found == false) return null;
-
-        var minCreatedDateTime = await query.MinAsync(p => p.CreatedDateTime, cancellationToken);
-
-        var maxCreatedDateTime = await query.MaxAsync(p => p.CreatedDateTime, cancellationToken);
-
-        return new FinancialDocumentRange(minCreatedDateTime, maxCreatedDateTime);
-    }
-
     public async Task<IEnumerable<FinancialDocumentDto>> GetFinancialDocumentsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
@@ -122,25 +100,5 @@ public sealed class FinancialDocumentRepository(ApplicationDbContext application
                 PurchaseCommission = p.Parent.Commission
             })
             .ToListAsync(cancellationToken);
-    }
-
-    public async Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(IEnumerable<int> contractIds,
-        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
-    {
-        return await applicationDbContext.FinancialDocuments
-            .Where(p => p.Type == FinancialDocumentType.Refund)
-            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
-            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
-            .SumAsync(p => p.Amount, cancellationToken);
-    }
-
-    public async Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(IEnumerable<int> contractIds,
-        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
-    {
-        return await applicationDbContext.FinancialDocuments
-            .Where(p => p.Type == FinancialDocumentType.Refund)
-            .Where(p => contractIds.Contains(p.TenantMerchantContractId.Value))
-            .Where(p => startOfPeriod <= p.CreatedDateTime && p.CreatedDateTime < endOfPeriod)
-            .SumAsync(p => p.Commission, cancellationToken);
     }
 }

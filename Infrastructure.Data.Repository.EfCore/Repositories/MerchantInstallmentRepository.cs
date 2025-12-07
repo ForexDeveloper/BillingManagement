@@ -133,7 +133,7 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
         return await amountsQuery.SumAsync(p => p, cancellationToken);
     }
 
-    public async Task<decimal> GetSumOfTransactionsInSpecificPeriod(IEnumerable<int> contractIds,
+    public async Task<decimal> GetSumOfPurchaseTransactionsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await _applicationDbContext.MerchantInstallments
@@ -143,11 +143,31 @@ public sealed class MerchantInstallmentRepository(ApplicationDbContext applicati
             .SumAsync(p => p.Amount, cancellationToken);
     }
 
-    public async Task<decimal> GetSumOfCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
+    public async Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(IEnumerable<int> contractIds,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await _applicationDbContext.MerchantInstallments
+            .Where(p => p.Type == InstallmentType.Refund)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId))
+            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
+            .SumAsync(p => p.Amount, cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfPurchaseCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await _applicationDbContext.MerchantInstallments
             .Where(p => p.Type == InstallmentType.Purchase)
+            .Where(p => contractIds.Contains(p.TenantMerchantContractId))
+            .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
+            .SumAsync(p => p.Commission, cancellationToken);
+    }
+
+    public async Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(IEnumerable<int> contractIds,
+        DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken)
+    {
+        return await _applicationDbContext.MerchantInstallments
+            .Where(p => p.Type == InstallmentType.Refund)
             .Where(p => contractIds.Contains(p.TenantMerchantContractId))
             .Where(p => startOfPeriod <= p.DueDate && p.DueDate < endOfPeriod)
             .SumAsync(p => p.Commission, cancellationToken);
