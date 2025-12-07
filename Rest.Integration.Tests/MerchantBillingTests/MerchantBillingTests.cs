@@ -30,11 +30,11 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await ShiftFinancialDocument(financialDocument);
 
-        await _merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         await _dbContext.SaveChangesAsync();
 
-        await _merchantBillingService.IssueOrOverdueBilling(JOB_CREATED_DATETIME, CancellationToken.None);
+        await _merchantBillingService.IssueOrOverdueBilling(CancellationToken.None);
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
@@ -71,11 +71,11 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await ShiftFinancialDocument(financialDocument);
 
-        await _merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         await _dbContext.SaveChangesAsync();
 
-        await _merchantBillingService.IssueOrOverdueBilling(JOB_CREATED_DATETIME, CancellationToken.None);
+        await _merchantBillingService.IssueOrOverdueBilling(CancellationToken.None);
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 

@@ -17,7 +17,6 @@ namespace Application.Service.EventConsumers;
 
 public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     IApplicationDbContextUnitOfWork unitOfWork,
-    IFinancialDocumentService financialDocumentService,
     IMerchantInstallmentService merchantInstallmentService,
     IFinancialDocumentRepository financialDocumentRepository,
     ITenantMerchantContractRepository tenantMerchantContractRepository,
@@ -47,14 +46,11 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                     if (financialDocument.Type == FinancialDocumentType.Purchase)
                     {
-                        commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+                        commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
                     }
                     else
                     {
-                        if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount or CommissionCalculationType.FixedPercentage)
-                        {
-                            commission = await financialDocumentService.CalculateRefundCommission(financialDocument);
-                        }
+                        commission = await merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
                     }
 
                     financialDocument.SetCommission(commission);
@@ -81,6 +77,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 ResponseTimeStopWatcher = stopWatch,
                 Tags = LogMessageTag.EventBus
             });
+
             throw;
         }
         finally

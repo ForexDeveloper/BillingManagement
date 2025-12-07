@@ -23,7 +23,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -46,7 +46,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -75,7 +75,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -115,7 +115,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -155,7 +155,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -195,7 +195,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -234,7 +234,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -264,7 +264,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -293,7 +293,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -323,7 +323,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -362,7 +362,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 
@@ -398,7 +398,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
 
-        var commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+        var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
         financialDocument.SetCommission(commission);
 

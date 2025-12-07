@@ -30,15 +30,6 @@ public interface IFinancialDocumentRepository
 
     Task<List<int>> GetTenantMerchantContractIdsHasTransaction(List<int> tenantMerchantContractIds);
 
-    Task<FinancialDocumentRange?> GetFinancialDocumentRange(IEnumerable<int> contractIds, DateTime? lastBillingDueDate,
-        DateTime jobCreatedDateTime, CancellationToken cancellationToken);
-
     Task<IEnumerable<FinancialDocumentDto>> GetFinancialDocumentsInSpecificPeriod(IEnumerable<int> contractIds,
         DateTime startOfPeriod, DateTime endOfPeriod, CancellationToken cancellationToken);
-
-    Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
-        DateTime endOfPeriod, CancellationToken cancellationToken);
-
-    Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
-        DateTime endOfPeriod, CancellationToken cancellationToken);
 }

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using Domain.Core.Constants;
 using System.Threading.Tasks;
 using Application.Service.Contracts;
@@ -12,7 +11,7 @@ public sealed class BackgroundJobService(
     IBackgroundJobRepository repository,
     IApplicationDbContextUnitOfWork unitOfWork) : IBackgroundJobService
 {
-    public async Task<DateTime> CreateMerchantBillingJobAsync(CancellationToken cancellationToken)
+    public async Task CreateMerchantBillingJobAsync(CancellationToken cancellationToken)
     {
         var jobId = BackgroundJobConstants.MerchantBilling;
 
@@ -26,7 +25,5 @@ public sealed class BackgroundJobService(
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
-
-        return job.CreatedDateTime;
     }
 }

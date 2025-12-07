@@ -1,13 +1,13 @@
-﻿using System;
-using Domain.Core.Enums;
-using System.Globalization;
+﻿using Domain.Core.Enums;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace Application.Service.Helper;
 
 public static class DateHelper
 {
-    public static List<DateTime> CalculateInstallments(DateTime depositDate, int? numberOfInstallments,
+    public static List<DateTime> CalculateInstallmentDates(DateTime depositDate, int? numberOfInstallments,
        TimeInterval? installmentBreakType, int? installmentBreak, int billingPeriod, TimeInterval periodType)
     {
         PersianCalendar pc = new();
@@ -89,29 +89,29 @@ public static class DateHelper
         switch (daysInMonth)
         {
             case 30:
-            {
-                if (dayOfMonth is 29 && billingPeriod is 30)
-                { 
-                    dateOfPeriod = pc.ToDateTime(year, month, 30, 0, 0, 0, 0);
-                }
+                {
+                    if (dayOfMonth is 29 && billingPeriod is 30)
+                    {
+                        dateOfPeriod = pc.ToDateTime(year, month, 30, 0, 0, 0, 0);
+                    }
 
-                break;
-            }
+                    break;
+                }
 
             case 31:
-            {
-                if (dayOfMonth is 29 && billingPeriod is 30)
-                { 
-                    dateOfPeriod = pc.ToDateTime(year, month, 30, 0, 0, 0, 0);
-                }
+                {
+                    if (dayOfMonth is 29 && billingPeriod is 30)
+                    {
+                        dateOfPeriod = pc.ToDateTime(year, month, 30, 0, 0, 0, 0);
+                    }
 
-                if (dayOfMonth is 29 or 30 && billingPeriod is 31)
-                { 
-                    dateOfPeriod = pc.ToDateTime(year, month, 31, 0, 0, 0, 0);
-                }
+                    if (dayOfMonth is 29 or 30 && billingPeriod is 31)
+                    {
+                        dateOfPeriod = pc.ToDateTime(year, month, 31, 0, 0, 0, 0);
+                    }
 
-                break;
-            }
+                    break;
+                }
         }
 
         return dateOfPeriod;
