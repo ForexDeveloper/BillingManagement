@@ -1,12 +1,12 @@
-﻿using System;
-using Domain.Core.Enums;
-using System.Threading.Tasks;
+﻿using Application.Service.Contracts;
 using Application.Service.Helper;
-using System.Collections.Generic;
-using Application.Service.Contracts;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Enums;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Application.Service.Services;
 
@@ -175,7 +175,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
         var lastInstallmentCommission = refundCommission - (installmentCommission * (installmentCount - 1));
 
         var installmentDates = DateHelper.CalculateInstallmentDates(financialDocument.CreatedDateTime, installmentCount,
-            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+            TimeInterval.Day, 0, contract.BillingPeriod, contract.BillingPeriodType);
 
         List<MerchantInstallment> installments = [];
 
