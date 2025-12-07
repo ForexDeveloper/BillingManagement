@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Domain.Core.Entities.InstallmentAggregate.Dtos;
+using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-using Domain.Core.Entities.InstallmentAggregate.Dtos;
-using Domain.Core.Entities.TenantMerchantContractAggregate.Dtos;
 
 namespace Domain.Core.Entities.MerchantInstallmentAggregate;
 
@@ -22,9 +22,15 @@ public interface IMerchantInstallmentRepository : IRepository<MerchantInstallmen
     Task<decimal> GetSumOfTieredTransactionsInSpecificPeriod(ContractGroup contract, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken);
 
-    Task<decimal> GetSumOfTransactionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
+    Task<decimal> GetSumOfPurchaseTransactionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken);
 
-    Task<decimal> GetSumOfCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
+    Task<decimal> GetSumOfRefundTransactionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
+      DateTime endOfPeriod, CancellationToken cancellationToken);
+
+    Task<decimal> GetSumOfPurchaseCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
+        DateTime endOfPeriod, CancellationToken cancellationToken);
+
+    Task<decimal> GetSumOfRefundCommissionsInSpecificPeriod(IEnumerable<int> contractIds, DateTime startOfPeriod,
         DateTime endOfPeriod, CancellationToken cancellationToken);
 }

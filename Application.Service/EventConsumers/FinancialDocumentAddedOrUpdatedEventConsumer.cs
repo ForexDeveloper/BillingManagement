@@ -1,23 +1,22 @@
-﻿using Application.Service.Contracts;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
+using Domain.Core.Enums;
 using System.Diagnostics;
+using Shared.EventBus.Events;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Application.Service.Contracts;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Application.Service.EventConsumers;
 
 public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     IApplicationDbContextUnitOfWork unitOfWork,
-    IFinancialDocumentService financialDocumentService,
     IMerchantInstallmentService merchantInstallmentService,
     IFinancialDocumentRepository financialDocumentRepository,
     ITenantMerchantContractRepository tenantMerchantContractRepository,
@@ -51,10 +50,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                     }
                     else
                     {
-                        if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount or CommissionCalculationType.FixedPercentage)
-                        {
-                            commission = await financialDocumentService.CalculateRefundCommission(financialDocument);
-                        }
+                        commission = await merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
                     }
 
                     financialDocument.SetCommission(commission);

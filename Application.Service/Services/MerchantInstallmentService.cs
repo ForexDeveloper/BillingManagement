@@ -10,7 +10,8 @@ using Domain.Core.Entities.TenantMerchantContractAggregate;
 
 namespace Application.Service.Services;
 
-public sealed class MerchantInstallmentService(IMerchantInstallmentRepository merchantInstallmentRepository) : IMerchantInstallmentService
+public sealed class MerchantInstallmentService(IMerchantInstallmentRepository merchantInstallmentRepository,
+    IFinancialDocumentService financialDocumentService) : IMerchantInstallmentService
 {
     public async Task<decimal> CreatePurchaseInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
     {
@@ -45,13 +46,13 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
             }
         }
 
-        decimal financialDocumentCommission = 0;
+        decimal purchaseCommission = 0;
 
         switch (contract.CommissionCalculationType)
         {
             case CommissionCalculationType.FixedAmount:
 
-                financialDocumentCommission = contract.FixedAmountCommission ?? 0;
+                purchaseCommission = contract.FixedAmountCommission ?? 0;
 
                 break;
 
@@ -59,7 +60,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
 
                 if (!contract.FixedPercentageCommission.HasValue) break;
 
-                financialDocumentCommission = CalculateFixedPercentageCommission(contract, financialDocumentTargetAmount);
+                purchaseCommission = CalculateFixedPercentageCommission(contract, financialDocumentTargetAmount);
 
                 break;
 
@@ -85,10 +86,10 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
         var installmentPrepaymentAmount = RoundHelper.RoundAmount(financialDocument.PrepaymentAmount / installmentCount);
         var lastInstallmentPrepaymentAmount = financialDocument.PrepaymentAmount - (installmentPrepaymentAmount * (installmentCount - 1));
 
-        var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
-        var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
+        var installmentCommission = RoundHelper.RoundAmount(purchaseCommission / installmentCount);
+        var lastInstallmentCommission = purchaseCommission - (installmentCommission * (installmentCount - 1));
 
-        var installmentDates = DateHelper.CalculateInstallments(financialDocument.CreatedDateTime, installmentCount,
+        var installmentDates = DateHelper.CalculateInstallmentDates(financialDocument.CreatedDateTime, installmentCount,
             TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
 
         List<MerchantInstallment> installments = [];
@@ -134,7 +135,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
                     break;
 
                 case CommissionDeductionMethodType.DeductFromFirstInstallment:
-                    installments[0].SetCommission(financialDocumentCommission);
+                    installments[0].SetCommission(purchaseCommission);
                     break;
 
                 default:
@@ -144,18 +145,17 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
 
         await merchantInstallmentRepository.AddRangeAsync(installments);
 
-        return financialDocumentCommission;
+        return purchaseCommission;
     }
 
     public async Task<decimal> CreateRefundInstallments(TenantMerchantContract contract, FinancialDocument financialDocument)
     {
-        if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount
-            or CommissionCalculationType.FixedPercentage)
+        decimal refundCommission = 0;
+
+        if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount or CommissionCalculationType.FixedPercentage)
         {
-
+            refundCommission = await financialDocumentService.CalculateRefundCommission(financialDocument);
         }
-
-        decimal financialDocumentCommission = 0;
 
         var installmentCount = contract.InstallmentsCount ?? 1;
 
@@ -171,10 +171,10 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
         var installmentPrepaymentAmount = RoundHelper.RoundAmount(financialDocument.PrepaymentAmount / installmentCount);
         var lastInstallmentPrepaymentAmount = financialDocument.PrepaymentAmount - (installmentPrepaymentAmount * (installmentCount - 1));
 
-        var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
-        var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
+        var installmentCommission = RoundHelper.RoundAmount(refundCommission / installmentCount);
+        var lastInstallmentCommission = refundCommission - (installmentCommission * (installmentCount - 1));
 
-        var installmentDates = DateHelper.CalculateInstallments(financialDocument.CreatedDateTime, installmentCount,
+        var installmentDates = DateHelper.CalculateInstallmentDates(financialDocument.CreatedDateTime, installmentCount,
             TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
 
         List<MerchantInstallment> installments = [];
@@ -220,7 +220,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
                     break;
 
                 case CommissionDeductionMethodType.DeductFromFirstInstallment:
-                    installments[0].SetCommission(financialDocumentCommission);
+                    installments[0].SetCommission(refundCommission);
                     break;
 
                 default:
@@ -230,7 +230,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
 
         await merchantInstallmentRepository.AddRangeAsync(installments);
 
-        return financialDocumentCommission;
+        return refundCommission;
     }
 
     private static decimal CalculateFixedPercentageCommission(TenantMerchantContract contract, decimal financialDocumentTargetAmount)

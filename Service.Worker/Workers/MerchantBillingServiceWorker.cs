@@ -36,9 +36,9 @@ public sealed class MerchantBillingServiceWorker(IServiceProvider services,
 
             try
             {
-                var jobCreatedDateTime = await backgroundJobService.CreateMerchantBillingJobAsync(stoppingToken);
+                await merchantBillingService.IssueOrOverdueBilling(stoppingToken);
 
-                await merchantBillingService.IssueOrOverdueBilling(jobCreatedDateTime, stoppingToken);
+                await backgroundJobService.CreateMerchantBillingJobAsync(stoppingToken);
             }
             catch (Exception exception)
             {
