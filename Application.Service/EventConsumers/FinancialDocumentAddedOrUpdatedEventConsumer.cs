@@ -1,23 +1,26 @@
-﻿using System;
-using MassTransit;
+﻿using Application.Service.Contracts;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Domain.Core.Enums;
+using Domain.Core.UnitOfWorkContracts;
+using MassTransit;
+using Microsoft.Extensions.Logging;
+using Shared.EventBus.Events;
+using Shared.Logging.Abstraction.Extensions;
+using Shared.Logging.Abstraction.Models;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Shared.EventBus.Events;
-using Microsoft.Extensions.Logging;
-using Application.Service.Contracts;
-using Domain.Core.UnitOfWorkContracts;
-using Shared.Logging.Abstraction.Models;
-using Shared.Logging.Abstraction.Extensions;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.FinancialDocumentAggregate;
 
 namespace Application.Service.EventConsumers;
 
 public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     IApplicationDbContextUnitOfWork unitOfWork,
+    IFinancialDocumentService financialDocumentService,
     IMerchantInstallmentService merchantInstallmentService,
     IFinancialDocumentRepository financialDocumentRepository,
+    ITenantMerchantContractRepository tenantMerchantContractRepository,
     ILogger<FinancialDocumentAddedOrUpdatedEventConsumer> logger) : IConsumer<FcmFinancialDocumentAddedOrUpdatedEvent>
 {
     public async Task Consume(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context)
@@ -34,9 +37,25 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 //purchase and refund
                 financialDocument = await CreateFinancialDocument(context);
 
-                if (financialDocument.Type == FinancialDocumentType.Purchase)
+                if (financialDocument.TenantMerchantContractId.HasValue)
                 {
-                    var commission = await merchantInstallmentService.CreateInstallments(financialDocument);
+                    decimal commission = 0;
+
+                    var contractId = financialDocument.TenantMerchantContractId.Value;
+
+                    var contract = await tenantMerchantContractRepository.GetAsync(contractId);
+
+                    if (financialDocument.Type == FinancialDocumentType.Purchase)
+                    {
+                        commission = await merchantInstallmentService.CreateInstallments(contract, financialDocument);
+                    }
+                    else
+                    {
+                        if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount or CommissionCalculationType.FixedPercentage)
+                        {
+                            commission = await financialDocumentService.CalculateRefundCommission(financialDocument);
+                        }
+                    }
 
                     financialDocument.SetCommission(commission);
                 }
@@ -62,6 +81,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
                 ResponseTimeStopWatcher = stopWatch,
                 Tags = LogMessageTag.EventBus
             });
+
             throw;
         }
         finally

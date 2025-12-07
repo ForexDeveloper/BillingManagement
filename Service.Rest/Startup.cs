@@ -56,7 +56,7 @@ namespace Service.Rest
             services.RegisterServices();
             services.RegisterPublicAppConfiguration(configuration);
             services.RegisterUnitOfWorks();
-            services.RegisteRedisServices(configuration);
+            services.RegisterRedisServices(configuration);
             services.RegisterOutBoxServices(configuration);
             services.RegisterMinIoServices(configuration);
             services.RegisterEncryptionServices(configuration);

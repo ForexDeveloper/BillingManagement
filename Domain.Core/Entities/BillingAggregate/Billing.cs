@@ -5,6 +5,7 @@ using Domain.Core.Enums;
 using Domain.Core.Helper;
 using System.Globalization;
 using System.Collections.Generic;
+using System.Threading;
 using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.TenantAggregate;
@@ -183,7 +184,8 @@ public abstract class Billing : BaseEntity<long>
         }
         else
         {
-            Status = BillingStatus.Settled;
+            Status = PayableAmount == 0 ? BillingStatus.Settled :
+                throw new ArgumentValidationException(nameof(additionsAmount), "مبلغ اضافات نمی تواند باعث منفی شدن مبلغ قابل پرداخت صورتحساب شود");
         }
 
         SetCheckSum();
@@ -200,11 +202,6 @@ public abstract class Billing : BaseEntity<long>
         if (Status is BillingStatus.Overdue)
         {
             throw new ArgumentValidationException(nameof(deductionsAmount), "امکان ثبت کسورات برای صورتحساب معوق شده وجود ندارد");
-        }
-
-        if (PayableAmount + DeductionsAmount < deductionsAmount)
-        {
-            throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از مبلغ قابل پرداخت صورتحساب بیشتر باشد");
         }
 
         if (PaymentDeadlineDate < DateTime.Today)
@@ -226,7 +223,8 @@ public abstract class Billing : BaseEntity<long>
         }
         else
         {
-            Status = BillingStatus.Settled;
+            Status = PayableAmount == 0 ? BillingStatus.Settled :
+                throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از مبلغ قابل پرداخت صورتحساب بیشتر باشد");
         }
 
         SetCheckSum();

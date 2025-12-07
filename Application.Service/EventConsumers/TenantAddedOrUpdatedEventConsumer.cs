@@ -75,7 +75,7 @@ public class TenantAddedOrUpdatedEventConsumer : IConsumer<CmTenantAddedOrUpdate
 
     private async Task CreateTenant(ConsumeContext<CmTenantAddedOrUpdatedEvent> context)
     {
-        Tenant tenant = new(context.Message.Id, context.Message.Title, context.Message.CreditProjectName, context.Message.BrandName, context.Message.InternalProjectManagerName);
+        Tenant tenant = new(context.Message.Id, context.Message.Title, context.Message.CreditProjectName, context.Message.BrandName, context.Message.InternalProjectManagerName, context.Message.HasCoWallet, context.Message.HasAnonymous);
 
         await _tenantRepository.AddAsync(tenant);
         await _unitOfWork.SaveChangesAsync();
@@ -83,7 +83,7 @@ public class TenantAddedOrUpdatedEventConsumer : IConsumer<CmTenantAddedOrUpdate
 
     private async Task UpdateTenant(ConsumeContext<CmTenantAddedOrUpdatedEvent> context, Tenant tenant)
     {
-        tenant.Update(context.Message.Title, context.Message.CreditProjectName, context.Message.BrandName, context.Message.InternalProjectManagerName);
+        tenant.Update(context.Message.Title, context.Message.CreditProjectName, context.Message.BrandName, context.Message.InternalProjectManagerName,context.Message.HasCoWallet,context.Message.HasAnonymous);
         _tenantRepository.Update(tenant);
         await _unitOfWork.SaveChangesAsync();
     }

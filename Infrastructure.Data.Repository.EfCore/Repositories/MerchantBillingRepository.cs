@@ -84,12 +84,18 @@ public sealed class MerchantBillingRepository(ApplicationDbContext applicationDb
         return lastBillingDueDate == DateTime.MinValue ? null : lastBillingDueDate;
     }
 
-    public async Task<bool> FindAnotherBillingOnEndOfPeriod(int tenantId, int merchantId, DateTime endOfPeriod, CancellationToken cancellationToken)
+    public async Task<bool> HasIntersectionWithAnotherBillingPeriod(int tenantId, int merchantId, DateTime endOfPeriod, CancellationToken cancellationToken)
     {
         return await _applicationDbContext.MerchantBillings
-            .Where(p => p.FromBusinessIdentityId == tenantId &&
-                        p.ToBusinessIdentityId == merchantId &&
-                        p.DueDate == endOfPeriod)
+            .Where(p => (p.Type == BillingType.TenantToMerchant &&
+                         p.FromBusinessIdentityId == tenantId &&
+                         p.ToBusinessIdentityId == merchantId &&
+                         p.StartDate <= endOfPeriod && endOfPeriod < p.DueDate)
+                        ||
+                        (p.Type == BillingType.MerchantToTenant &&
+                        p.FromBusinessIdentityId == merchantId &&
+                        p.ToBusinessIdentityId == tenantId &&
+                        p.StartDate <= endOfPeriod && endOfPeriod < p.DueDate))
             .AnyAsync(cancellationToken);
     }
 

@@ -145,6 +145,7 @@ namespace Service.Rest
             services.AddScoped<ITenantMerchantContractService, TenantMerchantContractService>();
             services.AddScoped<IAttachmentService, AttachmentService>();
             services.AddScoped<IMerchantBillingService, MerchantBillingService>();
+            services.AddScoped<IFinancialDocumentService, FinancialDocumentService>();
             services.AddScoped<ITenantPlatformContractService, TenantPlatformContractService>();
             services.AddScoped<IWalletContractService, WalletContractService>();
             services.AddScoped<IMerchantBillingService, MerchantBillingService>();
@@ -157,7 +158,7 @@ namespace Service.Rest
             services.Configure<PublicAppConfiguration>(configuration.GetSection(nameof(PublicAppConfiguration)));
         }
 
-        internal static void RegisteRedisServices(this IServiceCollection services, IConfiguration configuration)
+        internal static void RegisterRedisServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddRedisWithRedLockService(options =>
             {

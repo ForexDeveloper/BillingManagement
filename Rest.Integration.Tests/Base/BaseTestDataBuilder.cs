@@ -18,7 +18,7 @@ namespace Rest.Integration.Tests.Base
 
         public async Task<Tenant> CreateTenant()
         {
-            var tenant = new Tenant(1, "tt", "tpn", "tbn", "p1");
+            var tenant = new Tenant(1, "tt", "tpn", "tbn", "p1",true,true);
             
             _context.Add(tenant);
             _context.Tenants.Add(tenant);
