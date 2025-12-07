@@ -1,10 +1,6 @@
-﻿using Domain.Base;
-using System;
-using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
-using Xunit;
+using System.Linq.Expressions;
 
 namespace Rest.Integration.Tests.Base;
 
