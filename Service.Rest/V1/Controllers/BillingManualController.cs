@@ -1,12 +1,12 @@
-﻿using Domain.Core.Enums;
-using Microsoft.AspNetCore.Mvc;
+﻿using Application.Service.Contracts;
 using Application.Service.Helper;
-using Application.Service.Contracts;
-using Domain.Core.UnitOfWorkContracts;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Enums;
+using Domain.Core.UnitOfWorkContracts;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Service.Rest.V1.Controllers;
 
@@ -150,7 +150,7 @@ public class BillingManualController(
                 throw new ArgumentOutOfRangeException();
         }
 
-        var installmentCount = contract.InstallmentsCount ?? 1;
+        var installmentCount = contract.InstallmentsCount;
 
         var installmentDates = DateHelper.CalculateInstallmentDates(today, installmentCount,
             TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
