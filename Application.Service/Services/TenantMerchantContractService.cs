@@ -174,7 +174,7 @@ namespace Application.Service.Services
                 StartDate = contract.StartDate,
                 EndDate = contract.EndDate,
                 Status = contract.Status,
-                InstallmentsCount = contract.SettlementType == SettlementType.LumpSum ? 1 : contract.InstallmentsCount.Value
+                InstallmentsCount = contract.InstallmentsCount
             });
         }
     }

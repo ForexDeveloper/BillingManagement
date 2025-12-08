@@ -72,7 +72,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
                 throw new ArgumentOutOfRangeException();
         }
 
-        var installmentCount = contract.InstallmentsCount ?? 1;
+        var installmentCount = contract.InstallmentsCount;
 
         var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
         var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
@@ -157,7 +157,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
             refundCommission = await financialDocumentService.CalculateRefundCommission(financialDocument);
         }
 
-        var installmentCount = contract.InstallmentsCount ?? 1;
+        var installmentCount = contract.InstallmentsCount;
 
         var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
         var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));

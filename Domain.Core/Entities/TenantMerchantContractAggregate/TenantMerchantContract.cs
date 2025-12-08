@@ -1,13 +1,13 @@
-﻿using System;
-using Domain.Base;
+﻿using Domain.Base;
+using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.MerchantAggregate;
+using Domain.Core.Entities.Shared;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
+using System;
 using System.Collections.Generic;
-using Domain.Core.Entities.Shared;
-using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.Entities.MerchantAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.FinancialDocumentAggregate;
 
 namespace Domain.Core.Entities.TenantMerchantContractAggregate;
 
@@ -37,7 +37,7 @@ public class TenantMerchantContract : BaseEntity<int>
 
     public bool IsCommissionExchanged { get; private set; }
 
-    public int? InstallmentsCount { get; private set; }
+    public int InstallmentsCount { get; private set; }
 
     public CommissionDeductionMethodType? CommissionDeductionMethodType { get; private set; }
 
@@ -111,7 +111,7 @@ public class TenantMerchantContract : BaseEntity<int>
         EndDate = endDate;
         SettlementType = settlementType;
         IsCommissionExchanged = isCommissionExchanged;
-        InstallmentsCount = installmentsCount;
+        SetInstallmentsCount(installmentsCount);
         CommissionDeductionMethodType = commissionDeductionMethodType;
         InterestPercentage = interestPercentage;
         InterestReferenceTypes = interestReferenceTypes;
@@ -154,7 +154,7 @@ public class TenantMerchantContract : BaseEntity<int>
         EndDate = endDate;
         SettlementType = settlementType;
         IsCommissionExchanged = isCommissionExchanged;
-        InstallmentsCount = installmentsCount;
+        SetInstallmentsCount(installmentsCount);
         CommissionDeductionMethodType = commissionDeductionMethodType;
         InterestPercentage = interestPercentage;
         InterestReferenceTypes = interestReferenceTypes;
@@ -234,5 +234,10 @@ public class TenantMerchantContract : BaseEntity<int>
             throw new ArgumentValidationException(nameof(ContractNumber), $"{nameof(contractNumber)} is required");
 
         ContractNumber = contractNumber;
+    }
+
+    public void SetInstallmentsCount(int? installmentsCount)
+    {
+        InstallmentsCount = SettlementType == SettlementType.LumpSum ? 1 : installmentsCount.Value;
     }
 }

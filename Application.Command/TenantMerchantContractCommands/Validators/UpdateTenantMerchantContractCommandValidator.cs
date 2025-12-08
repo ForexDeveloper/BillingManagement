@@ -56,9 +56,6 @@ namespace Application.Command.TenantMerchantContractCommands.Validators
               .GreaterThanOrEqualTo(2).WithMessage("تعداد اقساط نامعتبر است.")
               .When(x => x.SettlementType == SettlementType.Installments);
 
-            RuleFor(x => x.InstallmentsCount)
-              .Null().WithMessage("تعداد اقساط نامعتبر است.")
-              .When(x => x.SettlementType == SettlementType.LumpSum);
 
             RuleFor(x => x.CommissionDeductionMethodType)
                 .NotNull().WithMessage("انتخاب نحوه کسر کارمزد از اقساط اجباریست.")
