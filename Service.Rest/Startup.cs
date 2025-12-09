@@ -1,25 +1,17 @@
 ﻿using Application.Command.Base;
 using Application.Service.HealthChecks;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Microsoft.OpenApi.Models;
 using Shared.ApiVersioning;
 using Shared.FluentValidation;
-using Shared.IdentityServerProvider;
-using Shared.Logging.Serilog;
-using Shared.Logging.Serilog.Configurations;
-using Shared.Middlewares;
 using Shared.Swagger;
 using Shared.Swagger.Extensions;
-using System.Reflection;
-using System.Text.Json.Serialization;
 
 namespace Service.Rest
 {
     public partial class Startup(IConfiguration configuration, IWebHostEnvironment env)
-    {      
+    {
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
@@ -64,6 +56,7 @@ namespace Service.Rest
 
             services.AddCustomApiVersioning();
             services.AddHealthChecks().AddCheck<DatabaseConnectionHealthCheck>("database_health_check");
+            services.RegisteOpenTelemetryServices("BillingManagementGeneralMetrics");
 
 
 
