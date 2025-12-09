@@ -258,7 +258,7 @@ public sealed class MerchantBillingService(
                     {
                         if (!contract.Status) continue;
 
-                        if (contract.Status && !billingDto.CurrentPeriod) continue;
+                        //if (contract.Status && !billingDto.CurrentPeriod) continue;
 
                         if (contract.Status && billingDto.CurrentPeriod && oneDeactiveContractHasBilling) continue;
                     }
