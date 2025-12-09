@@ -184,12 +184,12 @@ public sealed class MerchantBillingService(
                     if (replicateBillings.Count == 0)
                     {
                         debtorBilling = TransferDebtorBillings(overdueBillings,
-                            billingDto.Type,
+                            billingDto,
                             contract.ContractIds,
                             out previousDebitAmount);
 
                         creditorBilling = TransferCreditorBillings(negativeBillings,
-                            billingDto.Type,
+                            billingDto,
                             contract.ContractIds,
                             out previousCreditAmount);
                     }
@@ -636,13 +636,14 @@ public sealed class MerchantBillingService(
         return commission;
     }
 
-    private static MerchantBilling TransferDebtorBillings(List<NotSettledBilling> overdueBillings, BillingType type, List<int> contractIds, out decimal previousDebitAmount)
+    private static MerchantBilling TransferDebtorBillings(List<NotSettledBilling> overdueBillings, BillingDto billingDto, List<int> contractIds, out decimal previousDebitAmount)
     {
         previousDebitAmount = 0;
         MerchantBilling debtorBilling = null;
         List<MerchantBilling> debtorBillings = [];
 
-        foreach (var overdueBilling in overdueBillings.Where(p => p.Billing.Type == type))
+        foreach (var overdueBilling in overdueBillings.Where(p =>
+                     p.Billing.Type == billingDto.Type && p.Billing.DueDate < billingDto.EndOfPeriod))
         {
             var billing = overdueBilling.Billing;
 
@@ -674,13 +675,14 @@ public sealed class MerchantBillingService(
         return debtorBilling;
     }
 
-    private static MerchantBilling TransferCreditorBillings(List<NegativeSettledBilling> negativeBillings, BillingType type, List<int> contractIds, out decimal previousCreditAmount)
+    private static MerchantBilling TransferCreditorBillings(List<NegativeSettledBilling> negativeBillings, BillingDto billingDto, List<int> contractIds, out decimal previousCreditAmount)
     {
         previousCreditAmount = 0;
         MerchantBilling creditorBilling = null;
         List<MerchantBilling> creditorBillings = [];
 
-        foreach (var negativeBilling in negativeBillings.Where(p => p.Billing.Type == type))
+        foreach (var negativeBilling in negativeBillings.Where(p =>
+                     p.Billing.Type == billingDto.Type && p.Billing.DueDate < billingDto.EndOfPeriod))
         {
             var billing = negativeBilling.Billing;
 
