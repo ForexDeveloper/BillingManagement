@@ -184,12 +184,12 @@ public sealed class MerchantBillingService(
                     if (replicateBillings.Count == 0)
                     {
                         debtorBilling = TransferDebtorBillings(overdueBillings,
-                            billingDto.Type,
+                            billingDto,
                             contract.ContractIds,
                             out previousDebitAmount);
 
                         creditorBilling = TransferCreditorBillings(negativeBillings,
-                            billingDto.Type,
+                            billingDto,
                             contract.ContractIds,
                             out previousCreditAmount);
                     }
@@ -216,8 +216,7 @@ public sealed class MerchantBillingService(
                         }
                     }
 
-                    var purchaseTransactionsAmount =
-                        await merchantInstallmentRepository.GetSumOfPurchaseTransactionsInSpecificPeriod(
+                    var purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfPurchaseTransactionsInSpecificPeriod(
                             contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                     var refundedTransactionsAmount = refundedTransactions.RefundedTransactionsAmount;
@@ -254,11 +253,11 @@ public sealed class MerchantBillingService(
 
                     replicateBillings.Add(billing);
 
-                    if (billing.Amount == 0)
+                    if (purchaseTransactionsAmount == 0)
                     {
                         if (!contract.Status) continue;
 
-                        if (contract.Status && !billingDto.CurrentPeriod) continue;
+                        //if (contract.Status && !billingDto.CurrentPeriod) continue;
 
                         if (contract.Status && billingDto.CurrentPeriod && oneDeactiveContractHasBilling) continue;
                     }
@@ -286,7 +285,7 @@ public sealed class MerchantBillingService(
                     InputParams = "",
                     Exception = exception,
                     Message = "MerchantBillingService billings issue failed",
-                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(OverdueExpiredBillings)}"
+                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateMerchantBillings)}"
                 });
             }
             finally
@@ -297,7 +296,7 @@ public sealed class MerchantBillingService(
                     InputParams = "",
                     Exception = null,
                     Message = "MerchantBillingService billings issue completed",
-                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(OverdueExpiredBillings)}"
+                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateMerchantBillings)}"
                 });
             }
         }
@@ -323,10 +322,17 @@ public sealed class MerchantBillingService(
 
             currentPeriod = endOfPeriod == today;
 
-            var hasIntersection = await merchantBillingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId,
-                contract.MerchantId, endOfPeriod, cancellationToken);
+            if (endOfPeriod > installmentRange.MaxDueDate)
+            {
+                var hasIntersection = await merchantBillingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId,
+                    contract.MerchantId, endOfPeriod, cancellationToken);
 
-            if (hasIntersection == false)
+                if (hasIntersection == false)
+                {
+                    CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
+                }
+            }
+            else
             {
                 CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
             }
@@ -630,13 +636,14 @@ public sealed class MerchantBillingService(
         return commission;
     }
 
-    private static MerchantBilling TransferDebtorBillings(List<NotSettledBilling> overdueBillings, BillingType type, List<int> contractIds, out decimal previousDebitAmount)
+    private static MerchantBilling TransferDebtorBillings(List<NotSettledBilling> overdueBillings, BillingDto billingDto, List<int> contractIds, out decimal previousDebitAmount)
     {
         previousDebitAmount = 0;
         MerchantBilling debtorBilling = null;
         List<MerchantBilling> debtorBillings = [];
 
-        foreach (var overdueBilling in overdueBillings.Where(p => p.Billing.Type == type))
+        foreach (var overdueBilling in overdueBillings.Where(p =>
+                     p.Billing.Type == billingDto.Type && p.Billing.DueDate < billingDto.EndOfPeriod))
         {
             var billing = overdueBilling.Billing;
 
@@ -668,13 +675,14 @@ public sealed class MerchantBillingService(
         return debtorBilling;
     }
 
-    private static MerchantBilling TransferCreditorBillings(List<NegativeSettledBilling> negativeBillings, BillingType type, List<int> contractIds, out decimal previousCreditAmount)
+    private static MerchantBilling TransferCreditorBillings(List<NegativeSettledBilling> negativeBillings, BillingDto billingDto, List<int> contractIds, out decimal previousCreditAmount)
     {
         previousCreditAmount = 0;
         MerchantBilling creditorBilling = null;
         List<MerchantBilling> creditorBillings = [];
 
-        foreach (var negativeBilling in negativeBillings.Where(p => p.Billing.Type == type))
+        foreach (var negativeBilling in negativeBillings.Where(p =>
+                     p.Billing.Type == billingDto.Type && p.Billing.DueDate < billingDto.EndOfPeriod))
         {
             var billing = negativeBilling.Billing;
 
@@ -768,13 +776,13 @@ public sealed class MerchantBillingService(
         };
     }
 
-    private static bool ShouldSkipBilling(decimal billingAmount, bool contractStatus, bool isCurrentPeriod, ref bool oneDeactiveContractHasBilling)
+    private static bool ShouldSkipBilling(decimal purchaseTransactionsAmount, bool contractStatus, bool isCurrentPeriod, ref bool oneDeactiveContractHasBilling)
     {
-        if (billingAmount == 0)
+        if (purchaseTransactionsAmount == 0)
         {
             if (!contractStatus) return true;
 
-            if (!isCurrentPeriod) return true;
+            //if (!isCurrentPeriod) return true;
 
             if (oneDeactiveContractHasBilling) return true;
         }

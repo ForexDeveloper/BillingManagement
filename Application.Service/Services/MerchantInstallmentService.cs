@@ -1,12 +1,12 @@
-﻿using Application.Service.Contracts;
+﻿using System;
+using Domain.Core.Enums;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 using Application.Service.Helper;
+using Application.Service.Contracts;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Enums;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Application.Service.Services;
 
