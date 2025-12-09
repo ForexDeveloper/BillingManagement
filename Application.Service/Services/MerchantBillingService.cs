@@ -216,8 +216,7 @@ public sealed class MerchantBillingService(
                         }
                     }
 
-                    var purchaseTransactionsAmount =
-                        await merchantInstallmentRepository.GetSumOfPurchaseTransactionsInSpecificPeriod(
+                    var purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfPurchaseTransactionsInSpecificPeriod(
                             contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                     var refundedTransactionsAmount = refundedTransactions.RefundedTransactionsAmount;
