@@ -1,8 +1,8 @@
 ﻿using System;
 using Domain.Core.Enums;
 using System.Threading.Tasks;
-using Application.Service.Helper;
 using System.Collections.Generic;
+using Application.Service.Helper;
 using Application.Service.Contracts;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -70,7 +70,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
                 throw new ArgumentOutOfRangeException();
         }
 
-        var installmentCount = contract.InstallmentsCount ?? 1;
+        var installmentCount = contract.InstallmentsCount;
 
         var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
         var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
@@ -155,7 +155,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
             refundCommission = await financialDocumentService.CalculateRefundCommission(financialDocument);
         }
 
-        var installmentCount = contract.InstallmentsCount ?? 1;
+        var installmentCount = contract.InstallmentsCount;
 
         var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
         var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
@@ -173,7 +173,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
         var lastInstallmentCommission = refundCommission - (installmentCommission * (installmentCount - 1));
 
         var installmentDates = DateHelper.CalculateInstallmentDates(financialDocument.CreatedDateTime, installmentCount,
-            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+            TimeInterval.Day, 0, contract.BillingPeriod, contract.BillingPeriodType);
 
         List<MerchantInstallment> installments = [];
 

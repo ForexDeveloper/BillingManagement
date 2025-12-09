@@ -6,17 +6,17 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Service.Rest;
-using Shared.ApiVersioning;
-using Shared.FluentValidation;
 using Shared.Logging.Abstraction.Models;
 using Shared.Logging.Serilog;
 using Shared.Logging.Serilog.Configurations;
 using Shared.Logging.Serilog.Utilities;
 using Shared.Middlewares;
 using Shared.Swagger;
-using Shared.Swagger.Extensions;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using Shared.ApiVersioning;
+using Shared.FluentValidation;
+using Shared.Swagger.Extensions;
 
 
 try
@@ -68,7 +68,9 @@ try
     startup.ConfigureServices(builder.Services);
 
     var app = builder.Build();
-  
+
+    app.MapPrometheusScrapingEndpoint("/metrics");
+
     app.UseRequestResponseLogger(cfg =>
     {
         cfg.ExcludedLogPaths = configuration.GetSection("Serilog:ExcludedLogPaths").Get<Collection<string>>();

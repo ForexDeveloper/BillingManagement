@@ -10,7 +10,7 @@ using Domain.Core.Entities.TenantMerchantContractAggregate;
 namespace Rest.Integration.Tests.MerchantInstallmentTests;
 
 [Collection(nameof(SharedHostCollection))]
-public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
+public sealed class PurchaseInstallmentTests(SharedHostFixture hostFixture)
 {
     [Fact]
     public async Task WhenInstallmentsAreCreated_ShouldSetAllInstallmentTypesToPurchase()
@@ -220,6 +220,48 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         }
     }
 
+    //[Fact]
+    //public async Task WhenBillingBreak_IsGreaterThan_Zero_ShouldShiftAllInstallmentsByBillingBreak()
+    //{
+    //    var pc = new PersianCalendar();
+
+    //    var dbContext = hostFixture.GetMainContext();
+
+    //    var contract = await hostFixture.CreateTenantMerchantContract();
+
+    //    contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+    //    contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(1, 5));
+    //    contract.SetProperty(p => p.BillingPeriod, Random.Shared.Next(5, 10));
+
+    //    var financialDocument = await hostFixture.CreateFinancialDocument(contract);
+
+    //    var merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
+
+    //    var commission = await merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+    //    financialDocument.SetCommission(commission);
+
+    //    await dbContext.SaveChangesAsync();
+
+    //    var installments = await dbContext.MerchantInstallments
+    //        .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+    //    installments.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today));
+
+    //    foreach (var installment in installments)
+    //    {
+    //        var index = installments.IndexOf(installment);
+
+    //        if (index == 0) continue;
+
+    //        var previousInstallment = installments[index - 1];
+
+    //        var nextDueDate = pc.AddDays(previousInstallment.DueDate, contract.BillingPeriod);
+
+    //        installment.DueDate.Should().Be(nextDueDate);
+    //    }
+    //}
+
     [Fact]
     public async Task WhenSettlementType_Is_LumpSum_NumberOfInstallments_ShouldBeEqualToOne()
     {
@@ -227,7 +269,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(p => p.InstallmentsCount, null);
+        contract.SetProperty(p => p.InstallmentsCount, 1);
         contract.SetProperty(p => p.SettlementType, SettlementType.LumpSum);
 
         var financialDocument = await hostFixture.CreateFinancialDocument(contract);
@@ -273,7 +315,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         var installments = await dbContext.MerchantInstallments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
 
-        var installmentsCount = contract.InstallmentsCount ?? 1;
+        var installmentsCount = contract.InstallmentsCount;
 
         installments.Should().NotBeNull();
         installments.Should().HaveCount(installmentsCount);

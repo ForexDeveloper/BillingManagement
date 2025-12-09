@@ -27,6 +27,8 @@ using Domain.Core.UnitOfWorkContracts;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
 using Infrastructure.Data.Repository.EfCore.Repositories;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 using Shared.EventBus.Contracts;
 using Shared.EventBus.Services;
 using Shared.IdentityServerProvider;
@@ -165,6 +167,25 @@ namespace Service.Rest
                 options.Configuration = configuration["RedisConfiguration:Host"] ?? throw new ArgumentNullException($"RedisConfiguration {options.Configuration} is not set");
                 options.InstanceName = configuration["RedisConfiguration:InstanceName"] ?? throw new ArgumentNullException($"RedisInstanceName {options.Configuration} is not set");
             });
+        }
+
+        internal static void RegisteOpenTelemetryServices(this IServiceCollection services, string generalServiceName)
+        {
+
+            services.AddOpenTelemetry()
+                .ConfigureResource(resource => resource
+                    .AddService(serviceName: generalServiceName))
+                .WithMetrics(metrics =>
+                {
+                    // Add built-in instrumentations
+                    metrics
+                        .AddAspNetCoreInstrumentation()   // HTTP server metrics
+                        .AddHttpClientInstrumentation()   // outgoing HTTP calls
+                        .AddRuntimeInstrumentation();     // GC, CPU, exceptions, etc.
+
+                    // Export to Prometheus (scrape endpoint)
+                    metrics.AddPrometheusExporter();
+                });
         }
     }
 }
