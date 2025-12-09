@@ -322,10 +322,17 @@ public sealed class MerchantBillingService(
 
             currentPeriod = endOfPeriod == today;
 
-            var hasIntersection = await merchantBillingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId,
-                contract.MerchantId, endOfPeriod, cancellationToken);
+            if (endOfPeriod > installmentRange.MaxDueDate)
+            {
+                var hasIntersection = await merchantBillingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId,
+                    contract.MerchantId, endOfPeriod, cancellationToken);
 
-            if (hasIntersection == false)
+                if (hasIntersection == false)
+                {
+                    CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
+                }
+            }
+            else
             {
                 CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
             }
@@ -767,13 +774,13 @@ public sealed class MerchantBillingService(
         };
     }
 
-    private static bool ShouldSkipBilling(decimal billingAmount, bool contractStatus, bool isCurrentPeriod, ref bool oneDeactiveContractHasBilling)
+    private static bool ShouldSkipBilling(decimal purchaseTransactionsAmount, bool contractStatus, bool isCurrentPeriod, ref bool oneDeactiveContractHasBilling)
     {
-        if (billingAmount == 0)
+        if (purchaseTransactionsAmount == 0)
         {
             if (!contractStatus) return true;
 
-            if (!isCurrentPeriod) return true;
+            //if (!isCurrentPeriod) return true;
 
             if (oneDeactiveContractHasBilling) return true;
         }
