@@ -285,7 +285,7 @@ public sealed class MerchantBillingService(
                     InputParams = "",
                     Exception = exception,
                     Message = "MerchantBillingService billings issue failed",
-                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(OverdueExpiredBillings)}"
+                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateMerchantBillings)}"
                 });
             }
             finally
@@ -296,7 +296,7 @@ public sealed class MerchantBillingService(
                     InputParams = "",
                     Exception = null,
                     Message = "MerchantBillingService billings issue completed",
-                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(OverdueExpiredBillings)}"
+                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateMerchantBillings)}"
                 });
             }
         }
