@@ -96,8 +96,8 @@ public sealed class MerchantBillingService(
                 logger.LogCritical(new LogStruct()
                 {
                     Results = "",
-                    InputParams = "",
                     Exception = exception,
+                    InputParams = contract,
                     Message = "MerchantBillingService creating billing dtos failed",
                     ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateBillingDtos)}"
                 });
@@ -111,7 +111,7 @@ public sealed class MerchantBillingService(
         List<NotSettledBilling> overdueBillings, List<NegativeSettledBilling> negativeBillings,
         CancellationToken cancellationToken)
     {
-        foreach (var (_, billingDtos) in billingDtoGroups)
+        foreach (var (billingIdentifier, billingDtos) in billingDtoGroups)
         {
             try
             {
@@ -225,8 +225,7 @@ public sealed class MerchantBillingService(
                     var tieredCalculatedLevels = purchaseCommission.TieredCalculatedLevels;
                     var tieredTransactionsAmount = purchaseCommission.TieredTransactionsAmount;
                     var purchaseTransactionsCommission = purchaseCommission.PurchaseTransactionsCommission;
-                    var purchaseTransactionsCalculatedCommission =
-                        purchaseCommission.PurchaseTransactionsCalculatedCommission;
+                    var purchaseTransactionsCalculatedCommission = purchaseCommission.PurchaseTransactionsCalculatedCommission;
 
                     var billing = new MerchantBilling(contract.TenantId,
                         billingDto.FromBusinessIdentityId,
@@ -282,8 +281,8 @@ public sealed class MerchantBillingService(
                 logger.LogCritical(new LogStruct()
                 {
                     Results = "",
-                    InputParams = "",
                     Exception = exception,
+                    InputParams = billingIdentifier,
                     Message = "MerchantBillingService billings issue failed",
                     ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateMerchantBillings)}"
                 });
@@ -293,8 +292,8 @@ public sealed class MerchantBillingService(
                 logger.LogTrace(new LogStruct()
                 {
                     Results = "",
-                    InputParams = "",
                     Exception = null,
+                    InputParams = billingIdentifier,
                     Message = "MerchantBillingService billings issue completed",
                     ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateMerchantBillings)}"
                 });
