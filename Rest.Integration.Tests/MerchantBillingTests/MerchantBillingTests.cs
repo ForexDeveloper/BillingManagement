@@ -13,7 +13,6 @@ namespace Rest.Integration.Tests.MerchantBillingTests;
 public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 {
     private const int SHIFT = -1000;
-    private readonly DateTime JOB_CREATED_DATETIME = DateTime.Today.AddYears(-10);
 
     private readonly ApplicationDbContext _dbContext = hostFixture.GetMainContext();
     private readonly IMerchantBillingService _merchantBillingService = hostFixture.GetMerchantBillingService();
@@ -34,7 +33,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _dbContext.SaveChangesAsync();
 
-        await _merchantBillingService.IssueOrOverdueBilling(CancellationToken.None);
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
@@ -75,7 +74,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _dbContext.SaveChangesAsync();
 
-        await _merchantBillingService.IssueOrOverdueBilling(CancellationToken.None);
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
