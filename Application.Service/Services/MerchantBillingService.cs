@@ -27,7 +27,7 @@ public sealed class MerchantBillingService(
     IMerchantInstallmentRepository merchantInstallmentRepository,
     ITenantMerchantContractRepository tenantMerchantContractRepository) : IMerchantBillingService
 {
-    public async Task IssueOrOverdueBilling(CancellationToken cancellationToken)
+    public async Task IssueOrOverdueBillings(CancellationToken cancellationToken)
     {
         var negativeBillings = await merchantBillingRepository.GetNegativeSettledBillings(cancellationToken);
 
@@ -321,7 +321,7 @@ public sealed class MerchantBillingService(
 
             currentPeriod = endOfPeriod == today;
 
-            if (endOfPeriod > installmentRange.MaxDueDate)
+            if (endOfPeriod > installmentRange?.MaxDueDate)
             {
                 var hasIntersection = await merchantBillingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId,
                     contract.MerchantId, endOfPeriod, cancellationToken);
