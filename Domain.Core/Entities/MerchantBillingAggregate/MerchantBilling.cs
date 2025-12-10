@@ -44,6 +44,11 @@ public sealed class MerchantBilling : Billing
         Configure();
     }
 
+    public bool IsAbsoluteZero()
+    {
+        return Amount == 0 && PurchaseTransactionsAmount == 0;
+    }
+
     protected override void CalculateAmount()
     {
         if (Type == BillingType.TenantToMerchant)

@@ -15,7 +15,7 @@ namespace Service.Rest.V1.Controllers;
 [Authorize]
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/tenant-panel/merchant-billings")]
+[Route("api/tenant-panel/merchant-billings/{id}")]
 public sealed class MerchantBillingController(IMediator mediator, ICurrentUserService currentUserService) : ControllerBase
 {
     [HttpGet]
@@ -32,7 +32,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}")]
+    [HttpGet]
     [SwaggerOperation("Get merchant billing")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "merchant billing not found")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing returned", typeof(GetMerchantBillingVm))]
@@ -44,7 +44,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/additions")]
+    [HttpGet("additions")]
     [SwaggerOperation("Get merchant billing additions")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing additions returned", typeof(GetAdditionsVm))]
     public async Task<ActionResult> GetAdditions([FromRoute] long id)
@@ -55,7 +55,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpPut("{id}/additions")]
+    [HttpPut("additions")]
     [SwaggerOperation("Update merchant billing additions")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing additions updated", typeof(long))]
     public async Task<ActionResult> UpdateAdditions([FromRoute] long id, UpdateBillingAdditionsRequest request)
@@ -66,7 +66,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/deductions")]
+    [HttpGet("deductions")]
     [SwaggerOperation("Get merchant billing deductions")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing deductions returned", typeof(GetDeductionsVm))]
     public async Task<ActionResult> GetDeductions([FromRoute] long id)
@@ -77,7 +77,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpPut("{id}/deductions")]
+    [HttpPut("deductions")]
     [SwaggerOperation("Update merchant billing deductions")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing deductions updated", typeof(long))]
     public async Task<ActionResult> UpdateDeductions([FromRoute] long id, UpdateBillingDeductionsRequest request)
@@ -88,7 +88,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/previous-debit")]
+    [HttpGet("previous-debit")]
     [SwaggerOperation("Get merchant billing previous debit")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing previous debit returned", typeof(GetPreviousDebitVm))]
     public async Task<ActionResult> GetPreviousDebit([FromRoute] long id)
@@ -99,7 +99,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/previous-credit")]
+    [HttpGet("previous-credit")]
     [SwaggerOperation("Get merchant billing previous credit")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing previous credit returned", typeof(GetPreviousCreditVm))]
     public async Task<ActionResult> GetPreviousCredit([FromRoute] long id)
@@ -110,7 +110,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/purchase-transactions")]
+    [HttpGet("purchase-transactions")]
     [SwaggerOperation("Get merchant billing purchase transactions")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing purchase transactions returned", typeof(GetPurchaseTransactionsVm))]
     public async Task<ActionResult> GetPurchaseTransactions([FromRoute] long id)
@@ -121,7 +121,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/refunded-transactions")]
+    [HttpGet("refunded-transactions")]
     [SwaggerOperation("Get merchant billing refunded transactions")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing refunded transactions returned", typeof(GetRefundedTransactionsVm))]
     public async Task<ActionResult> GetRefundedTransactions([FromRoute] long id)
@@ -132,7 +132,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/purchase-transactions-commission")]
+    [HttpGet("purchase-transactions-commission")]
     [SwaggerOperation("Get merchant billing purchase transactions commission")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing purchase transactions commission returned", typeof(GetPurchaseTransactionsCommissionVm))]
     public async Task<ActionResult> GetPurchaseTransactionsCommission([FromRoute] long id)
@@ -143,7 +143,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/refunded-transactions-commission")]
+    [HttpGet("refunded-transactions-commission")]
     [SwaggerOperation("Get merchant billing refunded transactions commission")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing refunded transactions commission returned", typeof(GetRefundedTransactionsCommissionVm))]
     public async Task<ActionResult> GetRefundedTransactionsCommission([FromRoute] long id)
@@ -154,7 +154,7 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
     }
 
 
-    [HttpGet("{id}/pay-amount/{amount}/payable-amount")]
+    [HttpGet("pay-amount/{amount}/payable-amount")]
     [SwaggerOperation("Get billing payable amount")]
     [SwaggerResponse((int)HttpStatusCode.NotFound, "Merchant billing not found")]
     [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billing payable amount returned", typeof(decimal))]

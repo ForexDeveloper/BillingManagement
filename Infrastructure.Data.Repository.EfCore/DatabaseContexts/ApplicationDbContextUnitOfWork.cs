@@ -1,32 +1,25 @@
-﻿using Domain.Core.UnitOfWorkContracts;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+using Domain.Core.UnitOfWorkContracts;
 
 namespace Infrastructure.Data.Repository.EfCore.DatabaseContexts
 {
-    public class ApplicationDbContextUnitOfWork : IApplicationDbContextUnitOfWork
+    public sealed class ApplicationDbContextUnitOfWork(ApplicationDbContext applicationDbContext)
+        : IApplicationDbContextUnitOfWork
     {
-        private readonly ApplicationDbContext _applicationDbContext;
-
-        public ApplicationDbContextUnitOfWork(ApplicationDbContext applicationDbContext)
-        {
-            _applicationDbContext = applicationDbContext;
-        }
-
         public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            await _applicationDbContext.SaveChangesAsync();
+            await applicationDbContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<bool> CanConnectDatabaseAsync(CancellationToken cancellationToken)
         {
-            return await _applicationDbContext.Database.CanConnectAsync(cancellationToken);
+            return await applicationDbContext.Database.CanConnectAsync(cancellationToken);
         }
 
         public void ClearChangeTracker()
         {
-            _applicationDbContext.ChangeTracker.Clear();
+            applicationDbContext.ChangeTracker.Clear();
         }
-
     }
 }
