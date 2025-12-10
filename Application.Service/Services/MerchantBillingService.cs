@@ -253,7 +253,7 @@ public sealed class MerchantBillingService(
 
                     replicateBillings.Add(billing);
 
-                    if (purchaseTransactionsAmount == 0)
+                    if (billing.IsAbsoluteZero())
                     {
                         if (!contract.Status) continue;
 
