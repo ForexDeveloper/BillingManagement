@@ -8,6 +8,7 @@ using Application.Query.ViewModels.Billings;
 using Service.Rest.V1.RequestModels.Billings;
 using Shared.IdentityServerProvider.Contracts;
 using Application.Query.Queries.MerchantBilling;
+using Application.Command.MerchantBillingCommands;
 using Application.Query.ViewModels.MerchantBillings;
 
 namespace Service.Rest.V1.Controllers;
@@ -163,5 +164,16 @@ public sealed class MerchantBillingController(IMediator mediator, ICurrentUserSe
         var merchantBillingPayableAmount = await mediator.Send(new GetMerchantBillingPayableAmountQuery(currentUserService.TenantId, id, amount));
 
         return Ok(merchantBillingPayableAmount);
+    }
+
+
+    [HttpPost("issue")]
+    [SwaggerOperation("Issue or overdue merchant billings")]
+    [SwaggerResponse((int)HttpStatusCode.OK, "Merchant billings got issued or overdued")]
+    public async Task<ActionResult> IssueOrOverdueBillings()
+    {
+        await mediator.Send(new IssueOrOverdueMerchantBillingsCommand());
+
+        return Ok("Merchant billings issued successfully");
     }
 }

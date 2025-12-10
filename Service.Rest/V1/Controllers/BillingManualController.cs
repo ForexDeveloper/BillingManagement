@@ -65,7 +65,7 @@ public class BillingManualController(
     {
         try
         {
-            await merchantBillingService.IssueOrOverdueBilling(cancellationToken);
+            await merchantBillingService.IssueOrOverdueBillings(cancellationToken);
 
             await backgroundJobService.CreateMerchantBillingJobAsync(cancellationToken);
 
