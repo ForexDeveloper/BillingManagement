@@ -311,6 +311,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
                 var nextDueDate = pc.AddWeeks(previousInstallment.DueDate, 1);
 
                 installment.DueDate.Should().Be(nextDueDate);
+
+                var dayOfWeek = pc.GetDayOfWeek(installment.DueDate);
+
+                var previousDayOfWeek = pc.GetDayOfWeek(previousInstallment.DueDate);
+
+                dayOfWeek.Should().Be(previousDayOfWeek);
             }
         }
     }
@@ -372,6 +378,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
                 var nextDueDate = pc.AddMonths(previousInstallment.DueDate, 1);
 
                 installment.DueDate.Should().Be(nextDueDate);
+
+                var dayOfMonth = pc.GetDayOfMonth(installment.DueDate);
+
+                var previousDayOfMonth = pc.GetDayOfMonth(previousInstallment.DueDate);
+
+                dayOfMonth.Should().Be(previousDayOfMonth);
             }
         }
     }

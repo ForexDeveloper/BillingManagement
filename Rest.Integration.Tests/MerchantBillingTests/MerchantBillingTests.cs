@@ -1,9 +1,10 @@
 ﻿using Xunit;
 using FluentAssertions;
 using Domain.Core.Enums;
+using System.Globalization;
 using Rest.Integration.Tests.Base;
-using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Application.Service.Contracts;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
@@ -86,6 +87,147 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
         billings.Should().AllSatisfy(p => p.As<MerchantBilling>().IsAbsoluteZero().Should().BeFalse());
+    }
+
+    [Fact]
+    public async Task WhenBillingPeriodType_Is_Daily_DurationBetweenDueDates_ShouldAllBeEqualToBillingPeriod()
+    {
+        var pc = new PersianCalendar();
+
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+        contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
+        contract.SetProperty(p => p.BillingPeriod, Random.Shared.Next(1, 100));
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+
+        await ShiftFinancialDocument(financialDocument);
+
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(SHIFT)));
+
+        foreach (var billing in billings)
+        {
+            var index = billings.IndexOf(billing);
+
+            if (index == 0) continue;
+
+            var previousBilling = billings[index - 1];
+
+            var nextDueDate = pc.AddDays(previousBilling.DueDate, contract.BillingPeriod);
+
+            billing.DueDate.Should().Be(nextDueDate);
+
+            billing.StartDate.Should().Be(previousBilling.DueDate);
+        }
+    }
+
+    [Fact]
+    public async Task WhenBillingPeriodType_Is_Weekly_DurationBetweenDueDates_ShouldAllBeEqualToOneWeek()
+    {
+        var pc = new PersianCalendar();
+
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, DayOfWeek.Monday);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Week);
+        contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+
+        await ShiftFinancialDocument(financialDocument);
+
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(SHIFT)));
+
+        foreach (var billing in billings)
+        {
+            var index = billings.IndexOf(billing);
+
+            if (index == 0) continue;
+
+            var previousBilling = billings[index - 1];
+
+            var nextDueDate = pc.AddWeeks(previousBilling.DueDate, 1);
+
+            billing.DueDate.Should().Be(nextDueDate);
+
+            billing.StartDate.Should().Be(previousBilling.DueDate);
+
+            var dayOfWeek = pc.GetDayOfWeek(billing.DueDate);
+
+            var previousDayOfWeek = pc.GetDayOfWeek(previousBilling.DueDate);
+
+            dayOfWeek.Should().Be(previousDayOfWeek);
+        }
+    }
+
+    [Fact]
+    public async Task WhenBillingPeriodType_Is_Monthly_DurationBetweenDueDates_ShouldAllBeEqualToOneMonth()
+    {
+        var pc = new PersianCalendar();
+
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 17);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
+        contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+
+        await ShiftFinancialDocument(financialDocument);
+
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(SHIFT)));
+
+        foreach (var billing in billings)
+        {
+            var index = billings.IndexOf(billing);
+
+            if (index == 0) continue;
+
+            var previousBilling = billings[index - 1];
+
+            var nextDueDate = pc.AddMonths(previousBilling.DueDate, 1);
+
+            billing.DueDate.Should().Be(nextDueDate);
+
+            billing.StartDate.Should().Be(previousBilling.DueDate);
+
+            var dayOfMonth = pc.GetDayOfMonth(billing.DueDate);
+
+            var previousDayOfMonth = pc.GetDayOfMonth(previousBilling.DueDate);
+
+            dayOfMonth.Should().Be(previousDayOfMonth);
+        }
     }
 
     [Fact]
