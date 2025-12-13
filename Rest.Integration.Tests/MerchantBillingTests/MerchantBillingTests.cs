@@ -44,28 +44,6 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Fact]
-    public async Task WhenInstallmentsAreDetected_AllBillings_ShouldBeNotAbsoluteZero()
-    {
-        await hostFixture.FlushAsync();
-
-        var contract = await hostFixture.CreateTenantMerchantContract();
-
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
-
-        await ShiftFinancialDocument(financialDocument);
-
-        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
-
-        await _dbContext.SaveChangesAsync();
-
-        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
-
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
-
-        billings.Should().AllSatisfy(p => p.As<MerchantBilling>().IsAbsoluteZero().Should().BeFalse());
-    }
-
-    [Fact]
     public async Task WhenBillingsAreCreated_ShouldAllBeAssignableToBilling()
     {
         await hostFixture.FlushAsync();
@@ -86,6 +64,28 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         billings.Should().AllBeAssignableTo<Billing>();
         billings.Should().AllBeOfType<MerchantBilling>();
+    }
+
+    [Fact]
+    public async Task WhenInstallmentsAreDetected_AllBillings_ShouldBeNotAbsoluteZero()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+
+        await ShiftFinancialDocument(financialDocument);
+
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings.Should().AllSatisfy(p => p.As<MerchantBilling>().IsAbsoluteZero().Should().BeFalse());
     }
 
     [Fact]
