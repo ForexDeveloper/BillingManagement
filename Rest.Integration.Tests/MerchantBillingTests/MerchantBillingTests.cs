@@ -44,7 +44,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Fact]
-    public async Task WhenInstallmentsAreDetected_ShouldAllBillingsBeNotAbsoluteZero()
+    public async Task WhenInstallmentsAreDetected_AllBillings_ShouldBeNotAbsoluteZero()
     {
         await hostFixture.FlushAsync();
 
