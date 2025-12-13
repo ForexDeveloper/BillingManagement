@@ -5,6 +5,7 @@ using Rest.Integration.Tests.Base;
 using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Rest.Integration.Tests.MerchantBillingTests;
@@ -15,8 +16,8 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     private const int SHIFT = -1000;
 
     private readonly ApplicationDbContext _dbContext = hostFixture.GetMainContext();
-    private readonly IMerchantBillingService _merchantBillingService = hostFixture.GetMerchantBillingService();
-    private readonly IMerchantInstallmentService _merchantInstallmentService = hostFixture.GetMerchantInstallmentService();
+    private readonly IMerchantBillingService _merchantBillingService = hostFixture.GetRequiredService<IMerchantBillingService>();
+    private readonly IMerchantInstallmentService _merchantInstallmentService = hostFixture.GetRequiredService<IMerchantInstallmentService>();
 
     [Fact]
     public async Task WhenBillingsAreCreated_ShouldDebitEachBillingToNextOne()
@@ -25,7 +26,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract);
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
 
         await ShiftFinancialDocument(financialDocument);
 
@@ -50,12 +51,13 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
             if (index == 0)
             {
                 billing.PreviousDebitAmount.Should().Be(0);
-                continue;
             }
+            else
+            {
+                var previousBilling = billings[index - 1];
 
-            var previousBilling = billings[index - 1];
-
-            billing.PreviousDebitAmount.Should().Be(previousBilling.Amount);
+                billing.PreviousDebitAmount.Should().Be(previousBilling.Amount);
+            }
         }
     }
 
@@ -66,7 +68,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract);
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
 
         await ShiftFinancialDocument(financialDocument);
 
@@ -85,12 +87,13 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
             if (index == 0)
             {
                 billing.PreviousDebitAmount.Should().Be(0);
-                continue;
             }
+            else
+            {
+                var previousBilling = billings[index - 1];
 
-            var previousBilling = billings[index - 1];
-
-            billing.PreviousDebitAmount.Should().Be(previousBilling.Amount);
+                billing.PreviousDebitAmount.Should().Be(previousBilling.Amount);
+            }
         }
     }
 

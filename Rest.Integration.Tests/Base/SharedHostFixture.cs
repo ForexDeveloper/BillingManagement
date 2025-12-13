@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.TestHost;
-using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
@@ -32,8 +31,6 @@ public class SharedHostFixture : IDisposable
     private readonly HttpMessageHandler _httpMessageHandler;
     private readonly BaseTestDataBuilder _baseTestDataBuilder;
     private readonly SemaphoreSlim _syncDbCreationLock = new(1, 1);
-    private readonly IMerchantBillingService _merchantBillingService;
-    private readonly IMerchantInstallmentService _merchantInstallmentService;
 
     public SharedHostFixture()
     {
@@ -44,8 +41,6 @@ public class SharedHostFixture : IDisposable
         _httpMessageHandler = _server.CreateHandler();
         _tokenManager = new AccessTokenManager(Configuration);
         _logger = _host.Services.GetRequiredService<ILogger<SharedHostFixture>>();
-        _merchantBillingService = _host.Services.GetRequiredService<IMerchantBillingService>();
-        _merchantInstallmentService = _host.Services.GetRequiredService<IMerchantInstallmentService>();
 
         InitializeDatabaseAsync().GetAwaiter().GetResult();
 
@@ -165,16 +160,14 @@ public class SharedHostFixture : IDisposable
 
     public Merchant Merchant { get; private set; }
 
+    public TenantMerchantContract TenantMerchantContract { get; private set; }
+
     private void SetAccessToken(string token)
     {
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     public ApplicationDbContext GetMainContext() => _mainContext;
-
-    public IMerchantBillingService GetMerchantBillingService() => _merchantBillingService;
-
-    public IMerchantInstallmentService GetMerchantInstallmentService() => _merchantInstallmentService;
 
     public void Dispose()
     {
@@ -228,6 +221,71 @@ public class SharedHostFixture : IDisposable
     {
         Tenant = _baseTestDataBuilder.CreateTenant().Result;
         Merchant = _baseTestDataBuilder.CreateMerchant(Tenant.Id).Result;
+        TenantMerchantContract = CreateTenantMerchantContract().Result;
+    }
+
+    public async Task<FinancialDocument> CreateFinancialDocument(int contractId)
+    {
+        var FINANCIAL_DOCUMENT_ID = await GetUniqueFinancialDocumentId();
+
+        var financialDocument = new FinancialDocument(FINANCIAL_DOCUMENT_ID,
+            Tenant.Id,
+            Merchant.Id,
+            Tenant.Id,
+            100000000,
+            40000000,
+            30000000,
+            30000000,
+            FinancialDocumentType.Purchase,
+            FinancialDocumentState.Verified,
+            PaymentGatewayType.Ipg,
+            null,
+            null,
+            contractId
+        );
+
+        await _mainContext.FinancialDocuments.AddAsync(financialDocument);
+
+        await _mainContext.SaveChangesAsync();
+
+        return financialDocument;
+    }
+
+    public async Task<FinancialDocument> CreateRefundFinancialDocument(FinancialDocument purchaseDocument)
+    {
+        var FINANCIAL_DOCUMENT_ID = await GetUniqueFinancialDocumentId();
+
+        var amount = purchaseDocument.Amount / 10;
+        var cashAmount = purchaseDocument.CashAmount / 10;
+        var creditAmount = purchaseDocument.CreditAmount / 10;
+        var prePaymentAmount = purchaseDocument.PrepaymentAmount / 10;
+
+        var financialDocument = new FinancialDocument(FINANCIAL_DOCUMENT_ID,
+            Tenant.Id,
+            Merchant.Id,
+            Tenant.Id,
+            amount,
+            creditAmount,
+            cashAmount,
+            prePaymentAmount,
+            FinancialDocumentType.Refund,
+            FinancialDocumentState.Verified,
+            PaymentGatewayType.Ipg,
+            null,
+            null,
+            purchaseDocument.TenantMerchantContractId,
+            null,
+            null,
+            null,
+            null,
+            purchaseDocument.Id
+        );
+
+        await _mainContext.FinancialDocuments.AddAsync(financialDocument);
+
+        await _mainContext.SaveChangesAsync();
+
+        return financialDocument;
     }
 
     public async Task<TenantMerchantContract> CreateTenantMerchantContract()
@@ -271,33 +329,6 @@ public class SharedHostFixture : IDisposable
         await _mainContext.SaveChangesAsync();
 
         return tenantMerchantContract;
-    }
-
-    public async Task<FinancialDocument> CreateFinancialDocument(TenantMerchantContract contract)
-    {
-        var FINANCIAL_DOCUMENT_ID = await GetUniqueFinancialDocumentId();
-
-        var financialDocument = new FinancialDocument(FINANCIAL_DOCUMENT_ID,
-            Tenant.Id,
-            Merchant.Id,
-            Tenant.Id,
-            100000000,
-            40000000,
-            30000000,
-            30000000,
-            FinancialDocumentType.Purchase,
-            FinancialDocumentState.Verified,
-            PaymentGatewayType.Ipg,
-            null,
-            null,
-            contract.Id
-        );
-
-        await _mainContext.FinancialDocuments.AddAsync(financialDocument);
-
-        await _mainContext.SaveChangesAsync();
-
-        return financialDocument;
     }
 
     private async Task<long> GetUniqueFinancialDocumentId()
