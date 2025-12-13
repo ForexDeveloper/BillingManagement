@@ -6,17 +6,79 @@ using Application.Service.Helper;
 using Rest.Integration.Tests.Base;
 using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.InstallmentAggregate;
+using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Rest.Integration.Tests.MerchantInstallmentTests;
 
 [Collection(nameof(SharedHostCollection))]
-public sealed class InstallmentTests(SharedHostFixture hostFixture)
+public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 {
-    private readonly IMerchantInstallmentService _merchantInstallmentService =
-        hostFixture.GetRequiredService<IMerchantInstallmentService>();
-
     private readonly ApplicationDbContext _dbContext = hostFixture.GetMainContext();
+    private readonly IMerchantInstallmentService _merchantInstallmentService = hostFixture.GetRequiredService<IMerchantInstallmentService>();
+
+    [Theory]
+    [InlineData(FinancialDocumentType.Refund)]
+    [InlineData(FinancialDocumentType.Purchase)]
+    public async Task WhenFinancialDocumentReceived_ShouldCreateInstallments(FinancialDocumentType financialDocumentType)
+    {
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+
+        financialDocument.SetProperty(p => p.Type, financialDocumentType);
+
+        if (financialDocumentType == FinancialDocumentType.Purchase)
+        {
+            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+        }
+        else
+        {
+            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
+
+            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        var installments = await _dbContext.Installments
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+        installments.Should().NotBeNull();
+        installments.Should().HaveCountGreaterThan(0);
+    }
+
+    [Theory]
+    [InlineData(FinancialDocumentType.Refund)]
+    [InlineData(FinancialDocumentType.Purchase)]
+    public async Task WhenInstallmentsAreCreated_ShouldAllBeAssignableToInstallment(FinancialDocumentType financialDocumentType)
+    {
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+
+        financialDocument.SetProperty(p => p.Type, financialDocumentType);
+
+        if (financialDocumentType == FinancialDocumentType.Purchase)
+        {
+            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+        }
+        else
+        {
+            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
+
+            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        var installments = await _dbContext.Installments
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+        installments.Should().AllBeAssignableTo<Installment>();
+        installments.Should().AllBeOfType<MerchantInstallment>();
+    }
 
     [Theory]
     [InlineData(FinancialDocumentType.Refund)]

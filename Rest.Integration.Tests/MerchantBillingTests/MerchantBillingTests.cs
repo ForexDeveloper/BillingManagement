@@ -4,6 +4,8 @@ using Domain.Core.Enums;
 using Rest.Integration.Tests.Base;
 using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
@@ -17,6 +19,74 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     private readonly ApplicationDbContext _dbContext = hostFixture.GetMainContext();
     private readonly IMerchantBillingService _merchantBillingService = hostFixture.GetRequiredService<IMerchantBillingService>();
     private readonly IMerchantInstallmentService _merchantInstallmentService = hostFixture.GetRequiredService<IMerchantInstallmentService>();
+
+    [Fact]
+    public async Task WhenSomeInstallmentsAreDetected_ShouldCreateBillings()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+
+        await ShiftFinancialDocument(financialDocument);
+
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings.Should().NotBeNull();
+        billings.Should().HaveCountGreaterThan(0);
+    }
+
+    [Fact]
+    public async Task WhenSomeInstallmentsAreDetected_ShouldAllBillingsBeNotAbsoluteZero()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+
+        await ShiftFinancialDocument(financialDocument);
+
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings.Should().AllSatisfy(p => p.As<MerchantBilling>().IsAbsoluteZero().Should().BeFalse());
+    }
+
+    [Fact]
+    public async Task WhenBillingsAreCreated_ShouldAllBeAssignableToBilling()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+
+        await ShiftFinancialDocument(financialDocument);
+
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings.Should().AllBeAssignableTo<Billing>();
+        billings.Should().AllBeOfType<MerchantBilling>();
+    }
 
     [Fact]
     public async Task WhenBillingsAreCreated_ShouldDebitEachBillingToNextOne()
@@ -97,8 +167,6 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
             }
         }
     }
-
-
 
     private async Task ShiftFinancialDocument(FinancialDocument financialDocument)
     {
