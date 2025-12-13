@@ -215,7 +215,7 @@ public class UpdateTenantMerchantContractCommandHandler : IRequestHandler<Update
                     request.EndDate,
                     request.SettlementType,
                     request.IsCommissionExchanged,
-                    request.InstallmentsCount,
+                    request.InstallmentsCount ?? 0,
                     request.CommissionDeductionMethodType,
                     request.InterestPercentage,
                     request.InterestReferenceTypes,

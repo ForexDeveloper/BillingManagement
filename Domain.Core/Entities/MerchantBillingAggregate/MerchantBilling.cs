@@ -46,7 +46,13 @@ public sealed class MerchantBilling : Billing
 
     public bool IsAbsoluteZero()
     {
-        return Amount == 0 && PurchaseTransactionsAmount == 0;
+        return Amount == 0 &&
+               PreviousDebitAmount == 0 &&
+               PreviousCreditAmount == 0 &&
+               PurchaseTransactionsAmount == 0 &&
+               RefundedTransactionsAmount == 0 && 
+               PurchaseTransactionsCommission == 0 && 
+               RefundedTransactionsCommission == 0;
     }
 
     protected override void CalculateAmount()

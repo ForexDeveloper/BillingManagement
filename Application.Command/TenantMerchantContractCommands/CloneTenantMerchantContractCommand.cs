@@ -191,7 +191,7 @@ namespace Application.Command.TenantMerchantContractCommands
                     request.EndDate,
                     request.SettlementType,
                     request.IsCommissionExchanged,
-                    request.InstallmentsCount,
+                    request.InstallmentsCount ?? 0,
                     request.CommissionDeductionMethodType,
                     request.InterestPercentage,
                     request.InterestReferenceTypes,
