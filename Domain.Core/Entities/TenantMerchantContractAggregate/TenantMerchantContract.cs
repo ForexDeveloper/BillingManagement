@@ -92,7 +92,7 @@ public class TenantMerchantContract : BaseEntity<int>
 
     public TenantMerchantContract(int tenantId, int merchantId,
         string contractNumber, DateTime startDate, DateTime endDate,
-        SettlementType settlementType, bool isCommissionExchanged, int? installmentsCount,
+        SettlementType settlementType, bool isCommissionExchanged, int installmentsCount,
         CommissionDeductionMethodType? commissionDeductionMethodType,
         decimal? interestPercentage, List<InterestReferenceType> interestReferenceTypes,
         TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? billingBreak,
@@ -135,7 +135,7 @@ public class TenantMerchantContract : BaseEntity<int>
 
     public void Update(int tenantId, int merchantId,
         string contractNumber, DateTime startDate, DateTime endDate,
-        SettlementType settlementType, bool isCommissionExchanged, int? installmentsCount,
+        SettlementType settlementType, bool isCommissionExchanged, int installmentsCount,
         CommissionDeductionMethodType? commissionDeductionMethodType,
         decimal? interestPercentage, List<InterestReferenceType> interestReferenceTypes,
         TimeInterval billingPeriodType, int billingPeriod, DateTime? dailyBillingOriginDate, int? billingBreak,
@@ -236,8 +236,8 @@ public class TenantMerchantContract : BaseEntity<int>
         ContractNumber = contractNumber;
     }
 
-    public void SetInstallmentsCount(int? installmentsCount)
+    public void SetInstallmentsCount(int installmentsCount)
     {
-        InstallmentsCount = SettlementType == SettlementType.LumpSum ? 1 : installmentsCount.Value;
+        InstallmentsCount = SettlementType == SettlementType.LumpSum ? 1 : installmentsCount;
     }
 }
