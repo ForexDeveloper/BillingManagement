@@ -5,7 +5,6 @@ using Rest.Integration.Tests.Base;
 using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Rest.Integration.Tests.MerchantBillingTests;
@@ -50,13 +49,15 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
             if (index == 0)
             {
-                billing.PreviousDebitAmount.Should().Be(0);
+                billing.Debtor.Should().BeNull();
+                billing.DebtorId.Should().BeNull();
             }
             else
             {
                 var previousBilling = billings[index - 1];
 
-                billing.PreviousDebitAmount.Should().Be(previousBilling.Amount);
+                billing.Debtor.Should().Be(previousBilling);
+                billing.DebtorId.Should().Be(previousBilling.Id);
             }
         }
     }
@@ -96,6 +97,8 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
             }
         }
     }
+
+
 
     private async Task ShiftFinancialDocument(FinancialDocument financialDocument)
     {
