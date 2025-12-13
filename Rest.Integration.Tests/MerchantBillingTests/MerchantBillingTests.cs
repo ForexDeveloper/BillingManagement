@@ -21,7 +21,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     private readonly IMerchantInstallmentService _merchantInstallmentService = hostFixture.GetRequiredService<IMerchantInstallmentService>();
 
     [Fact]
-    public async Task WhenSomeInstallmentsAreDetected_ShouldCreateBillings()
+    public async Task WhenInstallmentsAreDetected_ShouldCreateBillings()
     {
         await hostFixture.FlushAsync();
 
@@ -44,7 +44,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Fact]
-    public async Task WhenSomeInstallmentsAreDetected_ShouldAllBillingsBeNotAbsoluteZero()
+    public async Task WhenInstallmentsAreDetected_ShouldAllBillingsBeNotAbsoluteZero()
     {
         await hostFixture.FlushAsync();
 
