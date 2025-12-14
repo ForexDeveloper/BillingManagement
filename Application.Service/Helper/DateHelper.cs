@@ -1,12 +1,27 @@
-﻿using Domain.Core.Enums;
-using System;
-using System.Collections.Generic;
+﻿using System;
+using Domain.Core.Enums;
 using System.Globalization;
+using System.Collections.Generic;
 
 namespace Application.Service.Helper;
 
 public static class DateHelper
 {
+    public static DayOfWeek GetPersianDayOfWeek(int billingPeriod)
+    {
+        return billingPeriod switch
+        {
+            0 => DayOfWeek.Saturday,
+            1 => DayOfWeek.Sunday,
+            2 => DayOfWeek.Monday,
+            3 => DayOfWeek.Tuesday,
+            4 => DayOfWeek.Wednesday,
+            5 => DayOfWeek.Thursday,
+            6 => DayOfWeek.Friday,
+            _ => throw new ArgumentOutOfRangeException(nameof(billingPeriod), billingPeriod, "دوره صورتحساب برای روز هفته ساپورت نمی شود")
+        };
+    }
+
     public static List<DateTime> CalculateInstallmentDates(DateTime depositDate, int? numberOfInstallments,
        TimeInterval? installmentBreakType, int? installmentBreak, int billingPeriod, TimeInterval periodType)
     {

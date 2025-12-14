@@ -377,17 +377,14 @@ public sealed class MerchantBillingService(
                 continue;
             }
 
-            else
+            (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
+                contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
+
+            currentPeriod = endOfPeriod == today;
+
+            if (currentPeriod)
             {
-                (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
-                    contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
-
-                currentPeriod = endOfPeriod == today;
-
-                if (currentPeriod)
-                {
-                    CreateBillingDto(contract, billingDtos, true, startOfPeriod, endOfPeriod);
-                }
+                CreateBillingDto(contract, billingDtos, true, startOfPeriod, endOfPeriod);
             }
 
             break;
@@ -683,22 +680,22 @@ public sealed class MerchantBillingService(
             {
                 billing.Transfer();
 
-                previousDebitAmount += billing.GetPayableAmount();
-
                 debtorBilling = billing;
 
                 debtorBillings.Add(billing);
+
+                previousDebitAmount += billing.GetPayableAmount();
             }
 
             else if (contractIds.Contains(overdueBilling.ActiveContractId))
             {
                 billing.Transfer();
 
-                previousDebitAmount += billing.GetPayableAmount();
-
                 debtorBilling ??= billing;
 
                 debtorBillings.Add(billing);
+
+                previousDebitAmount += billing.GetPayableAmount();
             }
         }
 
@@ -722,22 +719,22 @@ public sealed class MerchantBillingService(
             {
                 billing.Transfer();
 
-                previousCreditAmount += Math.Abs(billing.GetPayableAmount());
-
                 creditorBilling = billing;
 
                 creditorBillings.Add(billing);
+
+                previousCreditAmount += Math.Abs(billing.GetPayableAmount());
             }
 
             else if (contractIds.Contains(negativeBilling.ActiveContractId))
             {
                 billing.Transfer();
 
-                previousCreditAmount += Math.Abs(billing.GetPayableAmount());
-
                 creditorBilling ??= billing;
 
                 creditorBillings.Add(billing);
+
+                previousCreditAmount += Math.Abs(billing.GetPayableAmount());
             }
         }
 
