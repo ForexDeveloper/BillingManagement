@@ -2,7 +2,4 @@
 
 namespace Domain.Core.Entities.Shared.Exceptions;
 
-public class ArgumentValidationException : ValidationException
-{
-    public ArgumentValidationException(string key, string message) : base(key, message) { }
-}
+public class ArgumentValidationException(string key, string message) : ValidationException(key, message);

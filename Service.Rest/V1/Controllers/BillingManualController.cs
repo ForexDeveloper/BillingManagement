@@ -1,12 +1,12 @@
-﻿using Application.Service.Contracts;
+﻿using Domain.Core.Enums;
+using Microsoft.AspNetCore.Mvc;
 using Application.Service.Helper;
+using Application.Service.Contracts;
+using Domain.Core.UnitOfWorkContracts;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Service.Rest.V1.Controllers;
 
@@ -29,6 +29,14 @@ public class BillingManualController(
     {
         try
         {
+            var specificDate = DateTime.Today.AddDays(2);
+
+            for (var i = 0; i <= 6; i++)
+            {
+                var (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(i,
+                    TimeInterval.Week, DateTime.Today.AddDays(-100), specificDate);
+            }
+
             var financialDocument = await financialDocumentRepository.GetByIdAsync(financialDocumentId);
 
             var contract = await tenantMerchantContractRepository.GetAsync(financialDocument.TenantMerchantContractId!.Value);

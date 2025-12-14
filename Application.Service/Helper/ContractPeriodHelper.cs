@@ -1,6 +1,7 @@
 ﻿using System;
 using Domain.Core.Enums;
 using System.Globalization;
+using Domain.Core.Entities.Shared.Exceptions;
 
 namespace Application.Service.Helper;
 
@@ -26,18 +27,16 @@ public static class ContractPeriodHelper
 
                 if (!dailyBillingOriginDate.HasValue)
                 {
-                    startOfPeriod = DateTime.MaxValue;
-                    endOfPeriod = DateTime.MaxValue;
-                    break;
+                    throw new ArgumentValidationException(nameof(dailyBillingOriginDate),
+                        "تاریخ شروع صورتحساب روزانه مقدار ندارد");
                 }
 
                 var originDate = dailyBillingOriginDate.Value;
 
                 if (specificDate.Date < originDate.Date)
                 {
-                    startOfPeriod = DateTime.MaxValue;
-                    endOfPeriod = DateTime.MaxValue;
-                    break;
+                    throw new ArgumentValidationException(nameof(dailyBillingOriginDate),
+                        $"تاریخ شروع صورتحساب روزانه {specificDate} از بزرگتر است");
                 }
 
                 var totalDays = (specificDate.Date - originDate.Date).Days;
@@ -54,13 +53,15 @@ public static class ContractPeriodHelper
 
             case TimeInterval.Week:
 
-                if ((DayOfWeek)billingPeriod >= dayOfWeek)
+                var persianDayOfWeek = DateHelper.GetPersianDayOfWeek(billingPeriod);
+
+                if (persianDayOfWeek >= dayOfWeek)
                 {
-                    difference = 7 - (billingPeriod - (int)dayOfWeek);
+                    difference = 7 - (persianDayOfWeek - dayOfWeek);
                 }
                 else
                 {
-                    difference = (int)dayOfWeek - billingPeriod;
+                    difference = dayOfWeek - persianDayOfWeek;
                 }
 
                 startOfPeriod = pc.AddDays(specificDate, -difference);
