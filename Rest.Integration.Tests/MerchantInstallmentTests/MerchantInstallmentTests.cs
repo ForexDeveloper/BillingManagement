@@ -25,7 +25,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -56,7 +56,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -87,7 +87,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -121,7 +121,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -157,7 +157,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -181,14 +181,23 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         {
             var index = installments.IndexOf(installment);
 
-            if (index == 0 || index == installments.Count - 1) continue;
+            if (index == installments.Count - 2) continue;
 
-            var previousInstallment = installments[index - 1];
+            if (index == installments.Count - 1)
+            {
+                var remainingAmount = financialDocument.Amount - installments.Take(index).Sum(p => p.Amount);
 
-            installment.Amount.Should().Be(previousInstallment.Amount);
-            installment.CashAmount.Should().Be(previousInstallment.CashAmount);
-            installment.CreditAmount.Should().Be(previousInstallment.CreditAmount);
-            installment.PrepaymentAmount.Should().Be(previousInstallment.PrepaymentAmount);
+                installment.Amount.Should().Be(remainingAmount);
+            }
+            else
+            {
+                var nextInstallment = installments[index + 1];
+
+                installment.Amount.Should().Be(nextInstallment.Amount);
+                installment.CashAmount.Should().Be(nextInstallment.CashAmount);
+                installment.CreditAmount.Should().Be(nextInstallment.CreditAmount);
+                installment.PrepaymentAmount.Should().Be(nextInstallment.PrepaymentAmount);
+            }
         }
     }
 
@@ -205,7 +214,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
         contract.SetProperty(p => p.BillingPeriod, Random.Shared.Next(1, 100));
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -245,11 +254,13 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
             }
             else
             {
-                var previousInstallment = installments[index - 1];
+                if (index == installments.Count - 1) continue;
 
-                var nextDueDate = pc.AddDays(previousInstallment.DueDate, contract.BillingPeriod);
+                var nextInstallment = installments[index + 1];
 
-                installment.DueDate.Should().Be(nextDueDate);
+                var nextDueDate = pc.AddDays(installment.DueDate, contract.BillingPeriod);
+
+                nextInstallment.DueDate.Should().Be(nextDueDate);
             }
         }
     }
@@ -266,7 +277,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Week);
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -306,18 +317,64 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
             }
             else
             {
-                var previousInstallment = installments[index - 1];
+                if (index == installments.Count - 1) continue;
 
-                var nextDueDate = pc.AddWeeks(previousInstallment.DueDate, 1);
+                var nextInstallment = installments[index + 1];
 
-                installment.DueDate.Should().Be(nextDueDate);
+                var nextDueDate = pc.AddWeeks(installment.DueDate, 1);
 
-                var dayOfWeek = pc.GetDayOfWeek(installment.DueDate);
-
-                var previousDayOfWeek = pc.GetDayOfWeek(previousInstallment.DueDate);
-
-                dayOfWeek.Should().Be(previousDayOfWeek);
+                nextInstallment.DueDate.Should().Be(nextDueDate);
             }
+        }
+    }
+
+    [Theory]
+    [InlineData(FinancialDocumentType.Refund)]
+    [InlineData(FinancialDocumentType.Purchase)]
+    public async Task WhenBillingPeriodType_Is_Weekly_AllInstallmentsDayOfWeek_ShouldBeEqualToEachOther(FinancialDocumentType financialDocumentType)
+    {
+        var pc = new PersianCalendar();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Week);
+        contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
+
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+
+        financialDocument.SetProperty(p => p.Type, financialDocumentType);
+
+        if (financialDocumentType == FinancialDocumentType.Purchase)
+        {
+            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+        }
+        else
+        {
+            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
+
+            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        var installments = await _dbContext.Installments
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+        installments.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today));
+
+        foreach (var installment in installments)
+        {
+            var index = installments.IndexOf(installment);
+
+            if (index == installments.Count - 1) continue;
+
+            var nextInstallment = installments[index + 1];
+
+            var dayOfWeek = pc.GetDayOfWeek(installment.DueDate);
+
+            var nextDayOfWeek = pc.GetDayOfWeek(nextInstallment.DueDate);
+
+            dayOfWeek.Should().Be(nextDayOfWeek);
         }
     }
 
@@ -333,7 +390,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -373,17 +430,85 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
             }
             else
             {
-                var previousInstallment = installments[index - 1];
+                if (index == installments.Count - 1) continue;
 
-                var nextDueDate = pc.AddMonths(previousInstallment.DueDate, 1);
+                var nextInstallment = installments[index + 1];
 
-                installment.DueDate.Should().Be(nextDueDate);
+                var nextDueDate = pc.AddMonths(installment.DueDate, 1);
 
-                var dayOfMonth = pc.GetDayOfMonth(installment.DueDate);
+                nextInstallment.DueDate.Should().Be(nextDueDate);
+            }
+        }
+    }
 
-                var previousDayOfMonth = pc.GetDayOfMonth(previousInstallment.DueDate);
+    [Theory]
+    [InlineData(FinancialDocumentType.Refund)]
+    [InlineData(FinancialDocumentType.Purchase)]
+    public async Task WhenBillingPeriodType_Is_Monthly_AllInstallmentsDayOfMonth_ShouldBeEqualToEachOther(FinancialDocumentType financialDocumentType)
+    {
+        var pc = new PersianCalendar();
 
-                dayOfMonth.Should().Be(previousDayOfMonth);
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
+        contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
+
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+
+        financialDocument.SetProperty(p => p.Type, financialDocumentType);
+
+        if (financialDocumentType == FinancialDocumentType.Purchase)
+        {
+            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+        }
+        else
+        {
+            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
+
+            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        var installments = await _dbContext.Installments
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+        installments.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today));
+
+        foreach (var installment in installments)
+        {
+            var index = installments.IndexOf(installment);
+
+            if (index == installments.Count - 1) continue;
+
+            var month = pc.GetMonth(installment.DueDate);
+
+            var dayOfMonth = pc.GetDayOfMonth(installment.DueDate);
+
+            var nextInstallment = installments[index + 1];
+
+            var nextYear = pc.GetYear(nextInstallment.DueDate);
+
+            var nextMonth = pc.GetMonth(nextInstallment.DueDate);
+
+            var daysInNextMonth = pc.GetDaysInMonth(nextYear, nextMonth);
+
+            var dayOfNextMonth = pc.GetDayOfMonth(nextInstallment.DueDate);
+
+            switch (dayOfMonth)
+            {
+                case 31 when month == 6:
+                    dayOfNextMonth.Should().Be(30);
+                    break;
+
+                case 30 when month == 12:
+                case 30 when month == 11 && daysInNextMonth == 29:
+                    dayOfNextMonth.Should().Be(29);
+                    break;
+
+                default:
+                    dayOfMonth.Should().Be(dayOfNextMonth);
+                    break;
             }
         }
     }
@@ -398,7 +523,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.InstallmentsCount, 1);
         contract.SetProperty(p => p.SettlementType, SettlementType.LumpSum);
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -429,7 +554,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         financialDocument.SetProperty(p => p.Type, financialDocumentType);
 
@@ -456,6 +581,101 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     }
 
     [Theory]
+    [InlineData(FinancialDocumentType.Refund)]
+    [InlineData(FinancialDocumentType.Purchase)]
+    public async Task WhenCommissionDeductionMethodType_Is_DeductFromFirstInstallment_ShouldSetCommissionOnFirstInstallment(FinancialDocumentType financialDocumentType)
+    {
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.CommissionDeductionMethodType,
+            CommissionDeductionMethodType.DeductFromFirstInstallment);
+
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+
+        var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        financialDocument.SetCommission(commission);
+
+        await _dbContext.SaveChangesAsync();
+
+        if (financialDocumentType == FinancialDocumentType.Refund)
+        {
+            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
+
+            commission = await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
+
+            financialDocument.SetCommission(commission);
+
+            await _dbContext.SaveChangesAsync();
+        }
+
+        var installments = await _dbContext.Installments
+          .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+        installments[0].Commission.Should().BePositive();
+        installments[0].Commission.Should().Be(financialDocument.Commission);
+
+        installments.Skip(1).Should().AllSatisfy(p => p.Commission.Should().Be(0));
+        installments.Sum(p => p.Commission).Should().Be(financialDocument.Commission);
+    }
+
+    [Theory]
+    [InlineData(FinancialDocumentType.Refund)]
+    [InlineData(FinancialDocumentType.Purchase)]
+    public async Task WhenCommissionDeductionMethodType_Is_DeductEquallyFromInstallments_ShouldSetCommissionEquallyOnAllInstallments(FinancialDocumentType financialDocumentType)
+    {
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.CommissionDeductionMethodType,
+            CommissionDeductionMethodType.DeductEquallyFromInstallments);
+
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+
+        var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        financialDocument.SetCommission(commission);
+
+        await _dbContext.SaveChangesAsync();
+
+        if (financialDocumentType == FinancialDocumentType.Refund)
+        {
+            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
+
+            commission = await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
+
+            financialDocument.SetCommission(commission);
+
+            await _dbContext.SaveChangesAsync();
+        }
+
+        var installments = await _dbContext.Installments
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+
+        installments.Should().AllSatisfy(p => p.Commission.Should().BePositive());
+        installments.Sum(p => p.Commission).Should().Be(financialDocument.Commission);
+
+        foreach (var installment in installments)
+        {
+            var index = installments.IndexOf(installment);
+
+            if (index == installments.Count - 2) continue;
+
+            if (index == installments.Count - 1)
+            {
+                var remainingCommission = financialDocument.Commission - installments.Take(index).Sum(p => p.Commission);
+
+                installment.Commission.Should().Be(remainingCommission);
+            }
+            else
+            {
+                var nextInstallment = installments[index + 1];
+
+                installment.Commission.Should().Be(nextInstallment.Commission);
+            }
+        }
+    }
+
+    [Theory]
     [InlineData(CommissionCalculationType.UniformTiered)]
     [InlineData(CommissionCalculationType.CumulativeTiered)]
     public async Task WhenCommissionCalculationType_Is_TieredCommission_ShouldSetZeroCommissionForAllInstallments(CommissionCalculationType commissionCalculationType)
@@ -464,7 +684,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
@@ -496,7 +716,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.CommissionReferenceTypes, commissionReferenceTypes.ToList());
         contract.SetProperty(p => p.CommissionCalculationType, CommissionCalculationType.FixedPercentage);
 
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
         var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
 
@@ -546,91 +766,5 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         financialDocument.Commission.Should().Be(commission);
         installments.Sum(p => p.Commission).Should().Be(commission);
-    }
-
-    [Theory]
-    [InlineData(FinancialDocumentType.Refund)]
-    [InlineData(FinancialDocumentType.Purchase)]
-    public async Task WhenCommissionDeductionMethodType_Is_DeductFromFirstInstallment_ShouldSetCommissionOnFirstInstallment(FinancialDocumentType financialDocumentType)
-    {
-        var contract = await hostFixture.CreateTenantMerchantContract();
-
-        contract.SetProperty(p => p.CommissionDeductionMethodType,
-            CommissionDeductionMethodType.DeductFromFirstInstallment);
-
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
-
-        var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
-
-        financialDocument.SetCommission(commission);
-
-        await _dbContext.SaveChangesAsync();
-
-        if (financialDocumentType == FinancialDocumentType.Refund)
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            commission = await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-
-            financialDocument.SetCommission(commission);
-
-            await _dbContext.SaveChangesAsync();
-        }
-
-        var installments = await _dbContext.Installments
-          .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
-
-        installments[0].Commission.Should().BePositive();
-        installments[0].Commission.Should().Be(financialDocument.Commission);
-
-        installments.Skip(1).Should().AllSatisfy(p => p.Commission.Should().Be(0));
-        installments.Sum(p => p.Commission).Should().Be(financialDocument.Commission);
-    }
-
-    [Theory]
-    [InlineData(FinancialDocumentType.Refund)]
-    [InlineData(FinancialDocumentType.Purchase)]
-    public async Task WhenCommissionDeductionMethodType_Is_DeductEquallyFromInstallments_ShouldSetCommissionEquallyOnAllInstallments(FinancialDocumentType financialDocumentType)
-    {
-        var contract = await hostFixture.CreateTenantMerchantContract();
-
-        contract.SetProperty(p => p.CommissionDeductionMethodType,
-            CommissionDeductionMethodType.DeductEquallyFromInstallments);
-
-        var financialDocument = await hostFixture.CreateFinancialDocument(contract.Id);
-
-        var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
-
-        financialDocument.SetCommission(commission);
-
-        await _dbContext.SaveChangesAsync();
-
-        if (financialDocumentType == FinancialDocumentType.Refund)
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            commission = await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-
-            financialDocument.SetCommission(commission);
-
-            await _dbContext.SaveChangesAsync();
-        }
-
-        var installments = await _dbContext.Installments
-            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
-
-        installments.Should().AllSatisfy(p => p.Commission.Should().BePositive());
-        installments.Sum(p => p.Commission).Should().Be(financialDocument.Commission);
-
-        foreach (var installment in installments)
-        {
-            var index = installments.IndexOf(installment);
-
-            if (index == 0 || index == installments.Count - 1) continue;
-
-            var previousInstallment = installments[index - 1];
-
-            installment.Commission.Should().Be(previousInstallment.Commission);
-        }
     }
 }

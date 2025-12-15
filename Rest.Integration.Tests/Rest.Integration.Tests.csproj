@@ -6,12 +6,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="InstallmentTests\**" />
-    <EmbeddedResource Remove="InstallmentTests\**" />
-    <None Remove="InstallmentTests\**" />
-  </ItemGroup>
-
 
 	<ItemGroup>
 		<Content Include="appsettings.Stage.json">

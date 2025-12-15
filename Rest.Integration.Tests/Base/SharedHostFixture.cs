@@ -224,7 +224,7 @@ public class SharedHostFixture : IDisposable
         TenantMerchantContract = CreateTenantMerchantContract().Result;
     }
 
-    public async Task<FinancialDocument> CreateFinancialDocument(int contractId)
+    public async Task<FinancialDocument> CreatePurchaseFinancialDocument(int contractId)
     {
         var FINANCIAL_DOCUMENT_ID = await GetUniqueFinancialDocumentId();
 
