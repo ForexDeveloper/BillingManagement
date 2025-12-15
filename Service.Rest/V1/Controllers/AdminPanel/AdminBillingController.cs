@@ -22,8 +22,8 @@ public sealed class AdminBillingController(IMediator mediator, ICurrentUserServi
     [SwaggerResponse((int)HttpStatusCode.OK, "billing list returned", typeof(GetBillingsVm))]
     public async Task<ActionResult> GetListAsync([FromRoute] int id, [FromQuery] GetBillingsRequest request)
     {
-        var billings = await mediator.Send(new GetBillingsQuery(id, request.MerchantId,
-            request.Code, request.Type, request.Status, request.PageSize, request.PageIndex));
+        var billings = await mediator.Send(new GetBillingsQuery(id, request.MerchantId, request.Code, request.Type,
+            request.Status, request.StartDate, request.DueDate, request.PageSize, request.PageIndex));
 
         return Ok(billings);
     }

@@ -13,13 +13,14 @@ public static class ContractPeriodHelper
         int difference;
         DateTime startOfPeriod;
         DateTime endOfPeriod;
-
         var pc = new PersianCalendar();
 
         var year = pc.GetYear(specificDate);
         var month = pc.GetMonth(specificDate);
         var dayOfWeek = pc.GetDayOfWeek(specificDate);
         var dayOfMonth = pc.GetDayOfMonth(specificDate);
+
+        var currentPeriod = specificDate == DateTime.Today;
 
         switch (billingPeriodType)
         {
@@ -43,9 +44,16 @@ public static class ContractPeriodHelper
 
                 difference = totalDays % billingPeriod;
 
-                startOfPeriod = difference == 0
-                    ? pc.AddDays(specificDate, -billingPeriod)
-                    : pc.AddDays(specificDate, -difference);
+                if (difference == 0)
+                {
+                    startOfPeriod = currentPeriod ?
+                        pc.AddDays(specificDate, -billingPeriod) :
+                        pc.AddDays(specificDate, 0);
+                }
+                else
+                {
+                    startOfPeriod = pc.AddDays(specificDate, -difference);
+                }
 
                 endOfPeriod = pc.AddDays(startOfPeriod, billingPeriod);
 
@@ -53,15 +61,20 @@ public static class ContractPeriodHelper
 
             case TimeInterval.Week:
 
-                var persianDayOfWeek = DateHelper.GetPersianDayOfWeek(billingPeriod);
+                var periodDayOfWeek = DateHelper.GetPersianDayOfWeek(billingPeriod);
 
-                if (persianDayOfWeek >= dayOfWeek)
+                if (periodDayOfWeek == dayOfWeek)
                 {
-                    difference = 7 - (persianDayOfWeek - dayOfWeek);
+                    difference = currentPeriod ? 7 : 0;
+                }
+
+                else if (periodDayOfWeek > dayOfWeek)
+                {
+                    difference = 7 - (periodDayOfWeek - dayOfWeek);
                 }
                 else
                 {
-                    difference = dayOfWeek - persianDayOfWeek;
+                    difference = dayOfWeek - periodDayOfWeek;
                 }
 
                 startOfPeriod = pc.AddDays(specificDate, -difference);
@@ -74,7 +87,21 @@ public static class ContractPeriodHelper
 
                 var regulatePeriod = DateHelper.RegulateBillingPeriod(pc, year, month, billingPeriod);
 
-                if (regulatePeriod >= dayOfMonth)
+                if (regulatePeriod == dayOfMonth)
+                {
+                    if (currentPeriod)
+                    {
+                        startOfPeriod = pc.AddMonths(new DateTime(year, month, regulatePeriod, pc), -1);
+
+                        startOfPeriod = DateHelper.RegulateDateOfPeriod(pc, startOfPeriod, billingPeriod);
+                    }
+                    else
+                    {
+                        startOfPeriod = specificDate;
+                    }
+                }
+
+                else if (regulatePeriod > dayOfMonth)
                 {
                     startOfPeriod = pc.AddMonths(new DateTime(year, month, regulatePeriod, pc), -1);
 
@@ -82,7 +109,7 @@ public static class ContractPeriodHelper
                 }
                 else
                 {
-                    startOfPeriod = pc.ToDateTime(year, month, billingPeriod, 0, 0, 0, 0);
+                    startOfPeriod = pc.ToDateTime(year, month, regulatePeriod, 0, 0, 0, 0);
                 }
 
                 endOfPeriod = pc.AddMonths(startOfPeriod, 1);

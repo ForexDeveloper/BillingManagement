@@ -39,6 +39,16 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
             billingQuery = billingQuery.Where(p => p.Code.Contains(query.Code.Trim()));
         }
 
+        if (query.StartDate.HasValue)
+        {
+            billingQuery = billingQuery.Where(p => p.StartDate >= query.StartDate);
+        }
+
+        if (query.DueDate.HasValue)
+        {
+            billingQuery = billingQuery.Where(p => p.DueDate <= query.DueDate);
+        }
+
         var totalCount = await billingQuery.CountAsync();
 
         var billings = await billingQuery.Select(p => new GetBillingsItemVm
