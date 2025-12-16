@@ -251,14 +251,22 @@ public class SharedHostFixture : IDisposable
         return financialDocument;
     }
 
-    public async Task<FinancialDocument> CreateRefundFinancialDocument(FinancialDocument purchaseDocument)
+    public async Task<FinancialDocument> CreateRefundFinancialDocument(FinancialDocument purchaseDocument, bool isPartial = false)
     {
         var FINANCIAL_DOCUMENT_ID = await GetUniqueFinancialDocumentId();
 
-        var amount = purchaseDocument.Amount / 10;
-        var cashAmount = purchaseDocument.CashAmount / 10;
-        var creditAmount = purchaseDocument.CreditAmount / 10;
-        var prePaymentAmount = purchaseDocument.PrepaymentAmount / 10;
+        var amount = purchaseDocument.Amount;
+        var cashAmount = purchaseDocument.CashAmount;
+        var creditAmount = purchaseDocument.CreditAmount;
+        var prePaymentAmount = purchaseDocument.PrepaymentAmount;
+
+        if (isPartial)
+        {
+            amount /= 10;
+            cashAmount /= 10;
+            creditAmount /= 10;
+            prePaymentAmount /= 10;
+        }
 
         var financialDocument = new FinancialDocument(FINANCIAL_DOCUMENT_ID,
             Tenant.Id,

@@ -383,7 +383,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Fact]
-    public async Task WhenBillingPeriodType_Is_Monthly_And_BillingPeriod_Is_30_AllBillingsDayOfMonth_ShouldBeEqualTo29Or30()
+    public async Task WhenBillingPeriodType_Is_Monthly_And_BillingPeriod_Is_30_BillingsDayOfMonth_ShouldBeEqualTo29Or30()
     {
         var pc = new PersianCalendar();
 
@@ -422,20 +422,62 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         }
     }
 
+    [Fact]
+    public async Task WhenBillingPeriodType_Is_Monthly_And_BillingPeriod_Is_31_BillingsDayOfMonth_ShouldBeEqualTo29Or30Or31()
+    {
+        var pc = new PersianCalendar();
+
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 31);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
+        contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
+
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+
+        await ShiftFinancialDocument(financialDocument, 1000);
+
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        foreach (var billing in billings)
+        {
+            var year = pc.GetYear(billing.DueDate);
+
+            var month = pc.GetMonth(billing.DueDate);
+
+            var daysInMonth = pc.GetDaysInMonth(year, month);
+
+            var dayOfMonth = pc.GetDayOfMonth(billing.DueDate);
+
+            dayOfMonth.Should().Be(daysInMonth);
+        }
+    }
+
     [Theory]
     [InlineData(TimeInterval.Day, 17)]
     [InlineData(TimeInterval.Week, 3)]
     [InlineData(TimeInterval.Month, 20)]
-    public async Task WhenPurchaseInstallmentsAreDetected_And_BillingBreak_Is_Zero_NumberOfBillingsWithPositivePurchaseTransactionsAmount_ShouldBeEqualToContractInstallmentsCount(TimeInterval billingPeriodType, int billingPeriod)
+    public async Task WhenPurchaseInstallmentsAreDetected_And_BillingBreak_Is_0_NumberOfBillingsWithPositivePurchaseTransactionsAmount_ShouldBeEqualToContractInstallmentsCount(TimeInterval billingPeriodType, int billingPeriod)
     {
         await hostFixture.FlushAsync();
+
+        var installmentsCount = Random.Shared.Next(1, 24);
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
         contract.SetProperty(p => p.BillingBreak, 0);
         contract.SetProperty(p => p.BillingPeriod, billingPeriod);
         contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
-        contract.SetProperty(p => p.InstallmentsCount, Random.Shared.Next(1, 24));
+        contract.SetProperty(p => p.InstallmentsCount, installmentsCount);
 
         var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
@@ -449,8 +491,9 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billings = await _dbContext.MerchantBillings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
-        billings.Take(contract.InstallmentsCount).Should().AllSatisfy(p => p.PurchaseTransactionsAmount.Should().BePositive());
-        billings.Skip(contract.InstallmentsCount).Should().AllSatisfy(p => p.PurchaseTransactionsAmount.Should().Be(0));
+        billings.Take(installmentsCount).Should().AllSatisfy(p => p.PurchaseTransactionsAmount.Should().BePositive());
+        billings.Skip(installmentsCount).Should().AllSatisfy(p => p.PurchaseTransactionsAmount.Should().Be(0));
+        billings.Take(installmentsCount).Should().AllSatisfy(p => p.PurchaseTransactionsCommission.Should().BeGreaterThanOrEqualTo(0));
     }
 
     [Theory]
@@ -461,12 +504,14 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     {
         await hostFixture.FlushAsync();
 
+        var installmentsCount = Random.Shared.Next(1, 24);
+
         var contract = await hostFixture.CreateTenantMerchantContract();
 
         contract.SetProperty(p => p.BillingPeriod, billingPeriod);
         contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
+        contract.SetProperty(p => p.InstallmentsCount, installmentsCount);
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(20, 100));
-        contract.SetProperty(p => p.InstallmentsCount, Random.Shared.Next(1, 24));
 
         var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
 
@@ -488,9 +533,62 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billings = await _dbContext.MerchantBillings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
-        billings.Take(contract.InstallmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsAmount.Should().BePositive());
-        billings.Skip(contract.InstallmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsAmount.Should().Be(0));
+        billings.Take(installmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsAmount.Should().BePositive());
+        billings.Skip(installmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsAmount.Should().Be(0));
+        billings.Take(installmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsCommission.Should().BeGreaterThanOrEqualTo(0));
     }
+
+    //[Theory]
+    //[InlineData(TimeInterval.Day, 17, 16)]
+    //[InlineData(TimeInterval.Week, 3, 7)]
+    //[InlineData(TimeInterval.Month, 20, 29)]
+    //public async Task WhenRefundInstallmentsAreDetected_And_BillingBreak_Is_BigEnoughToShiftPurchaseInstallmentsToNextPeriod_StatusOfFirstBilling_ShouldBeEqualToSettled(TimeInterval billingPeriodType, int billingPeriod, int billingBreak)
+    //{
+    //    await hostFixture.FlushAsync();
+
+    //    var contract = await hostFixture.CreateTenantMerchantContract();
+
+    //    var installmentsCount = Random.Shared.Next(1, 24);
+
+    //    contract.SetProperty(p => p.BillingBreak, billingBreak);
+    //    contract.SetProperty(p => p.BillingPeriod, billingPeriod);
+    //    contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
+    //    contract.SetProperty(p => p.InstallmentsCount, installmentsCount);
+
+    //    var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+
+    //    await ShiftFinancialDocument(financialDocument);
+
+    //    await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+    //    await _dbContext.SaveChangesAsync();
+
+    //    financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
+
+    //    await ShiftFinancialDocument(financialDocument);
+
+    //    await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
+
+    //    await _dbContext.SaveChangesAsync();
+
+    //    await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+    //    var billings = await _dbContext.MerchantBillings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+    //    billings[0].Amount.Should().BeNegative();
+    //    billings[0].PurchaseTransactionsAmount.Should().Be(0);
+    //    billings[0].RefundedTransactionsAmount.Should().BePositive();
+    //    billings[0].RefundedTransactionsCommission.Should().BeGreaterThanOrEqualTo(0);
+    //    billings[0].Status.Should().Be(BillingStatus.Settled);
+
+    //    billings[^1].Amount.Should().Be(0);
+    //    billings[^1].RefundedTransactionsAmount.Should().Be(0);
+    //    billings[^1].RefundedTransactionsCommission.Should().Be(0);
+    //    billings[^1].PurchaseTransactionsAmount.Should().BePositive();
+    //    billings[^1].Status.Should().Be(BillingStatus.Settled);
+
+    //    billings.Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Settled));
+    //}
 
     private async Task ShiftFinancialDocument(FinancialDocument financialDocument, int? shift = null)
     {
