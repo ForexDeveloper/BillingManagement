@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System;
+using MediatR;
 using System.Threading;
 using Domain.Core.Enums;
 using System.Threading.Tasks;
@@ -20,14 +21,21 @@ public sealed class GetBillingsQuery : BasePaginatedListRequest, IRequest<GetBil
 
     public BillingStatus? Status { get; set; }
 
-    public GetBillingsQuery(int tenantId, int? merchantId, string? code, BillingType? type, BillingStatus? status, int pageSize, int pageIndex)
+    public DateTime? StartDate { get; set; }
+
+    public DateTime? DueDate { get; set; }
+
+    public GetBillingsQuery(int tenantId, int? merchantId, string? code, BillingType? type, BillingStatus? status,
+        DateTime? startDate, DateTime? dueDate, int pageSize, int pageIndex)
     {
         Code = code;
         Type = type;
         Status = status;
+        DueDate = dueDate;
         TenantId = tenantId;
         PageSize = pageSize;
         PageIndex = pageIndex;
+        StartDate = startDate;
         MerchantId = merchantId;
     }
 }

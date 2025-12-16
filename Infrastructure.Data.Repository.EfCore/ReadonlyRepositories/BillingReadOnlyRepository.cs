@@ -1,11 +1,11 @@
 ﻿using System.Linq;
+using Domain.Core.Enums;
 using System.Threading.Tasks;
 using Shared.Utilities.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Application.Query.Queries.Billings;
 using Application.Query.ViewModels.Billings;
 using Application.Query.ReadOnlyRepositoryContracts;
-using Domain.Core.Enums;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Infrastructure.Data.Repository.EfCore.ReadonlyRepositories;
@@ -33,8 +33,18 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
 
         if (query.MerchantId.HasValue)
         {
-            billingQuery = billingQuery.Where(p => (p.ToBusinessIdentityId == query.MerchantId && p.Type == BillingType.TenantToMerchant) ||
-                                                   (p.FromBusinessIdentityId == query.MerchantId && p.Type == BillingType.MerchantToTenant));
+            billingQuery = billingQuery.Where(p => (p.ToBusinessIdentityId == query.MerchantId && p.Type == BillingType.TenantToMerchant) || 
+                                                     (p.FromBusinessIdentityId == query.MerchantId && p.Type == BillingType.MerchantToTenant));
+        }
+
+        if (query.StartDate.HasValue)
+        {
+            billingQuery = billingQuery.Where(p => p.StartDate >= query.StartDate);
+        }
+
+        if (query.DueDate.HasValue)
+        {
+            billingQuery = billingQuery.Where(p => p.DueDate <= query.DueDate);
         }
 
         var totalCount = await billingQuery.CountAsync();
