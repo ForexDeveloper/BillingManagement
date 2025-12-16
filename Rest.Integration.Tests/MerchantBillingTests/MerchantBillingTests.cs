@@ -5,8 +5,8 @@ using System.Collections;
 using System.Globalization;
 using Application.Service.Helper;
 using Rest.Integration.Tests.Base;
-using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Application.Service.Contracts;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
@@ -17,7 +17,7 @@ namespace Rest.Integration.Tests.MerchantBillingTests;
 [Collection(nameof(SharedHostCollection))]
 public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 {
-    private const int SHIFT = -300;
+    private const int SHIFT = 300;
 
     private readonly ApplicationDbContext _dbContext = hostFixture.GetMainContext();
     private readonly IMerchantBillingService _merchantBillingService = hostFixture.GetRequiredService<IMerchantBillingService>();
@@ -204,7 +204,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
-        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(SHIFT)));
+        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
         foreach (var billing in billings)
         {
@@ -247,7 +247,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
-        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(SHIFT)));
+        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
         foreach (var billing in billings)
         {
@@ -291,7 +291,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
-        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(SHIFT)));
+        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
         var periodDayOfWeek = DateHelper.GetPersianDayOfWeek(billingPeriod);
 
@@ -328,7 +328,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
-        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(SHIFT)));
+        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
         foreach (var billing in billings)
         {
@@ -372,7 +372,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
-        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(SHIFT)));
+        billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
         foreach (var billing in billings)
         {
@@ -380,8 +380,46 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
             dayOfMonth.Should().Be(billingPeriod);
         }
+    }
+
+    [Fact]
+    public async Task WhenBillingPeriodType_Is_Monthly_And_BillingPeriod_Is_30_AllBillingsDayOfMonth_ShouldBeEqualTo29Or30()
+    {
+        var pc = new PersianCalendar();
 
         await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 30);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
+        contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
+
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+
+        await ShiftFinancialDocument(financialDocument, 1000);
+
+        await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        foreach (var billing in billings)
+        {
+            var year = pc.GetYear(billing.DueDate);
+
+            var month = pc.GetMonth(billing.DueDate);
+
+            var daysInMonth = pc.GetDaysInMonth(year, month);
+
+            var dayOfMonth = pc.GetDayOfMonth(billing.DueDate);
+
+            dayOfMonth.Should().Be(daysInMonth == 29 ? 29 : 30);
+        }
     }
 
     [Theory]
@@ -419,15 +457,15 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     [InlineData(TimeInterval.Day, 17)]
     [InlineData(TimeInterval.Week, 3)]
     [InlineData(TimeInterval.Month, 20)]
-    public async Task WhenRefundInstallmentsAreDetected_And_BillingBreak_Is_Zero_NumberOfBillingsWithPositiveRefundedTransactionsAmount_ShouldBeEqualToContractInstallmentsCount(TimeInterval billingPeriodType, int billingPeriod)
+    public async Task WhenRefundInstallmentsAreDetected_NumberOfBillingsWithPositiveRefundedTransactionsAmount_ShouldBeEqualToContractInstallmentsCount(TimeInterval billingPeriodType, int billingPeriod)
     {
         await hostFixture.FlushAsync();
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        contract.SetProperty(p => p.BillingBreak, 0);
         contract.SetProperty(p => p.BillingPeriod, billingPeriod);
         contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
+        contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(20, 100));
         contract.SetProperty(p => p.InstallmentsCount, Random.Shared.Next(1, 24));
 
         var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
@@ -454,11 +492,10 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         billings.Skip(contract.InstallmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsAmount.Should().Be(0));
     }
 
-
-    private async Task ShiftFinancialDocument(FinancialDocument financialDocument)
+    private async Task ShiftFinancialDocument(FinancialDocument financialDocument, int? shift = null)
     {
-        financialDocument.SetProperty(p => p.CreatedDateTime, DateTime.Today.AddDays(SHIFT));
-        financialDocument.SetProperty(p => p.EditDateTime, DateTime.Today.AddDays(SHIFT));
+        financialDocument.SetProperty(p => p.CreatedDateTime, DateTime.Today.AddDays(-shift ?? -SHIFT));
+        financialDocument.SetProperty(p => p.EditDateTime, DateTime.Today.AddDays(-shift ?? -SHIFT));
         await _dbContext.SaveChangesAsync();
     }
 }
