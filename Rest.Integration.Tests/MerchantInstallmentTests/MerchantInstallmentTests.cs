@@ -7,7 +7,9 @@ using Rest.Integration.Tests.Base;
 using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.InstallmentAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Rest.Integration.Tests.MerchantInstallmentTests;
@@ -25,22 +27,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -56,22 +48,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -87,22 +69,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installmentType = financialDocumentType == FinancialDocumentType.Purchase
             ? InstallmentType.Purchase
@@ -121,22 +93,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -157,22 +119,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -180,8 +132,6 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         foreach (var installment in installments)
         {
             var index = installments.IndexOf(installment);
-
-            if (index == installments.Count - 2) continue;
 
             if (index == installments.Count - 1)
             {
@@ -191,6 +141,8 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
             }
             else
             {
+                if (index == installments.Count - 2) continue;
+
                 var nextInstallment = installments[index + 1];
 
                 installment.Amount.Should().Be(nextInstallment.Amount);
@@ -214,22 +166,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
         contract.SetProperty(p => p.BillingPeriod, Random.Shared.Next(1, 100));
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -277,22 +219,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Week);
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -340,22 +272,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Week);
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -390,22 +312,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -453,22 +365,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -523,22 +425,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.InstallmentsCount, 1);
         contract.SetProperty(p => p.SettlementType, SettlementType.LumpSum);
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -554,22 +446,12 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
-        financialDocument.SetProperty(p => p.Type, financialDocumentType);
-
-        if (financialDocumentType == FinancialDocumentType.Purchase)
+        if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
-        else
-        {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-        }
-
-        await _dbContext.SaveChangesAsync();
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -590,27 +472,15 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.CommissionDeductionMethodType,
             CommissionDeductionMethodType.DeductFromFirstInstallment);
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
-
-        var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
-
-        financialDocument.SetCommission(commission);
-
-        await _dbContext.SaveChangesAsync();
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
         if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            commission = await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-
-            financialDocument.SetCommission(commission);
-
-            await _dbContext.SaveChangesAsync();
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
 
         var installments = await _dbContext.Installments
-          .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
+            .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
 
         installments[0].Commission.Should().BePositive();
         installments[0].Commission.Should().Be(financialDocument.Commission);
@@ -629,23 +499,11 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.CommissionDeductionMethodType,
             CommissionDeductionMethodType.DeductEquallyFromInstallments);
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
-
-        var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
-
-        financialDocument.SetCommission(commission);
-
-        await _dbContext.SaveChangesAsync();
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
         if (financialDocumentType == FinancialDocumentType.Refund)
         {
-            financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
-
-            commission = await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
-
-            financialDocument.SetCommission(commission);
-
-            await _dbContext.SaveChangesAsync();
+            financialDocument = await ConsumeRefundDocument(contract, financialDocument);
         }
 
         var installments = await _dbContext.Installments
@@ -658,8 +516,6 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         {
             var index = installments.IndexOf(installment);
 
-            if (index == installments.Count - 2) continue;
-
             if (index == installments.Count - 1)
             {
                 var remainingCommission = financialDocument.Commission - installments.Take(index).Sum(p => p.Commission);
@@ -668,6 +524,8 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
             }
             else
             {
+                if (index == installments.Count - 2) continue;
+
                 var nextInstallment = installments[index + 1];
 
                 installment.Commission.Should().Be(nextInstallment.Commission);
@@ -684,13 +542,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
-
-        var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
-
-        financialDocument.SetCommission(commission);
-
-        await _dbContext.SaveChangesAsync();
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -716,13 +568,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.CommissionReferenceTypes, commissionReferenceTypes.ToList());
         contract.SetProperty(p => p.CommissionCalculationType, CommissionCalculationType.FixedPercentage);
 
-        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
-
-        var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
-
-        financialDocument.SetCommission(commission);
-
-        await _dbContext.SaveChangesAsync();
+        var financialDocument = await ConsumePurchaseDocument(contract);
 
         var installments = await _dbContext.Installments
             .Where(p => p.FinancialDocumentId == financialDocument.Id).ToListAsync();
@@ -750,7 +596,7 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
             }
         }
 
-        commission = amount * (contract.FixedPercentageCommission!.Value / 100);
+        var commission = amount * (contract.FixedPercentageCommission!.Value / 100);
 
         commission = RoundHelper.RoundAmount(commission);
 
@@ -766,5 +612,31 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
 
         financialDocument.Commission.Should().Be(commission);
         installments.Sum(p => p.Commission).Should().Be(commission);
+    }
+
+    private async Task<FinancialDocument> ConsumePurchaseDocument(TenantMerchantContract contract, int? shift = null)
+    {
+        var financialDocument = await hostFixture.CreatePurchaseFinancialDocument(contract.Id);
+
+        var commission = await _merchantInstallmentService.CreatePurchaseInstallments(contract, financialDocument);
+
+        financialDocument.SetCommission(commission);
+
+        await _dbContext.SaveChangesAsync();
+
+        return financialDocument;
+    }
+
+    private async Task<FinancialDocument> ConsumeRefundDocument(TenantMerchantContract contract, FinancialDocument financialDocument, int? shift = null)
+    {
+        financialDocument = await hostFixture.CreateRefundFinancialDocument(financialDocument);
+
+        var commission = await _merchantInstallmentService.CreateRefundInstallments(contract, financialDocument);
+
+        financialDocument.SetCommission(commission);
+
+        await _dbContext.SaveChangesAsync();
+
+        return financialDocument;
     }
 }
