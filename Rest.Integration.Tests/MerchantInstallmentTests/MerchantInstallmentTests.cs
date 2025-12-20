@@ -4,6 +4,7 @@ using Domain.Core.Enums;
 using System.Globalization;
 using Application.Service.Helper;
 using Rest.Integration.Tests.Base;
+using Domain.Core.Entities.Shared;
 using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.InstallmentAggregate;
@@ -540,6 +541,18 @@ public sealed class MerchantInstallmentTests(SharedHostFixture hostFixture)
     {
         var contract = await hostFixture.CreateTenantMerchantContract();
 
+        List<TieredCommission> tieredCommissions =
+        [
+            new (0, 5000, 5.7M, null, null),
+            new(5001, 10000, 4.7M, null, null),
+            new(10001, 20000, 3.7M, null, null),
+            new(20001, 40000, 2.7M, null, null),
+            new(40001, 80000, 1.7M, null, null),
+            new(80001, 200000, 1.2M, null, null),
+            new(200001, null, 0.5M, null, null)
+        ];
+
+        contract.SetProperty(p => p.TieredCommissions, tieredCommissions);
         contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
 
         var financialDocument = await ConsumePurchaseDocument(contract);

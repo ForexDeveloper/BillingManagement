@@ -450,21 +450,20 @@ public sealed class MerchantBillingService(
 
         billingDtos.Add(billingDto);
 
-        if (!contract.IsCommissionExchanged)
-        {
-            billingDto = new BillingDto
-            {
-                ContractGroup = contract,
-                EndOfPeriod = endOfPeriod,
-                StartOfPeriod = startOfPeriod,
-                CurrentPeriod = currentPeriod,
-                Type = BillingType.MerchantToTenant,
-                FromBusinessIdentityId = contract.MerchantId,
-                ToBusinessIdentityId = contract.TenantId
-            };
+        if (contract.IsCommissionExchanged) return;
 
-            billingDtos.Add(billingDto);
-        }
+        billingDto = new BillingDto
+        {
+            ContractGroup = contract,
+            EndOfPeriod = endOfPeriod,
+            StartOfPeriod = startOfPeriod,
+            CurrentPeriod = currentPeriod,
+            Type = BillingType.MerchantToTenant,
+            FromBusinessIdentityId = contract.MerchantId,
+            ToBusinessIdentityId = contract.TenantId
+        };
+
+        billingDtos.Add(billingDto);
     }
 
     private async Task<List<NotSettledBilling>> OverdueExpiredBillings(List<NotSettledBilling> notSettledBillings, CancellationToken cancellationToken)

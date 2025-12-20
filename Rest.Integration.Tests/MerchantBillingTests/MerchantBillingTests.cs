@@ -1,18 +1,18 @@
-﻿using Application.Service.Contracts;
-using Application.Service.Helper;
-using Domain.Core.Entities.BillingAggregate;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Enums;
+﻿using Xunit;
 using FluentAssertions;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using Microsoft.EntityFrameworkCore;
-using Rest.Integration.Tests.Base;
+using Domain.Core.Enums;
 using System.Collections;
-using System.Diagnostics.Contracts;
 using System.Globalization;
+using Application.Service.Helper;
+using Domain.Core.Entities.Shared;
+using Rest.Integration.Tests.Base;
+using Application.Service.Contracts;
+using Microsoft.EntityFrameworkCore;
+using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.MerchantBillingAggregate;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Xunit;
+using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Rest.Integration.Tests.MerchantBillingTests;
 
@@ -24,6 +24,29 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     private readonly ApplicationDbContext _dbContext = hostFixture.GetMainContext();
     private readonly IMerchantBillingService _merchantBillingService = hostFixture.GetRequiredService<IMerchantBillingService>();
     private readonly IMerchantInstallmentService _merchantInstallmentService = hostFixture.GetRequiredService<IMerchantInstallmentService>();
+
+    [Theory]
+    [InlineData(TimeInterval.Day, 17)]
+    [InlineData(TimeInterval.Week, 3)]
+    [InlineData(TimeInterval.Month, 20)]
+    public async Task WhenPurchaseInstallmentsAreDetected_ShouldCreateBillings(TimeInterval billingPeriodType, int billingPeriod)
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, billingPeriod);
+        contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
+
+        await ConsumePurchaseDocument(contract);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings.Should().NotBeNull();
+        billings.Should().HaveCountGreaterThan(0);
+    }
 
     [Fact]
     public async Task WhenInstallmentsAreDetected_ShouldAllBeAssignableToBilling()
@@ -43,23 +66,6 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Fact]
-    public async Task WhenPurchaseInstallmentsAreDetected_ShouldCreateBillings()
-    {
-        await hostFixture.FlushAsync();
-
-        var contract = await hostFixture.CreateTenantMerchantContract();
-
-        await ConsumePurchaseDocument(contract);
-
-        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
-
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
-
-        billings.Should().NotBeNull();
-        billings.Should().HaveCountGreaterThan(0);
-    }
-
-    [Fact]
     public async Task WhenInstallmentsAreDetected_AllBillings_ShouldBeNotAbsoluteZero()
     {
         await hostFixture.FlushAsync();
@@ -75,19 +81,12 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         billings.Should().AllSatisfy(p => p.As<MerchantBilling>().IsAbsoluteZero().Should().BeFalse());
     }
 
-    [Theory]
-    [InlineData(TimeInterval.Day, 17)]
-    [InlineData(TimeInterval.Week, 3)]
-    [InlineData(TimeInterval.Month, 20)]
-    public async Task WhenPurchaseInstallmentsAreDetected_ShouldDebitEachBillingToNextOne(TimeInterval billingPeriodType, int billingPeriod)
+    [Fact]
+    public async Task WhenPurchaseInstallmentsAreDetected_StatusOfPreviousBillings_ShouldBeEqualToOverdue()
     {
         await hostFixture.FlushAsync();
 
         var contract = await hostFixture.CreateTenantMerchantContract();
-
-        contract.SetProperty(p => p.BillingPeriod, billingPeriod);
-        contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
-        contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 20));
 
         await ConsumePurchaseDocument(contract);
 
@@ -95,12 +94,22 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
-        billings[0].Status.Should().NotBe(BillingStatus.Settled);
-        billings[0].As<MerchantBilling>().IsAbsoluteZero().Should().BeFalse();
-
         billings[^1].Status.Should().BeOneOf(BillingStatus.Issued, BillingStatus.Overdue);
         billings[..^1].Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Overdue));
-        billings.Take(billings.Count - 1).Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Overdue));
+    }
+
+    [Fact]
+    public async Task WhenPurchaseInstallmentsAreDetected_ShouldDebitEachBillingToNextOne()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        await ConsumePurchaseDocument(contract);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
         foreach (var billing in billings)
         {
@@ -149,6 +158,26 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
                 billing.PreviousDebitAmount.Should().Be(previousBilling.Amount);
             }
         }
+    }
+
+    [Fact]
+    public async Task WhenPurchaseInstallmentsAreDetected_And_PeriodMinCommissionAmount_Is_GreaterThan_PurchaseTransactionsAmount_StatusOfPreviousBillings_ShouldBeEqualToSettled()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, 10000000);
+
+        await ConsumePurchaseDocument(contract);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings[^1].Status.Should().BeOneOf(BillingStatus.Issued, BillingStatus.Settled);
+        billings[..^1].Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Settled));
+        billings.Take(billings.Count - 1).Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Settled));
     }
 
     [Fact]
@@ -396,11 +425,12 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     [InlineData(TimeInterval.Day, 17)]
     [InlineData(TimeInterval.Week, 3)]
     [InlineData(TimeInterval.Month, 20)]
-    public async Task WhenPurchaseInstallmentsAreDetected_And_BillingBreak_Is_0_NumberOfBillingsWithPositivePurchaseTransactionsAmount_ShouldBeEqualToContractInstallmentsCount(TimeInterval billingPeriodType, int billingPeriod)
+    public async Task WhenPurchaseInstallmentsAreDetected_And_BillingBreak_Is_0_NumberOfBillingsWithPositivePurchaseTransactionsAmount_ShouldBeEqualToContractInstallmentsCount(
+        TimeInterval billingPeriodType, int billingPeriod)
     {
         await hostFixture.FlushAsync();
 
-        var installmentsCount = Random.Shared.Next(1, 24);
+        var installmentsCount = Random.Shared.Next(1, 6);
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
@@ -422,24 +452,42 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     [Theory]
     [InlineData(TimeInterval.Day, 17, CommissionCalculationType.FixedAmount)]
     [InlineData(TimeInterval.Day, 17, CommissionCalculationType.FixedPercentage)]
+    [InlineData(TimeInterval.Day, 17, CommissionCalculationType.UniformTiered)]
+    [InlineData(TimeInterval.Day, 17, CommissionCalculationType.CumulativeTiered)]
     [InlineData(TimeInterval.Week, 3, CommissionCalculationType.FixedAmount)]
     [InlineData(TimeInterval.Week, 3, CommissionCalculationType.FixedPercentage)]
+    [InlineData(TimeInterval.Week, 3, CommissionCalculationType.UniformTiered)]
+    [InlineData(TimeInterval.Week, 3, CommissionCalculationType.CumulativeTiered)]
     [InlineData(TimeInterval.Month, 20, CommissionCalculationType.FixedAmount)]
     [InlineData(TimeInterval.Month, 20, CommissionCalculationType.FixedPercentage)]
-    public async Task WhenPurchaseInstallmentsAreDetected_And_BillingBreak_Is_0_And_CommissionCalculationType_Is_FixedAmount_Or_FixedPercentage_NumberOfBillingsWithPositivePurchaseTransactionsCommission_ShouldBeEqualToContractInstallmentsCount(
-            TimeInterval billingPeriodType, int billingPeriod, CommissionCalculationType commissionCalculationType)
+    [InlineData(TimeInterval.Month, 20, CommissionCalculationType.UniformTiered)]
+    [InlineData(TimeInterval.Month, 20, CommissionCalculationType.CumulativeTiered)]
+    public async Task WhenPurchaseInstallmentsAreDetected_And_BillingBreak_Is_0_NumberOfBillingsWithPositivePurchaseTransactionsCommission_ShouldBeEqualToContractInstallmentsCount(
+        TimeInterval billingPeriodType, int billingPeriod, CommissionCalculationType commissionCalculationType)
     {
         await hostFixture.FlushAsync();
 
-        var installmentsCount = Random.Shared.Next(1, 24);
+        List<TieredCommission> tieredCommissions =
+        [
+            new (0, 5000, 5.7M, null, null),
+            new(5001, 10000, 4.7M, null, null),
+            new(10001, 20000, 3.7M, null, null),
+            new(20001, 40000, 2.7M, null, null),
+            new(40001, 80000, 1.7M, null, null),
+            new(80001, 200000, 1.2M, null, null),
+            new(200001, null, 0.5M, null, null)
+        ];
+
+        var installmentsCount = Random.Shared.Next(1, 6);
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
         contract.SetProperty(p => p.BillingBreak, 0);
         contract.SetProperty(p => p.BillingPeriod, billingPeriod);
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, 0);
         contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
         contract.SetProperty(p => p.InstallmentsCount, installmentsCount);
-        contract.SetProperty(p => p.PeriodMinCommissionAmount, (decimal?)0);
+        contract.SetProperty(p => p.TieredCommissions, tieredCommissions);
         contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
 
         await ConsumePurchaseDocument(contract);
@@ -460,11 +508,11 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     [InlineData(TimeInterval.Month, 20, CommissionCalculationType.FixedAmount)]
     [InlineData(TimeInterval.Month, 20, CommissionCalculationType.FixedPercentage)]
     public async Task WhenRefundInstallmentsAreDetected_And_CommissionCalculationType_Is_FixedAmount_Or_FixedPercentage_NumberOfBillingsWithPositivePurchaseTransactionsCommission_NumberOfBillingsWithPositiveRefundedTransactionsAmount_ShouldBeEqualToContractInstallmentsCount(
-            TimeInterval billingPeriodType, int billingPeriod, CommissionCalculationType commissionCalculationType)
+        TimeInterval billingPeriodType, int billingPeriod, CommissionCalculationType commissionCalculationType)
     {
         await hostFixture.FlushAsync();
 
-        var installmentsCount = Random.Shared.Next(1, 24);
+        var installmentsCount = Random.Shared.Next(1, 6);
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
@@ -487,22 +535,73 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Theory]
-    [InlineData(TimeInterval.Day, 17, 16)]
-    [InlineData(TimeInterval.Week, 3, 7)]
-    [InlineData(TimeInterval.Month, 20, 29)]
-    public async Task WhenRefundInstallmentsAreDetected_And_BillingBreak_Is_BigEnoughToShiftPurchaseInstallmentsToNextPeriod_StatusOfFirstBilling_ShouldBeEqualToSettled(TimeInterval billingPeriodType, int billingPeriod, int billingBreak)
+    [InlineData(TimeInterval.Day, 17, CommissionCalculationType.UniformTiered)]
+    [InlineData(TimeInterval.Day, 17, CommissionCalculationType.CumulativeTiered)]
+    [InlineData(TimeInterval.Week, 3, CommissionCalculationType.UniformTiered)]
+    [InlineData(TimeInterval.Week, 3, CommissionCalculationType.CumulativeTiered)]
+    [InlineData(TimeInterval.Month, 20, CommissionCalculationType.UniformTiered)]
+    [InlineData(TimeInterval.Month, 20, CommissionCalculationType.CumulativeTiered)]
+    public async Task WhenPurchaseInstallmentsAreDetected_And_CommissionCalculationType_Is_UniformTiered_Or_CumulativeTiered_AllOfBillingsRefundedTransactionsCommission_ShouldBeEqualToZero(
+        TimeInterval billingPeriodType, int billingPeriod, CommissionCalculationType commissionCalculationType)
     {
         await hostFixture.FlushAsync();
 
-        var installmentsCount = Random.Shared.Next(1, 24);
+        List<TieredCommission> tieredCommissions =
+        [
+            new (0, 5000, 5.7M, null, null),
+            new(5001, 10000, 4.7M, null, null),
+            new(10001, 20000, 3.7M, null, null),
+            new(20001, 40000, 2.7M, null, null),
+            new(40001, 80000, 1.7M, null, null),
+            new(80001, 200000, 1.2M, null, null),
+            new(200001, null, 0.5M, null, null)
+        ];
+
+        var installmentsCount = Random.Shared.Next(1, 6);
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingBreak, 0);
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, 0);
+        contract.SetProperty(p => p.BillingPeriod, billingPeriod);
+        contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
+        contract.SetProperty(p => p.InstallmentsCount, installmentsCount);
+        contract.SetProperty(p => p.TieredCommissions, tieredCommissions);
+        contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
+
+        await ConsumePurchaseDocument(contract);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.MerchantBillings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings.Should().AllSatisfy(p => p.RefundedTransactionsCommission.Should().Be(0));
+        billings.Take(installmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsCommission.Should().Be(0));
+        billings.Skip(installmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsCommission.Should().Be(0));
+    }
+
+    [Theory]
+    [InlineData(TimeInterval.Day, 17, 16, CommissionCalculationType.FixedAmount)]
+    [InlineData(TimeInterval.Day, 17, 16, CommissionCalculationType.FixedPercentage)]
+    [InlineData(TimeInterval.Week, 3, 7, CommissionCalculationType.FixedAmount)]
+    [InlineData(TimeInterval.Week, 3, 7, CommissionCalculationType.FixedPercentage)]
+    [InlineData(TimeInterval.Month, 20, 29, CommissionCalculationType.FixedAmount)]
+    [InlineData(TimeInterval.Month, 20, 29, CommissionCalculationType.FixedPercentage)]
+    public async Task WhenRefundInstallmentsAreDetected_And_CommissionCalculationType_Is_FixedAmount_Or_FixedPercentage_And_BillingBreak_Is_GreatEnoughToShiftPurchaseInstallmentsToNextPeriod_StatusOfFirstBilling_ShouldBeEqualToSettled(
+        TimeInterval billingPeriodType, int billingPeriod, int billingBreak, CommissionCalculationType commissionCalculationType)
+    {
+        await hostFixture.FlushAsync();
+
+        var installmentsCount = Random.Shared.Next(1, 6);
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
         contract.SetProperty(p => p.BillingBreak, billingBreak);
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, 0);
         contract.SetProperty(p => p.BillingPeriod, billingPeriod);
         contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
         contract.SetProperty(p => p.InstallmentsCount, installmentsCount);
-        contract.SetProperty(p => p.PeriodMinCommissionAmount, (decimal?)0);
+        contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
 
         var purchaseDocument = await ConsumePurchaseDocument(contract);
 

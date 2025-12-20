@@ -13,6 +13,7 @@ using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Microsoft.Extensions.DependencyInjection;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
@@ -298,7 +299,7 @@ public class SharedHostFixture : IDisposable
 
     public async Task<TenantMerchantContract> CreateTenantMerchantContract()
     {
-        var tenantMerchantContract = new TenantMerchantContract(Tenant.Id,
+        var contract = new TenantMerchantContract(Tenant.Id,
             Merchant.Id,
             $"TN-MR{Random.Shared.Next(1, 10000000)}",
             DateTime.Now,
@@ -332,11 +333,11 @@ public class SharedHostFixture : IDisposable
             500000
         );
 
-        await _mainContext.TenantMerchantContracts.AddAsync(tenantMerchantContract);
+        await _mainContext.TenantMerchantContracts.AddAsync(contract);
 
         await _mainContext.SaveChangesAsync();
 
-        return tenantMerchantContract;
+        return contract;
     }
 
     private async Task<long> GetUniqueFinancialDocumentId()

@@ -1,6 +1,9 @@
-﻿using System.Text;
-using System.Text.Json;
+﻿using Microsoft.VisualStudio.TestPlatform.TestHost;
+using System.ComponentModel;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
+using System.Text.Json;
 
 namespace Rest.Integration.Tests.Base;
 
@@ -24,6 +27,13 @@ public static class UtilityExtension
         var expression = (MemberExpression)propertyExpression.Body;
 
         var property = expression.Member.Name;
+
+        var propertyType = entityType.GetProperty(property)!.PropertyType;
+
+        if (!propertyType.IsClass)
+        {
+            value = TypeDescriptor.GetConverter(propertyType).ConvertFromInvariantString(value.ToString());
+        }
 
         entityType.GetProperty(property)?.SetValue(entity, value);
     }

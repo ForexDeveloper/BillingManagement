@@ -8,27 +8,22 @@ namespace Domain.Core.Entities.Shared;
 /// <summary>
 /// از رکورد به کلاس تبدیل نشود مپ کردن کارمزد های پلکان به مشکل می خورد
 /// </summary>
-public sealed record TieredCommission
+public sealed record TieredCommission(
+    decimal FromAmount,
+    decimal? ToAmount,
+    decimal Percentage,
+    decimal? MinAmount,
+    decimal? MaxAmount)
 {
-    public decimal FromAmount { get; private set; }
+    public decimal FromAmount { get; private set; } = FromAmount;
 
-    public decimal? ToAmount { get; private set; }
+    public decimal? ToAmount { get; private set; } = ToAmount;
 
-    public decimal Percentage { get; private set; }
+    public decimal Percentage { get; private set; } = Percentage;
 
-    public decimal? MinAmount { get; private set; }
+    public decimal? MinAmount { get; private set; } = MinAmount;
 
-    public decimal? MaxAmount { get; private set; }
-
-    public TieredCommission(decimal fromAmount, decimal? toAmount, decimal percentage,
-        decimal? minAmount, decimal? maxAmount)
-    {
-        FromAmount = fromAmount;
-        ToAmount = toAmount;
-        Percentage = percentage;
-        MinAmount = minAmount;
-        MaxAmount = maxAmount;
-    }
+    public decimal? MaxAmount { get; private set; } = MaxAmount;
 
     public void Update(decimal percentage, decimal? minAmount, decimal? maxAmount)
     {
