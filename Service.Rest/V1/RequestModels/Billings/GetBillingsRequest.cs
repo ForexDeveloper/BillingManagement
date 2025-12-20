@@ -13,7 +13,7 @@ public sealed class GetBillingsRequest : BasePaginatedListRequest
 
     public BillingStatus? Status { get; set; }
 
-    public DateTime? StartDate { get; set; }
+    public DateTime? FromDate { get; set; }
 
-    public DateTime? DueDate { get; set; }
+    public DateTime? ToDate { get; set; }
 }
