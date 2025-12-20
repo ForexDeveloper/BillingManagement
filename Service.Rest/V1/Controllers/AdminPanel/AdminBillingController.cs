@@ -23,7 +23,7 @@ public sealed class AdminBillingController(IMediator mediator, ICurrentUserServi
     public async Task<ActionResult> GetListAsync([FromRoute] int id, [FromQuery] GetBillingsRequest request)
     {
         var billings = await mediator.Send(new GetBillingsQuery(id, request.MerchantId, request.Code, request.Type,
-            request.Status, request.StartDate, request.DueDate, request.PageSize, request.PageIndex));
+            request.Status, request.FromDate, request.ToDate, request.PageSize, request.PageIndex));
 
         return Ok(billings);
     }

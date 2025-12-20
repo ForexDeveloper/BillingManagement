@@ -21,21 +21,21 @@ public sealed class GetBillingsQuery : BasePaginatedListRequest, IRequest<GetBil
 
     public BillingStatus? Status { get; set; }
 
-    public DateTime? StartDate { get; set; }
+    public DateTime? FromDate { get; set; }
 
-    public DateTime? DueDate { get; set; }
+    public DateTime? ToDate { get; set; }
 
     public GetBillingsQuery(int tenantId, int? merchantId, string? code, BillingType? type, BillingStatus? status,
-        DateTime? startDate, DateTime? dueDate, int pageSize, int pageIndex)
+        DateTime? fromDate, DateTime? toDate, int pageSize, int pageIndex)
     {
         Code = code;
         Type = type;
         Status = status;
-        DueDate = dueDate;
+        ToDate = toDate;
         TenantId = tenantId;
         PageSize = pageSize;
+        FromDate = fromDate;
         PageIndex = pageIndex;
-        StartDate = startDate;
         MerchantId = merchantId;
     }
 }

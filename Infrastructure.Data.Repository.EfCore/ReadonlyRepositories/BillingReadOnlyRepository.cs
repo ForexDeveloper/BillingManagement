@@ -34,17 +34,17 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
         if (query.MerchantId.HasValue)
         {
             billingQuery = billingQuery.Where(p => (p.ToBusinessIdentityId == query.MerchantId && p.Type == BillingType.TenantToMerchant) || 
-                                                     (p.FromBusinessIdentityId == query.MerchantId && p.Type == BillingType.MerchantToTenant));
+                                                   (p.FromBusinessIdentityId == query.MerchantId && p.Type == BillingType.MerchantToTenant));
         }
 
-        if (query.StartDate.HasValue)
+        if (query.FromDate.HasValue)
         {
-            billingQuery = billingQuery.Where(p => p.StartDate >= query.StartDate);
+            billingQuery = billingQuery.Where(p => p.StartDate >= query.FromDate);
         }
 
-        if (query.DueDate.HasValue)
+        if (query.ToDate.HasValue)
         {
-            billingQuery = billingQuery.Where(p => p.DueDate <= query.DueDate);
+            billingQuery = billingQuery.Where(p => p.DueDate <= query.ToDate);
         }
 
         var totalCount = await billingQuery.CountAsync();
