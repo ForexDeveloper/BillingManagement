@@ -181,6 +181,72 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Fact]
+    public async Task WhenPurchaseInstallmentsAreDetected_And_PeriodMinCommissionAmount_Is_GreaterThan_PurchaseTransactionsAmount_ShouldCreditEachBillingToNextOne()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, 10000000);
+
+        await ConsumePurchaseDocument(contract);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        foreach (var billing in billings)
+        {
+            var index = billings.IndexOf(billing);
+
+            if (index == 0)
+            {
+                billing.Creditor.Should().BeNull();
+                billing.CreditorId.Should().BeNull();
+            }
+            else
+            {
+                var previousBilling = billings[index - 1];
+
+                billing.Creditor.Should().Be(previousBilling);
+                billing.CreditorId.Should().Be(previousBilling.Id);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task WhenPurchaseInstallmentsAreDetected_And_PeriodMinCommissionAmount_Is_GreaterThan_PurchaseTransactionsAmount_ShouldSetBillingAmountAsNextOnePreviousCredit()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, 10000000);
+
+        await ConsumePurchaseDocument(contract);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        foreach (var billing in billings)
+        {
+            var index = billings.IndexOf(billing);
+
+            if (index == 0)
+            {
+                billing.PreviousCreditAmount.Should().Be(0);
+            }
+            else
+            {
+                var previousBilling = billings[index - 1];
+
+                billing.PreviousCreditAmount.Should().Be(Math.Abs(previousBilling.Amount));
+            }
+        }
+    }
+
+    [Fact]
     public async Task WhenBillingPeriodType_Is_Daily_DurationBetweenDueDates_ShouldAllBeEqualToBillingPeriod()
     {
         var pc = new PersianCalendar();
