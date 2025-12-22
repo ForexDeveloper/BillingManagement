@@ -39,7 +39,7 @@ public sealed class BillingReadOnlyRepository(ReadonlyApplicationDbContext dbCon
 
         if (query.FromDate.HasValue)
         {
-            billingQuery = billingQuery.Where(p => p.StartDate >= query.FromDate);
+            billingQuery = billingQuery.Where(p => p.DueDate >= query.FromDate);
         }
 
         if (query.ToDate.HasValue)
