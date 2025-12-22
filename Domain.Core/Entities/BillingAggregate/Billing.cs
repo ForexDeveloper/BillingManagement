@@ -169,8 +169,6 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(additionsAmount), "امکان ثبت اضافات برای صورتحسابی که مهلت بازپرداخت آن گذشته است وجود ندارد");
         }
 
-        var lastPayableAmount = PayableAmount;
-
         ValidateCheckSum();
         AdditionsAmount = additionsAmount;
         AdditionsDescription = additionDescription;
@@ -185,9 +183,8 @@ public abstract class Billing : BaseEntity<long>
         }
         else
         {
-            Status = PayableAmount > lastPayableAmount ? BillingStatus.Settled
-                : throw new ArgumentValidationException(nameof(additionsAmount), 
-                    "مبلغ اضافات نمی تواند باعث منفی شدن مبلغ قابل پرداخت صورتحساب شود");
+            Status = PayableAmount == 0 ? BillingStatus.Settled :
+                throw new ArgumentValidationException(nameof(additionsAmount), "مبلغ اضافات نمی تواند باعث منفی شدن مبلغ قابل پرداخت صورتحساب شود");
         }
 
         SetCheckSum();
