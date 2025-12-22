@@ -211,6 +211,8 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(deductionsAmount), "امکان ثبت کسورات برای صورتحسابی که مهلت بازپرداخت آن گذشته است وجود ندارد");
         }
 
+        var lastPayableAmount = PayableAmount;
+
         ValidateCheckSum();
         DeductionsAmount = deductionsAmount;
         DeductionsDescription = deductionDescription;
@@ -225,8 +227,9 @@ public abstract class Billing : BaseEntity<long>
         }
         else
         {
-            Status = PayableAmount == 0 ? BillingStatus.Settled :
-                throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از مبلغ قابل پرداخت صورتحساب بیشتر باشد");
+            Status = PayableAmount >= lastPayableAmount ? BillingStatus.Settled
+                : throw new ArgumentValidationException(nameof(deductionsAmount),
+                    "مبلغ کسورات نمی تواند از مبلغ قابل پرداخت صورتحساب بیشتر باشد");
         }
 
         SetCheckSum();
