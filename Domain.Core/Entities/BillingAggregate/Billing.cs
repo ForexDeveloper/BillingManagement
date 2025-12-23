@@ -227,7 +227,7 @@ public abstract class Billing : BaseEntity<long>
         }
         else
         {
-            Status = PayableAmount >= lastPayableAmount ? BillingStatus.Settled
+            Status = PayableAmount == 0 ? BillingStatus.Settled
                 : throw new ArgumentValidationException(nameof(deductionsAmount),
                     "مبلغ کسورات نمی تواند از مبلغ قابل پرداخت صورتحساب بیشتر باشد");
         }
