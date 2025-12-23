@@ -7,5 +7,7 @@ public enum IdentityTypeEnum : byte
     [Description("حقوقی")]
     Legal = 1,
     [Description("حقیقی")]
-    Individual = 2
+    Individual = 2,
+    [Description("ناشناس")]
+    Anonymous = 3
 }

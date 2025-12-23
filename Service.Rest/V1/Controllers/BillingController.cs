@@ -23,7 +23,8 @@ public sealed class BillingController(IMediator mediator, ICurrentUserService cu
     public async Task<ActionResult> GetListAsync([FromQuery] GetBillingsRequest request)
     {
         var billings = await mediator.Send(new GetBillingsQuery(currentUserService.TenantId, request.MerchantId,
-            request.Code, request.Type, request.Status, request.PageSize, request.PageIndex));
+            request.Code, request.Type, request.Status, request.FromDate, request.ToDate, request.PageSize,
+            request.PageIndex));
 
         return Ok(billings);
     }

@@ -5,7 +5,6 @@ using Domain.Core.Enums;
 using Domain.Core.Helper;
 using System.Globalization;
 using System.Collections.Generic;
-using System.Threading;
 using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.BusinessEntity;
 using Domain.Core.Entities.TenantAggregate;
@@ -170,6 +169,8 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(additionsAmount), "امکان ثبت اضافات برای صورتحسابی که مهلت بازپرداخت آن گذشته است وجود ندارد");
         }
 
+        var lastPayableAmount = PayableAmount;
+
         ValidateCheckSum();
         AdditionsAmount = additionsAmount;
         AdditionsDescription = additionDescription;
@@ -184,8 +185,9 @@ public abstract class Billing : BaseEntity<long>
         }
         else
         {
-            Status = PayableAmount == 0 ? BillingStatus.Settled :
-                throw new ArgumentValidationException(nameof(additionsAmount), "مبلغ اضافات نمی تواند باعث منفی شدن مبلغ قابل پرداخت صورتحساب شود");
+            Status = PayableAmount > lastPayableAmount ? BillingStatus.Settled
+                : throw new ArgumentValidationException(nameof(additionsAmount),
+                    "مبلغ اضافات نمی تواند باعث منفی شدن مبلغ قابل پرداخت صورتحساب شود");
         }
 
         SetCheckSum();
@@ -209,6 +211,8 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(deductionsAmount), "امکان ثبت کسورات برای صورتحسابی که مهلت بازپرداخت آن گذشته است وجود ندارد");
         }
 
+        var lastPayableAmount = PayableAmount;
+
         ValidateCheckSum();
         DeductionsAmount = deductionsAmount;
         DeductionsDescription = deductionDescription;
@@ -223,8 +227,9 @@ public abstract class Billing : BaseEntity<long>
         }
         else
         {
-            Status = PayableAmount == 0 ? BillingStatus.Settled :
-                throw new ArgumentValidationException(nameof(deductionsAmount), "مبلغ کسورات نمی تواند از مبلغ قابل پرداخت صورتحساب بیشتر باشد");
+            Status = PayableAmount == 0 ? BillingStatus.Settled
+                : throw new ArgumentValidationException(nameof(deductionsAmount),
+                    "مبلغ کسورات نمی تواند از مبلغ قابل پرداخت صورتحساب بیشتر باشد");
         }
 
         SetCheckSum();

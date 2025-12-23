@@ -19,6 +19,10 @@ public abstract record GetBillingVm
 
     public string StatusTitle { get; set; }
 
+    public bool CanSetAdditions { get; set; }
+
+    public bool CanSetDeductions { get; set; }
+
     public TimeInterval PeriodType { get; set; }
 
     public string PeriodTypeTitle { get; set; }

@@ -23,23 +23,23 @@ namespace Application.Service.Services;
 public sealed class MerchantBillingService(
     ILogger<MerchantBillingService> logger,
     IApplicationDbContextUnitOfWork unitOfWork,
-    IMerchantBillingRepository merchantBillingRepository,
-    IMerchantInstallmentRepository merchantInstallmentRepository,
-    ITenantMerchantContractRepository tenantMerchantContractRepository) : IMerchantBillingService
+    IMerchantBillingRepository billingRepository,
+    IMerchantInstallmentRepository installmentRepository,
+    ITenantMerchantContractRepository contractRepository) : IMerchantBillingService
 {
     public async Task IssueOrOverdueBillings(CancellationToken cancellationToken)
     {
-        var negativeBillings = await merchantBillingRepository.GetNegativeSettledBillings(cancellationToken);
+        var groupContracts = await contractRepository.GetAllGroupContractAsync(cancellationToken);
 
-        var notSettledBillings = await merchantBillingRepository.GetOverdueOrNotSettledBillings(cancellationToken);
+        var negativeBillings = await billingRepository.GetNegativeSettledBillings(cancellationToken);
+
+        var notSettledBillings = await billingRepository.GetOverdueOrNotSettledBillings(cancellationToken);
 
         var overdueBillings = await OverdueExpiredBillings(notSettledBillings, cancellationToken);
 
-        var groupContracts = await tenantMerchantContractRepository.GetAllGroupContractAsync(cancellationToken);
-
         var billingsDtoSets = await CreateBillingDtos(groupContracts, cancellationToken);
 
-        await CreateMerchantBillings(billingsDtoSets, overdueBillings, negativeBillings, cancellationToken);
+        await CreateBillings(billingsDtoSets, overdueBillings, negativeBillings, cancellationToken);
     }
 
     private async Task<Dictionary<BillingIdentifier, List<BillingDto>>> CreateBillingDtos(
@@ -53,9 +53,9 @@ public sealed class MerchantBillingService(
             {
                 var billingDtos = new List<BillingDto>();
 
-                var lastBillingDueDate = await merchantBillingRepository.GetLastBillingDueDate(contract.ContractIds, cancellationToken);
+                var lastBillingDueDate = await billingRepository.GetLastBillingDueDate(contract.ContractIds, cancellationToken);
 
-                var installmentRange = await merchantInstallmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
+                var installmentRange = await installmentRepository.GetInstallmentRange(contract.ContractIds, lastBillingDueDate, cancellationToken);
 
                 switch (contract.Status)
                 {
@@ -107,7 +107,7 @@ public sealed class MerchantBillingService(
         return billingsDtoSets;
     }
 
-    private async Task CreateMerchantBillings(Dictionary<BillingIdentifier, List<BillingDto>> billingDtoGroups,
+    private async Task CreateBillings(Dictionary<BillingIdentifier, List<BillingDto>> billingDtoGroups,
         List<NotSettledBilling> overdueBillings, List<NegativeSettledBilling> negativeBillings,
         CancellationToken cancellationToken)
     {
@@ -216,7 +216,7 @@ public sealed class MerchantBillingService(
                         }
                     }
 
-                    var purchaseTransactionsAmount = await merchantInstallmentRepository.GetSumOfPurchaseTransactionsInSpecificPeriod(
+                    var purchaseTransactionsAmount = await installmentRepository.GetSumOfPurchaseTransactionsInSpecificPeriod(
                             contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
                     var refundedTransactionsAmount = refundedTransactions.RefundedTransactionsAmount;
@@ -271,7 +271,7 @@ public sealed class MerchantBillingService(
                     billings.Add(billing);
                 }
 
-                await merchantBillingRepository.AddRangeAsync(billings, cancellationToken);
+                await billingRepository.AddRangeAsync(billings, cancellationToken);
 
                 await unitOfWork.SaveChangesAsync(cancellationToken);
             }
@@ -284,7 +284,7 @@ public sealed class MerchantBillingService(
                     Exception = exception,
                     InputParams = billingIdentifier,
                     Message = "MerchantBillingService billings issue failed",
-                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateMerchantBillings)}"
+                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateBillings)}"
                 });
             }
             finally
@@ -295,7 +295,7 @@ public sealed class MerchantBillingService(
                     Exception = null,
                     InputParams = billingIdentifier,
                     Message = "MerchantBillingService billings issue completed",
-                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateMerchantBillings)}"
+                    ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateBillings)}"
                 });
             }
         }
@@ -323,7 +323,7 @@ public sealed class MerchantBillingService(
 
                 if (endOfPeriod > installmentRange.MaxDueDate)
                 {
-                    var hasIntersection = await merchantBillingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId, contract.MerchantId, endOfPeriod, cancellationToken);
+                    var hasIntersection = await billingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId, contract.MerchantId, endOfPeriod, cancellationToken);
 
                     if (hasIntersection == false)
                     {
@@ -349,7 +349,7 @@ public sealed class MerchantBillingService(
 
                 currentPeriod = endOfPeriod == today;
 
-                var hasIntersection = await merchantBillingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId, contract.MerchantId, endOfPeriod, cancellationToken);
+                var hasIntersection = await billingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId, contract.MerchantId, endOfPeriod, cancellationToken);
 
                 if (hasIntersection == false)
                 {
@@ -746,10 +746,10 @@ public sealed class MerchantBillingService(
     {
         var contract = billingDto.ContractGroup;
 
-        var refundedTransactionsAmount = await merchantInstallmentRepository.GetSumOfRefundTransactionsInSpecificPeriod(
+        var refundedTransactionsAmount = await installmentRepository.GetSumOfRefundTransactionsInSpecificPeriod(
             contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
-        var refundedTransactionsCommission = await merchantInstallmentRepository.GetSumOfRefundCommissionsInSpecificPeriod(
+        var refundedTransactionsCommission = await installmentRepository.GetSumOfRefundCommissionsInSpecificPeriod(
             contract.ContractIds, billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
         return new Transactions()
@@ -769,13 +769,13 @@ public sealed class MerchantBillingService(
 
         if (contract.CommissionCalculationType is CommissionCalculationType.FixedAmount or CommissionCalculationType.FixedPercentage)
         {
-            purchaseTransactionsCalculatedCommission = await merchantInstallmentRepository.GetSumOfPurchaseCommissionsInSpecificPeriod(contract.ContractIds,
+            purchaseTransactionsCalculatedCommission = await installmentRepository.GetSumOfPurchaseCommissionsInSpecificPeriod(contract.ContractIds,
                 billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
         }
 
         else if (contract.CommissionCalculationType == CommissionCalculationType.UniformTiered)
         {
-            sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
+            sumOfTieredTransactions = await installmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
                 billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
             tieredCalculatedLevels = CalculateUniformedTieredLevels(contract.TieredCommissions, sumOfTieredTransactions);
@@ -785,7 +785,7 @@ public sealed class MerchantBillingService(
 
         else if (contract.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
         {
-            sumOfTieredTransactions = await merchantInstallmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
+            sumOfTieredTransactions = await installmentRepository.GetSumOfTieredTransactionsInSpecificPeriod(contract,
                 billingDto.StartOfPeriod, billingDto.EndOfPeriod, cancellationToken);
 
             tieredCalculatedLevels = CalculateCumulativeTieredLevels(contract.TieredCommissions, sumOfTieredTransactions);

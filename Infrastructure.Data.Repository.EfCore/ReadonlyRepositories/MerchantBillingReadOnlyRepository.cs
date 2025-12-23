@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
 using Domain.Core.Constants;
@@ -36,6 +37,16 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
         if (!string.IsNullOrEmpty(query.Code))
         {
             billingQuery = billingQuery.Where(p => p.Code.Contains(query.Code.Trim()));
+        }
+
+        if (query.FromDate.HasValue)
+        {
+            billingQuery = billingQuery.Where(p => p.DueDate >= query.FromDate);
+        }
+
+        if (query.ToDate.HasValue)
+        {
+            billingQuery = billingQuery.Where(p => p.DueDate <= query.ToDate);
         }
 
         var totalCount = await billingQuery.CountAsync();
@@ -94,6 +105,8 @@ public sealed class MerchantBillingReadOnlyRepository(ReadonlyApplicationDbConte
                 RefundedTransactionsAmount = p.RefundedTransactionsAmount,
                 PurchaseTransactionsCommission = p.PurchaseTransactionsCommission,
                 RefundedTransactionsCommission = p.RefundedTransactionsCommission,
+                CanSetAdditions = p.Status != BillingStatus.Overdue && p.PaymentDeadlineDate >= DateTime.Today,
+                CanSetDeductions = p.Status != BillingStatus.Overdue && p.PaymentDeadlineDate >= DateTime.Today,
                 IsPayable = p.Amount > 0 && (p.Status == BillingStatus.Issued || p.Status == BillingStatus.PartiallyPaid),
                 IsCommissionExchanged = dbContext.TenantMerchantContracts.FirstOrDefault(q => q.Id == p.MainContractId).IsCommissionExchanged,
                 TotalDebitAmount = p.PreviousDebitAmount + p.PurchaseTransactionsAmount + p.RefundedTransactionsCommission + p.AdditionsAmount,
