@@ -299,6 +299,8 @@ public sealed class MerchantBillingService(
                 });
             }
         }
+
+        unitOfWork.ClearChangeTracker();
     }
 
     private async Task ScanPeriodsForActiveContract(ContractGroup contract, DateTime? lastBillingDueDate,
