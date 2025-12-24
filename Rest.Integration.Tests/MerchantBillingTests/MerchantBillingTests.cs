@@ -3,12 +3,14 @@ using FluentAssertions;
 using Domain.Core.Enums;
 using System.Collections;
 using System.Globalization;
+using Shared.EventBus.Events;
 using Application.Service.Helper;
 using Domain.Core.Entities.Shared;
 using Rest.Integration.Tests.Base;
-using Application.Service.Contracts;
 using Microsoft.EntityFrameworkCore;
+using Application.Service.Contracts;
 using Domain.Core.Entities.BillingAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
@@ -22,6 +24,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     private const int SHIFT = 300;
 
     private readonly ApplicationDbContext _dbContext = hostFixture.GetMainContext();
+    private readonly IBillingPaymentService _billingPaymentService = hostFixture.GetRequiredService<IBillingPaymentService>();
     private readonly IMerchantBillingService _merchantBillingService = hostFixture.GetRequiredService<IMerchantBillingService>();
     private readonly IMerchantInstallmentService _merchantInstallmentService = hostFixture.GetRequiredService<IMerchantInstallmentService>();
 
@@ -463,11 +466,11 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         var contract = await hostFixture.CreateTenantMerchantContract();
 
         contract.SetProperty(p => p.BillingPeriod, 31);
-        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.InstallmentsCount, 120);
         contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
         contract.SetProperty(p => p.BillingBreak, Random.Shared.Next(0, 100));
 
-        await ConsumePurchaseDocument(contract, 1000);
+        await ConsumePurchaseDocument(contract, 3000);
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
@@ -692,6 +695,344 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         billings.Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Settled));
     }
 
+
+
+
+    //[Fact]
+    //public async Task WhenSetFullPaymentForBilling_BillingStatus_ShouldBeEqualToSettled()
+    //{
+    //    await hostFixture.FlushAsync();
+
+    //    var contract = await hostFixture.CreateTenantMerchantContract();
+
+    //    contract.SetProperty(p => p.BillingPeriod, 1);
+    //    contract.SetProperty(p => p.InstallmentsCount, 24);
+    //    contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+    //    await ConsumePurchaseDocument(contract, 24);
+
+    //    await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+    //    var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+    //        .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+    //    await _billingPaymentService.SetMerchantBillingPayment(new PmBillingManualPaymentUpdateStateEvent()
+    //    {
+    //        PaymentId = 12,
+    //        BillingId = billing!.Id,
+    //        TenantId = billing.TenantId,
+    //        PaymentDate = DateTime.Today,
+    //        Amount = billing!.GetPayableAmount()
+    //    });
+
+    //    billing.GetPayableAmount().Should().Be(0);
+    //    billing.Status.Should().Be(BillingStatus.Settled);
+    //}
+
+    //[Fact]
+    //public async Task WhenSetPartialPaymentForBilling_BillingStatus_ShouldBeEqualToPartiallyPaid()
+    //{
+    //    await hostFixture.FlushAsync();
+
+    //    var contract = await hostFixture.CreateTenantMerchantContract();
+
+    //    contract.SetProperty(p => p.BillingPeriod, 1);
+    //    contract.SetProperty(p => p.InstallmentsCount, 24);
+    //    contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+    //    await ConsumePurchaseDocument(contract, 24);
+
+    //    await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+    //    var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+    //        .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+    //    var oldPayableAmount = billing!.GetPayableAmount();
+
+    //    var paymentAmount = billing.GetPayableAmount() / 2;
+
+    //    await _billingPaymentService.SetMerchantBillingPayment(new PmBillingManualPaymentUpdateStateEvent()
+    //    {
+    //        PaymentId = 12,
+    //        Amount = paymentAmount,
+    //        BillingId = billing.Id,
+    //        TenantId = billing.TenantId,
+    //        PaymentDate = DateTime.Today
+    //    });
+
+    //    billing.Status.Should().Be(BillingStatus.PartiallyPaid);
+    //    billing.GetPayableAmount().Should().Be(oldPayableAmount - paymentAmount);
+    //}
+
+
+
+
+    [Fact]
+    public async Task WhenSetAdditionsForBilling_NewPayableAmount_ShouldBeGreaterThanOrEqualToOldPayableAmount()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var oldPayableAmount = billing!.GetPayableAmount();
+
+        var additionsAmount = Random.Shared.Next(0, 2000);
+
+        billing.SetAdditions(additionsAmount);
+
+        var newPayableAmount = billing.GetPayableAmount();
+
+        billing.AdditionsAmount.Should().Be(additionsAmount);
+        newPayableAmount.Should().BeGreaterThanOrEqualTo(oldPayableAmount);
+    }
+
+    [Fact]
+    public async Task WhenSetAdditionsForBilling_If_NewPayableAmount_Is_Negative_ShouldThrowArgumentValidationException()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var additionsAmount = billing!.GetPayableAmount();
+
+        var deductionsAmount = billing.GetPayableAmount() * 2;
+
+        billing.SetAdditions(additionsAmount);
+
+        billing.SetDeductions(deductionsAmount);
+
+        Assert.Throws<ArgumentValidationException>(() => billing.SetAdditions(0));
+    }
+
+    [Fact]
+    public async Task WhenSetAdditionsForBilling_If_PaymentDeadlineDate_Is_LessThanToday_ShouldThrowArgumentValidationException()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings[..^1].Should().AllSatisfy(p => Assert.Throws<ArgumentValidationException>(() => p.SetAdditions(1000)));
+    }
+
+    [Fact]
+    public async Task WhenSetAdditionsForBilling_If_PayableAmount_Is_Negative_And_AdditionsAmount_Is_EqualToAbsoluteOfPayableAmount_BillingStatus_ShouldBeEqualToSettled()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, 10000000);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var additionsAmount = Math.Abs(billing!.GetPayableAmount());
+
+        billing.SetAdditions(additionsAmount);
+
+        billing.GetPayableAmount().Should().Be(0);
+        billing.Status.Should().Be(BillingStatus.Settled);
+    }
+
+    [Fact]
+    public async Task WhenSetAdditionsForBilling_If_PayableAmount_Is_Negative_And_AdditionsAmount_Is_LessThanAbsoluteOfPayableAmount_BillingStatus_ShouldBeEqualToSettled()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, 10000000);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var additionsAmount = Math.Abs(billing!.GetPayableAmount()) / 2;
+
+        billing.SetAdditions(additionsAmount);
+
+        billing.GetPayableAmount().Should().BeNegative();
+        billing.Status.Should().Be(BillingStatus.Settled);
+    }
+
+    [Fact]
+    public async Task WhenSetAdditionsForBilling_If_PayableAmount_Is_Negative_And_AdditionsAmount_Is_GreaterThanAbsoluteOfPayableAmount_BillingStatus_ShouldBeEqualToIssued()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, 10000000);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var additionsAmount = Math.Abs(billing!.GetPayableAmount()) * 2;
+
+        billing.SetAdditions(additionsAmount);
+
+        billing.Status.Should().Be(BillingStatus.Issued);
+        billing.GetPayableAmount().Should().BePositive();
+    }
+
+
+
+    [Fact]
+    public async Task WhenSetDeductionsForBilling_NewPayableAmount_ShouldBeLessThanOrEqualToOldPayableAmount()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var oldPayableAmount = billing!.GetPayableAmount();
+
+        var deductionsAmount = Random.Shared.Next(0, (int)oldPayableAmount);
+
+        billing.SetDeductions(deductionsAmount);
+
+        var newPayableAmount = billing.GetPayableAmount();
+
+        billing.DeductionsAmount.Should().Be(deductionsAmount);
+        newPayableAmount.Should().BeLessThanOrEqualTo(oldPayableAmount);
+    }
+
+    [Fact]
+    public async Task WhenSetDeductionsForBilling_If_PaymentDeadlineDate_Is_LessThanToday_ShouldThrowArgumentValidationException()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        billings[..^1].Should().AllSatisfy(p => Assert.Throws<ArgumentValidationException>(() => p.SetDeductions(1000)));
+    }
+
+    [Fact]
+    public async Task WhenSetDeductionsForBilling_If_DeductionsAmount_Is_GreaterThanPayableAmount_ShouldThrowArgumentValidationException()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var payableAmount = billing!.GetPayableAmount();
+
+        var deductionsAmount = Random.Shared.Next((int)payableAmount + 1, (int)payableAmount * 2);
+
+        Assert.Throws<ArgumentValidationException>(() => billing.SetDeductions(deductionsAmount));
+    }
+
+    [Fact]
+    public async Task WhenSetDeductionsForBilling_If_DeductionsAmount_Is_EqualToPayableAmount_BillingStatus_ShouldBeEqualToSettled()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var deductionsAmount = billing!.GetPayableAmount();
+
+        billing.SetDeductions(deductionsAmount);
+
+        billing.GetPayableAmount().Should().Be(0);
+        billing.Status.Should().Be(BillingStatus.Settled);
+    }
+
+
+
+
     private async Task ShiftFinancialDocument(FinancialDocument financialDocument, int? shift = null)
     {
         financialDocument.SetProperty(p => p.CreatedDateTime, DateTime.Today.AddDays(-shift ?? -SHIFT));
@@ -739,7 +1080,6 @@ public class WeeklyBillingPeriods : IEnumerable<object[]>
         yield return [4];
         yield return [5];
         yield return [6];
-
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

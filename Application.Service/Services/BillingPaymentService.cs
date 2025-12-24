@@ -1,17 +1,21 @@
-﻿using Application.Service.Contracts;
-using Application.Service.Dtos.MerchantBillings;
-using Domain.Core.Entities.BillingAggregate.Exceptions;
-using Domain.Core.Entities.MerchantBillingAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
+﻿using System;
 using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
-using Shared.EventBus.Contracts;
 using Shared.EventBus.Events;
-using System;
 using System.Threading.Tasks;
+using Shared.EventBus.Contracts;
+using Application.Service.Contracts;
+using Domain.Core.UnitOfWorkContracts;
+using Domain.Core.Entities.Shared.Exceptions;
+using Application.Service.Dtos.MerchantBillings;
+using Domain.Core.Entities.MerchantBillingAggregate;
+using Domain.Core.Entities.BillingAggregate.Exceptions;
 
 namespace Application.Service.Services;
-public class BillingPaymentService(IMerchantBillingRepository merchantBillingRepository, IOutboxService outboxService, IApplicationDbContextUnitOfWork unitOfWork) : IBillingPaymentService
+
+public sealed class BillingPaymentService(
+    IOutboxService outboxService,
+    IApplicationDbContextUnitOfWork unitOfWork,
+    IMerchantBillingRepository merchantBillingRepository) : IBillingPaymentService
 {
     public bool IsMerchantBillingPayable(MerchantBillingPayableDto request)
     {
@@ -38,20 +42,20 @@ public class BillingPaymentService(IMerchantBillingRepository merchantBillingRep
         return true;
     }
 
-    public async Task MerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent requset)
+    public async Task SetMerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent request)
     {
-        var billing = await merchantBillingRepository.GetAsync(requset.BillingId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
+        var billing = await merchantBillingRepository.GetAsync(request.BillingId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
+
         var payableAmount = billing.GetPayableAmount();
 
         var merchantBillingPayableDto = new MerchantBillingPayableDto(
-            billing.TenantId, billing.Status, billing.DueDate, billing.GracePeriod, payableAmount, requset.Amount);
-
+            billing.TenantId, billing.Status, billing.DueDate, billing.GracePeriod, payableAmount, request.Amount);
 
         IsMerchantBillingPayable(merchantBillingPayableDto);
 
-        billing.AddBillingPayment(requset.BillingId, requset.PaymentId, requset.Amount, requset.PaymentDate);
+        billing.AddBillingPayment(request.BillingId, request.PaymentId, request.Amount, request.PaymentDate);
 
-        if (requset.Amount == payableAmount)
+        if (request.Amount == payableAmount)
         {
             billing.Settle();
         }
@@ -62,9 +66,9 @@ public class BillingPaymentService(IMerchantBillingRepository merchantBillingRep
 
         outboxService.AddNewEvent(new BmBillingManualPaymentSettledEvent
         {
-            BillingId = requset.BillingId,
-            PaymentId = requset.PaymentId,
-            Amount = requset.Amount,
+            BillingId = request.BillingId,
+            PaymentId = request.PaymentId,
+            Amount = request.Amount,
         });
 
         merchantBillingRepository.Update(billing);

@@ -2,5 +2,5 @@
 
 namespace Rest.Integration.Tests.Base;
 
-[CollectionDefinition(nameof(SharedHostCollection))]
+[CollectionDefinition(nameof(SharedHostCollection), DisableParallelization = true)]
 public class SharedHostCollection : ICollectionFixture<SharedHostFixture>;

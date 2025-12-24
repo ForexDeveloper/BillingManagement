@@ -1,10 +1,11 @@
-﻿using Application.Service.Dtos.MerchantBillings;
-using Shared.EventBus.Events;
+﻿using Shared.EventBus.Events;
 using System.Threading.Tasks;
+using Application.Service.Dtos.MerchantBillings;
 
 namespace Application.Service.Contracts;
 public interface IBillingPaymentService
 {
     bool IsMerchantBillingPayable(MerchantBillingPayableDto request);
-    Task MerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent requset);
+
+    Task SetMerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent request);
 }

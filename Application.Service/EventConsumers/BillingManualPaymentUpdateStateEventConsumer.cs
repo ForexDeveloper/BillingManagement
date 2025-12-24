@@ -33,7 +33,7 @@ public class BillingManualPaymentUpdateStateEventConsumer : IConsumer<PmBillingM
         bool succeed = true;
 
         var lockName = $"billing:merchant:payment:{context.Message.BillingId}";
-        using var redLock = await _distributedLockFactory.CreateLockAsync(lockName,
+        await using var redLock = await _distributedLockFactory.CreateLockAsync(lockName,
             TimeSpan.FromSeconds(3),
             TimeSpan.FromSeconds(6),
             TimeSpan.FromSeconds(3));
@@ -43,7 +43,7 @@ public class BillingManualPaymentUpdateStateEventConsumer : IConsumer<PmBillingM
 
         try
         {
-            await _billingPaymentService.MerchantBillingPayment(context.Message);
+            await _billingPaymentService.SetMerchantBillingPayment(context.Message);
         }
         catch (Exception ex)
         {
