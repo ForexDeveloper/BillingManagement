@@ -28,6 +28,8 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     private readonly IMerchantBillingService _merchantBillingService = hostFixture.GetRequiredService<IMerchantBillingService>();
     private readonly IMerchantInstallmentService _merchantInstallmentService = hostFixture.GetRequiredService<IMerchantInstallmentService>();
 
+    #region Basic
+
     [Theory]
     [InlineData(TimeInterval.Day, 17)]
     [InlineData(TimeInterval.Week, 3)]
@@ -695,6 +697,119 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         billings.Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Settled));
     }
 
+    #endregion
+
+
+    #region Advance
+
+    [Fact]
+    public async Task WhenBillingPeriodType_Is_Daily_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_ShouldCreateFirstBilling()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).FirstOrDefaultAsync();
+
+        billing.Should().NotBeNull();
+        billing.DueDate.Should().Be(DateTime.Today);
+        billing.Status.Should().Be(BillingStatus.Settled);
+    }
+
+    [Fact]
+    public async Task WhenBillingPeriodType_Is_Weekly_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_ShouldCreateFirstBilling()
+    {
+        var pc = new PersianCalendar();
+
+        var dayOfWeek = pc.GetDayOfWeek(DateTime.Today);
+
+        var billingPeriod = MapDayOfWeekToBillingPeriod(dayOfWeek);
+
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, billingPeriod);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Week);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).FirstOrDefaultAsync();
+
+        billing.Should().NotBeNull();
+        billing.DueDate.Should().Be(DateTime.Today);
+        billing.Status.Should().Be(BillingStatus.Settled);
+    }
+
+    [Fact]
+    public async Task WhenBillingPeriodType_Is_Monthly_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_ShouldCreateFirstBilling()
+    {
+        var pc = new PersianCalendar();
+
+        var billingPeriod = pc.GetDayOfMonth(DateTime.Today);
+
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, billingPeriod);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Month);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).FirstOrDefaultAsync();
+
+        billing.Should().NotBeNull();
+        billing.DueDate.Should().Be(DateTime.Today);
+        billing.Status.Should().Be(BillingStatus.Settled);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1000)]
+    public async Task WhenBillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_AmountOfDefaultBilling_ShouldBeEqualToPeriodMinCommissionAmount(decimal periodMinCommissionAmount)
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, periodMinCommissionAmount);
+
+        await _dbContext.SaveChangesAsync();
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).FirstAsync();
+
+        billing.DueDate.Should().Be(DateTime.Today);
+        billing.Status.Should().Be(BillingStatus.Settled);
+        billing.Amount.Should().Be(-periodMinCommissionAmount);
+
+        if (periodMinCommissionAmount == 0)
+        {
+            billing.As<MerchantBilling>().IsAbsoluteZero().Should().BeTrue();
+        }
+        else
+        {
+            billing.Amount.Should().BeNegative();
+        }
+    }
+
+    #endregion
+
 
     #region Payment
 
@@ -1132,6 +1247,21 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         financialDocument.SetCommission(commission);
 
         await _dbContext.SaveChangesAsync();
+    }
+
+    private static int MapDayOfWeekToBillingPeriod(DayOfWeek dayOfWeek)
+    {
+        return dayOfWeek switch
+        {
+            DayOfWeek.Saturday => 0,
+            DayOfWeek.Sunday => 1,
+            DayOfWeek.Monday => 2,
+            DayOfWeek.Tuesday => 3,
+            DayOfWeek.Wednesday => 4,
+            DayOfWeek.Thursday => 5,
+            DayOfWeek.Friday => 6,
+            _ => throw new ArgumentOutOfRangeException(nameof(dayOfWeek), dayOfWeek, null)
+        };
     }
 }
 
