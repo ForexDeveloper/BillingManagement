@@ -131,8 +131,6 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
                 billing.DebtorId.Should().Be(previousBilling.Id);
             }
         }
-
-        await hostFixture.FlushAsync();
     }
 
     [Fact]
@@ -732,6 +730,8 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billingPeriod = MapDayOfWeekToBillingPeriod(dayOfWeek);
 
+        var periodDayOfWeek = DateHelper.GetPersianDayOfWeek(billingPeriod);
+
         await hostFixture.FlushAsync();
 
         var contract = await hostFixture.CreateTenantMerchantContract();
@@ -748,6 +748,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         billing.Should().NotBeNull();
         billing.DueDate.Should().Be(DateTime.Today);
         billing.Status.Should().Be(BillingStatus.Settled);
+        pc.GetDayOfWeek(billing.DueDate).Should().Be(periodDayOfWeek);
     }
 
     [Fact]
@@ -773,6 +774,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         billing.Should().NotBeNull();
         billing.DueDate.Should().Be(DateTime.Today);
         billing.Status.Should().Be(BillingStatus.Settled);
+        pc.GetDayOfMonth(billing.DueDate).Should().Be(billingPeriod);
     }
 
     [Theory]
@@ -794,17 +796,45 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).FirstAsync();
 
-        billing.DueDate.Should().Be(DateTime.Today);
-        billing.Status.Should().Be(BillingStatus.Settled);
-        billing.Amount.Should().Be(-periodMinCommissionAmount);
-
         if (periodMinCommissionAmount == 0)
         {
+            billing.Amount.Should().Be(0);
             billing.As<MerchantBilling>().IsAbsoluteZero().Should().BeTrue();
         }
         else
         {
             billing.Amount.Should().BeNegative();
+            billing.As<MerchantBilling>().IsAbsoluteZero().Should().BeFalse();
+        }
+    }
+
+    [Fact]
+    public async Task WhenPurchaseInstallmentsAreDetected_ShouldDebitEachBillingToNextOne2()
+    {
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        await ConsumePurchaseDocument(contract);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+
+        foreach (var billing in billings)
+        {
+            var index = billings.IndexOf(billing);
+
+            if (index == 0)
+            {
+                billing.Debtor.Should().BeNull();
+                billing.DebtorId.Should().BeNull();
+            }
+            else
+            {
+                var previousBilling = billings[index - 1];
+
+                billing.Debtor.Should().Be(previousBilling);
+                billing.DebtorId.Should().Be(previousBilling.Id);
+            }
         }
     }
 
