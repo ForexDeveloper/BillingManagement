@@ -180,9 +180,11 @@ public class SharedHostFixture : IDisposable
     {
         var billings = await _mainContext.Billings.ToListAsync();
         var installments = await _mainContext.Installments.ToListAsync();
+        var billingPayments = await _mainContext.BillingPayments.ToListAsync();
         var contracts = await _mainContext.TenantMerchantContracts.ToListAsync();
         var financialDocuments = await _mainContext.FinancialDocuments.ToListAsync();
 
+        _mainContext.BillingPayments.RemoveRange(billingPayments);
         _mainContext.Billings.RemoveRange(billings);
         _mainContext.Installments.RemoveRange(installments);
         _mainContext.TenantMerchantContracts.RemoveRange(contracts);

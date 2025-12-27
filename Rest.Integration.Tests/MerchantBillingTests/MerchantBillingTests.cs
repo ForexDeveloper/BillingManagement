@@ -104,8 +104,6 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     [Fact]
     public async Task WhenPurchaseInstallmentsAreDetected_ShouldDebitEachBillingToNextOne()
     {
-        await hostFixture.FlushAsync();
-
         var contract = await hostFixture.CreateTenantMerchantContract();
 
         await ConsumePurchaseDocument(contract);
@@ -131,6 +129,8 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
                 billing.DebtorId.Should().Be(previousBilling.Id);
             }
         }
+
+        await hostFixture.FlushAsync();
     }
 
     [Fact]
@@ -696,76 +696,78 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
 
+    #region Payment
+
+    [Fact]
+    public async Task WhenSetFullPaymentForBilling_BillingStatus_ShouldBeEqualToSettled()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        await _billingPaymentService.SetMerchantBillingPayment(new PmBillingManualPaymentUpdateStateEvent()
+        {
+            PaymentId = 12,
+            BillingId = billing!.Id,
+            TenantId = billing.TenantId,
+            PaymentDate = DateTime.Today,
+            Amount = billing.GetPayableAmount()
+        });
+
+        billing.GetPayableAmount().Should().Be(0);
+        billing.Status.Should().Be(BillingStatus.Settled);
+    }
+
+    [Fact]
+    public async Task WhenSetPartialPaymentForBilling_BillingStatus_ShouldBeEqualToPartiallyPaid()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var oldPayableAmount = billing!.GetPayableAmount();
+
+        var paymentAmount = billing.GetPayableAmount() / 2;
+
+        await _billingPaymentService.SetMerchantBillingPayment(new PmBillingManualPaymentUpdateStateEvent()
+        {
+            PaymentId = 12,
+            Amount = paymentAmount,
+            BillingId = billing.Id,
+            TenantId = billing.TenantId,
+            PaymentDate = DateTime.Today
+        });
+
+        billing.Status.Should().Be(BillingStatus.PartiallyPaid);
+        billing.GetPayableAmount().Should().Be(oldPayableAmount - paymentAmount);
+    }
+
+    #endregion
 
 
-    //[Fact]
-    //public async Task WhenSetFullPaymentForBilling_BillingStatus_ShouldBeEqualToSettled()
-    //{
-    //    await hostFixture.FlushAsync();
-
-    //    var contract = await hostFixture.CreateTenantMerchantContract();
-
-    //    contract.SetProperty(p => p.BillingPeriod, 1);
-    //    contract.SetProperty(p => p.InstallmentsCount, 24);
-    //    contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
-
-    //    await ConsumePurchaseDocument(contract, 24);
-
-    //    await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
-
-    //    var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-    //        .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
-
-    //    await _billingPaymentService.SetMerchantBillingPayment(new PmBillingManualPaymentUpdateStateEvent()
-    //    {
-    //        PaymentId = 12,
-    //        BillingId = billing!.Id,
-    //        TenantId = billing.TenantId,
-    //        PaymentDate = DateTime.Today,
-    //        Amount = billing!.GetPayableAmount()
-    //    });
-
-    //    billing.GetPayableAmount().Should().Be(0);
-    //    billing.Status.Should().Be(BillingStatus.Settled);
-    //}
-
-    //[Fact]
-    //public async Task WhenSetPartialPaymentForBilling_BillingStatus_ShouldBeEqualToPartiallyPaid()
-    //{
-    //    await hostFixture.FlushAsync();
-
-    //    var contract = await hostFixture.CreateTenantMerchantContract();
-
-    //    contract.SetProperty(p => p.BillingPeriod, 1);
-    //    contract.SetProperty(p => p.InstallmentsCount, 24);
-    //    contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
-
-    //    await ConsumePurchaseDocument(contract, 24);
-
-    //    await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
-
-    //    var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-    //        .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
-
-    //    var oldPayableAmount = billing!.GetPayableAmount();
-
-    //    var paymentAmount = billing.GetPayableAmount() / 2;
-
-    //    await _billingPaymentService.SetMerchantBillingPayment(new PmBillingManualPaymentUpdateStateEvent()
-    //    {
-    //        PaymentId = 12,
-    //        Amount = paymentAmount,
-    //        BillingId = billing.Id,
-    //        TenantId = billing.TenantId,
-    //        PaymentDate = DateTime.Today
-    //    });
-
-    //    billing.Status.Should().Be(BillingStatus.PartiallyPaid);
-    //    billing.GetPayableAmount().Should().Be(oldPayableAmount - paymentAmount);
-    //}
-
-
-
+    #region Additions
 
     [Fact]
     public async Task WhenSetAdditionsForBilling_NewPayableAmount_ShouldBeGreaterThanOrEqualToOldPayableAmount()
@@ -844,6 +846,67 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
 
         billings[..^1].Should().AllSatisfy(p => Assert.Throws<ArgumentValidationException>(() => p.SetAdditions(1000)));
+    }
+
+    [Fact]
+    public async Task WhenSetAdditionsForSettledBilling_BillingStatus_ShouldBeEqualToPartiallyPaid()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        await _billingPaymentService.SetMerchantBillingPayment(new PmBillingManualPaymentUpdateStateEvent()
+        {
+            PaymentId = 12,
+            BillingId = billing!.Id,
+            TenantId = billing.TenantId,
+            PaymentDate = DateTime.Today,
+            Amount = billing.GetPayableAmount()
+        });
+
+        billing.SetAdditions(1000);
+
+        billing.Status.Should().Be(BillingStatus.PartiallyPaid);
+    }
+
+    [Fact]
+    public async Task WhenSetAdditionsForBilling_If_PayableAmount_Is_Zero_Or_Billing_Is_AbsoluteZero_BillingStatus_ShouldBeEqualToIssued()
+    {
+        await hostFixture.FlushAsync();
+
+        var contract = await hostFixture.CreateTenantMerchantContract();
+
+        contract.SetProperty(p => p.BillingPeriod, 1);
+        contract.SetProperty(p => p.InstallmentsCount, 24);
+        contract.SetProperty(p => p.BillingPeriodType, TimeInterval.Day);
+
+        await ConsumePurchaseDocument(contract, 24);
+
+        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
+            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+
+        var payableAmount = billing!.GetPayableAmount();
+
+        billing.SetDeductions(payableAmount);
+        billing.GetPayableAmount().Should().Be(0);
+        billing.Status.Should().Be(BillingStatus.Settled);
+
+        billing.SetAdditions(payableAmount);
+        billing.Status.Should().Be(BillingStatus.Issued);
+        billing.GetPayableAmount().Should().BePositive();
     }
 
     [Fact]
@@ -927,7 +990,10 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         billing.GetPayableAmount().Should().BePositive();
     }
 
+    #endregion
 
+
+    #region Deductions
 
     [Fact]
     public async Task WhenSetDeductionsForBilling_NewPayableAmount_ShouldBeLessThanOrEqualToOldPayableAmount()
@@ -1030,7 +1096,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         billing.Status.Should().Be(BillingStatus.Settled);
     }
 
-
+    #endregion
 
 
     private async Task ShiftFinancialDocument(FinancialDocument financialDocument, int? shift = null)
