@@ -252,27 +252,27 @@ public class TenantMerchantContract : BaseEntity<int>
         {
             case TimeInterval.Day:
             {
-                if (BillingBreak >= BillingPeriod)
+                if (BillingBreak > BillingPeriod - 1)
                 {
-                    throw new ArgumentValidationException(nameof(BillingBreak), $"بازه تنفس نمی تواند از طول دوره یعنی {BillingPeriod} روز بیشتر باشد");
+                    throw new ArgumentValidationException(nameof(BillingBreak), $"حداکثر تعداد روز بازه تنفس برای دوره روزانه {BillingPeriod - 1} روز می باشد");
                 }
 
                 break;
             }
             case TimeInterval.Week:
             {
-                if (BillingBreak >= 6)
+                if (BillingBreak > 6)
                 {
-                    throw new ArgumentValidationException(nameof(BillingBreak), "بازه تنفس نمی تواند از طول دوره یعنی 6 روز بیشتر باشد");
+                    throw new ArgumentValidationException(nameof(BillingBreak), "حداکثر تعداد روز بازه تنفس برای دوره هفتگی 6 روز می باشد");
                 }
 
                 break;
             }
             case TimeInterval.Month:
             {
-                if (BillingBreak >= 28)
+                if (BillingBreak > 28)
                 {
-                    throw new ArgumentValidationException(nameof(BillingBreak), "بازه تنفس نمی تواند از طول دوره یعنی 28 روز بیشتر باشد");
+                    throw new ArgumentValidationException(nameof(BillingBreak), "حداکثر تعداد روز بازه تنفس برای دوره ماهانه 28 روز می باشد");
                 }
 
                 break;
