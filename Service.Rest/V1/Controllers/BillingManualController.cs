@@ -1,9 +1,12 @@
 ﻿using Domain.Core.Enums;
+using Shared.EventBus.Events;
 using Microsoft.AspNetCore.Mvc;
 using Application.Service.Helper;
 using Application.Service.Contracts;
 using Domain.Core.UnitOfWorkContracts;
+using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
+using Domain.Core.Entities.BillingAggregate.Exceptions;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
@@ -15,14 +18,15 @@ namespace Service.Rest.V1.Controllers;
 [Route("api/merchantBilling")]
 public class BillingManualController(
     ApplicationDbContext dbContext,
-    IFinancialDocumentRepository financialDocumentRepository,
-    ITenantMerchantContractRepository tenantMerchantContractRepository,
-    IMerchantInstallmentRepository merchantInstallmentRepository,
-    IBackgroundJobService backgroundJobService,
     IApplicationDbContextUnitOfWork unitOfWork,
+    IBackgroundJobService backgroundJobService,
+    IBillingPaymentService billingPaymentService,
     IMerchantBillingService merchantBillingService,
-    IMerchantInstallmentService merchantInstallmentService)
-    : ControllerBase
+    IMerchantBillingRepository merchantBillingRepository,
+    IMerchantInstallmentService merchantInstallmentService,
+    IFinancialDocumentRepository financialDocumentRepository,
+    IMerchantInstallmentRepository merchantInstallmentRepository,
+    ITenantMerchantContractRepository tenantMerchantContractRepository) : ControllerBase
 {
     [HttpPost("installments")]
     public async Task<ActionResult> SetMerchantInstallments(int tenantId, int merchantId, int financialDocumentId, int day)
@@ -83,6 +87,26 @@ public class BillingManualController(
         {
             return BadRequest(ex.Message);
         }
+    }
+
+    [HttpPost("billings/payment")]
+    public async Task<IActionResult> SetBillingPayment(long billingId)
+    {
+        var billing = await merchantBillingRepository.GetAsync(billingId) ??
+                      throw new BillingNotFoundException("صورت حساب پیدا نشد");
+
+        var @event = new PmBillingManualPaymentUpdateStateEvent
+        {
+            BillingId = billing.Id,
+            TenantId = billing.TenantId,
+            PaymentDate = DateTime.Today,
+            Amount = billing.GetPayableAmount() / 2,
+            PaymentId = Random.Shared.Next(10000, 100000)
+        };
+
+        await billingPaymentService.SetMerchantBillingPayment(@event);
+
+        return Ok("Payment submitted successfully");
     }
 
     private async Task<decimal> CreateMerchantInstallments(TenantMerchantContract contract, FinancialDocument financialDocument, int day)
