@@ -6,7 +6,6 @@ using Application.Service.Contracts;
 using Domain.Core.UnitOfWorkContracts;
 using Domain.Core.Entities.MerchantBillingAggregate;
 using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.BillingAggregate.Exceptions;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;

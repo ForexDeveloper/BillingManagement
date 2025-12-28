@@ -1,39 +1,31 @@
-﻿using Application.Service.Contracts;
-using MassTransit;
-using Microsoft.Extensions.Logging;
+﻿using System;
 using RedLockNet;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
+using MassTransit;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Shared.EventBus.Events;
+using Microsoft.Extensions.Logging;
+using Application.Service.Contracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
 
 namespace Application.Service.EventConsumers;
 
-public class BillingManualPaymentUpdateStateEventConsumer : IConsumer<PmBillingManualPaymentUpdateStateEvent>
+public sealed class BillingManualPaymentUpdateStateEventConsumer(
+    IBillingPaymentService billingPaymentService,
+    IDistributedLockFactory distributedLockFactory,
+    ILogger<BillingManualPaymentUpdateStateEventConsumer> logger) : IConsumer<PmBillingManualPaymentUpdateStateEvent>
 {
-    private readonly IBillingPaymentService _billingPaymentService;
-    public readonly ILogger<BillingManualPaymentUpdateStateEventConsumer> _logger;
-    private readonly IDistributedLockFactory _distributedLockFactory;
-
-    public BillingManualPaymentUpdateStateEventConsumer(ILogger<BillingManualPaymentUpdateStateEventConsumer> logger,
-        IBillingPaymentService billingPaymentService,
-        IDistributedLockFactory distributedLockFactory)
-    {
-        _logger = logger;
-        _billingPaymentService = billingPaymentService;
-        _distributedLockFactory = distributedLockFactory;
-    }
-
     public async Task Consume(ConsumeContext<PmBillingManualPaymentUpdateStateEvent> context)
     {
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        var succeed = true;
+        const string SERVICE_NAME = "BillingManualPaymentUpdateStateEventConsumer_Consume";
 
         var lockName = $"billing:merchant:payment:{context.Message.BillingId}";
-        await using var redLock = await _distributedLockFactory.CreateLockAsync(lockName,
+        await using var redLock = await distributedLockFactory.CreateLockAsync(lockName,
             TimeSpan.FromSeconds(3),
             TimeSpan.FromSeconds(6),
             TimeSpan.FromSeconds(3));
@@ -43,34 +35,51 @@ public class BillingManualPaymentUpdateStateEventConsumer : IConsumer<PmBillingM
 
         try
         {
-            await _billingPaymentService.SetMerchantBillingPayment(context.Message);
+            await billingPaymentService.SetMerchantBillingPayment(context.Message);
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
-            {
-                Message = ex.Message,
-                ServiceName = "BillingManualPaymentUpdateStateEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
 
-            throw;
+            if (exception is IBusinessException)
+            {
+                logger.LogWarning(new LogStruct
+                {
+                    Results = string.Empty,
+                    Exception = exception,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Results = string.Empty,
+                    Exception = exception,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "BillingManualPaymentUpdateStateEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
                 Tags = LogMessageTag.EventBus,
+                InputParams = context.Message,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }

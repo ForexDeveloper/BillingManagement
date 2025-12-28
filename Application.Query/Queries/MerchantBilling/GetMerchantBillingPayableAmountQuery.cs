@@ -26,8 +26,8 @@ public sealed class IsMerchantBillingPayableQueryHandler(
         var billing = await _merchantBillingReadOnlyRepository.GetBillingByIdAsync(request.Id, request.TenantId) ??
                       throw new BillingNotFoundException("صورت حساب پیدا نشد.");
 
-        var merchantBillingPayableDto = new MerchantBillingPayableDto(
-           request.TenantId, billing.Status, billing.DueDate, billing.GracePeriod, billing.PayableAmount, request.Amount);
+        var merchantBillingPayableDto = new MerchantBillingPayableDto(request.TenantId, billing.Status, billing.DueDate,
+            billing.GracePeriod, billing.PayableAmount, request.Amount);
 
         var isMerchantBillingPayable = _billingPaymentService.IsMerchantBillingPayable(merchantBillingPayableDto);
 
