@@ -92,8 +92,7 @@ public class BillingManualController(
     [HttpPost("billings/payment")]
     public async Task<IActionResult> SetBillingPayment(long billingId)
     {
-        var billing = await merchantBillingRepository.GetAsync(billingId) ??
-                      throw new BillingNotFoundException("صورت حساب پیدا نشد");
+        var billing = await merchantBillingRepository.GetAsync(billingId);
 
         var @event = new PmBillingManualPaymentUpdateStateEvent
         {

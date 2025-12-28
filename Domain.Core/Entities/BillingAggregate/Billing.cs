@@ -238,7 +238,7 @@ public abstract class Billing : BaseEntity<long>
 
     public void AddBillingPayment(long paymentId, decimal amount, DateTime paymentDate)
     {
-        Payments.Add(new BillingPayment(paymentId, amount, paymentDate));
+        Payments.Add(new BillingPayment(Id, paymentId, amount, paymentDate));
     }
 
     protected void Configure()

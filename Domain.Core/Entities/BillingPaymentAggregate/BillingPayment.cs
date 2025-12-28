@@ -25,8 +25,9 @@ public sealed class BillingPayment : BaseEntity<long>
 
     }
 
-    public BillingPayment(long paymentId, decimal amount, DateTime paymentDate)
+    public BillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)
     {
+        BillingId = billingId;
         PaymentId = paymentId;
         SetAmount(amount);
         PaymentDate = paymentDate;
