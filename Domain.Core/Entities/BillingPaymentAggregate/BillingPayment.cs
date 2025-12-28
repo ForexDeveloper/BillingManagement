@@ -1,26 +1,26 @@
-﻿using Domain.Base;
+﻿using System;
+using Domain.Base;
+using Domain.Core.Helper;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Helper;
-using System;
 
 namespace Domain.Core.Entities.BillingPaymentAggregate;
 
 public sealed class BillingPayment : BaseEntity<long>
 {
-    public long BillingId { get; protected set; }
+    public long BillingId { get; private set; }
 
-    public long PaymentId { get; protected set; }
+    public long PaymentId { get; private set; }
 
-    public decimal Amount { get; protected set; }
+    public decimal Amount { get; private set; }
 
-    public DateTime PaymentDate { get; protected set; }
+    public DateTime PaymentDate { get; private set; }
 
-    public string CheckSum { get; protected set; }
+    public string CheckSum { get; private set; }
 
-    public Billing Billing { get; protected set; }
+    public Billing Billing { get; private set; }
 
-    protected BillingPayment()
+    private BillingPayment()
     {
 
     }
