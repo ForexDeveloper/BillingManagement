@@ -17,21 +17,20 @@ public sealed record GetMerchantBillingPayableAmountQuery(int TenantId, long Id,
     public decimal Amount { get; set; } = Amount;
 }
 
-public sealed class IsMerchantBillingPayableQueryHandler(IMerchantBillingReadOnlyRepository _merchantBillingReadOnlyRepository,
-    IBillingPaymentService _billingPaymentService)
-    : IRequestHandler<GetMerchantBillingPayableAmountQuery, decimal>
+public sealed class IsMerchantBillingPayableQueryHandler(
+    IMerchantBillingReadOnlyRepository _merchantBillingReadOnlyRepository,
+    IBillingPaymentService _billingPaymentService) : IRequestHandler<GetMerchantBillingPayableAmountQuery, decimal>
 {
     public async Task<decimal> Handle(GetMerchantBillingPayableAmountQuery request, CancellationToken cancellationToken)
     {
-        var billing = await _merchantBillingReadOnlyRepository.GetBillingByIdAsync(request.Id, request.TenantId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
+        var billing = await _merchantBillingReadOnlyRepository.GetBillingByIdAsync(request.Id, request.TenantId) ??
+                      throw new BillingNotFoundException("صورت حساب پیدا نشد.");
 
         var merchantBillingPayableDto = new MerchantBillingPayableDto(
            request.TenantId, billing.Status, billing.DueDate, billing.GracePeriod, billing.PayableAmount, request.Amount);
 
         var isMerchantBillingPayable = _billingPaymentService.IsMerchantBillingPayable(merchantBillingPayableDto);
-        if (isMerchantBillingPayable)
-            return billing.PayableAmount;
 
-        return 0;
+        return isMerchantBillingPayable ? billing.PayableAmount : 0;
     }
 }

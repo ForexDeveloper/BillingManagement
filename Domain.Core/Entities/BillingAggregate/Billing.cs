@@ -236,9 +236,9 @@ public abstract class Billing : BaseEntity<long>
         SetEditDateTime(DateTime.Now);
     }
 
-    public void AddBillingPayment(long billingId, long paymentId, decimal amount, DateTime paymentDate)
+    public void AddBillingPayment(long paymentId, decimal amount, DateTime paymentDate)
     {
-        Payments.Add(new BillingPayment(billingId, paymentId, amount, paymentDate));
+        Payments.Add(new BillingPayment(paymentId, amount, paymentDate));
     }
 
     protected void Configure()
