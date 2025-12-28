@@ -1,13 +1,13 @@
-﻿using Domain.Base;
-using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.MerchantAggregate;
-using Domain.Core.Entities.Shared;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantAggregate;
+﻿using System;
+using Domain.Base;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
-using System;
 using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.MerchantAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.FinancialDocumentAggregate;
 
 namespace Domain.Core.Entities.TenantMerchantContractAggregate;
 
@@ -111,7 +111,6 @@ public class TenantMerchantContract : BaseEntity<int>
         EndDate = endDate;
         SettlementType = settlementType;
         IsCommissionExchanged = isCommissionExchanged;
-        SetInstallmentsCount(installmentsCount);
         CommissionDeductionMethodType = commissionDeductionMethodType;
         InterestPercentage = interestPercentage;
         InterestReferenceTypes = interestReferenceTypes;
@@ -131,6 +130,9 @@ public class TenantMerchantContract : BaseEntity<int>
         PeriodMinCommissionAmount = periodMinCommissionAmount;
         PeriodMaxCommissionAmount = periodMaxCommissionAmount;
         Status = true;
+
+        ValidateBillingBreak();
+        SetInstallmentsCount(installmentsCount);
     }
 
     public void Update(int tenantId, int merchantId,
@@ -154,7 +156,6 @@ public class TenantMerchantContract : BaseEntity<int>
         EndDate = endDate;
         SettlementType = settlementType;
         IsCommissionExchanged = isCommissionExchanged;
-        SetInstallmentsCount(installmentsCount);
         CommissionDeductionMethodType = commissionDeductionMethodType;
         InterestPercentage = interestPercentage;
         InterestReferenceTypes = interestReferenceTypes;
@@ -173,7 +174,11 @@ public class TenantMerchantContract : BaseEntity<int>
         TransactionMaxCommissionAmount = transactionMaxCommissionAmount;
         PeriodMinCommissionAmount = periodMinCommissionAmount;
         PeriodMaxCommissionAmount = periodMaxCommissionAmount;
+
+        ValidateBillingBreak();
+        SetInstallmentsCount(installmentsCount);
     }
+
     public void SetEnamadLink(string enamadLink)
     {
         if (!string.IsNullOrEmpty(enamadLink) && !BaseValidationHelpers.IsValidUrl(enamadLink))
@@ -239,5 +244,42 @@ public class TenantMerchantContract : BaseEntity<int>
     public void SetInstallmentsCount(int installmentsCount)
     {
         InstallmentsCount = SettlementType == SettlementType.LumpSum ? 1 : installmentsCount;
+    }
+
+    private void ValidateBillingBreak()
+    {
+        switch (BillingPeriodType)
+        {
+            case TimeInterval.Day:
+            {
+                if (BillingBreak >= BillingPeriod)
+                {
+                    throw new ArgumentValidationException(nameof(BillingBreak), $"بازه تنفس نمی تواند از طول دوره یعنی {BillingPeriod} روز بیشتر باشد");
+                }
+
+                break;
+            }
+            case TimeInterval.Week:
+            {
+                if (BillingBreak >= 6)
+                {
+                    throw new ArgumentValidationException(nameof(BillingBreak), "بازه تنفس نمی تواند از طول دوره یعنی 6 روز بیشتر باشد");
+                }
+
+                break;
+            }
+            case TimeInterval.Month:
+            {
+                if (BillingBreak >= 28)
+                {
+                    throw new ArgumentValidationException(nameof(BillingBreak), "بازه تنفس نمی تواند از طول دوره یعنی 28 روز بیشتر باشد");
+                }
+
+                break;
+            }
+
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 }
