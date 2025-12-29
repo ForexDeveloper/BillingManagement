@@ -2,4 +2,5 @@
 
 namespace Domain.Core.Entities.Shared.Exceptions;
 
-public class ArgumentValidationException(string key, string message) : ValidationException(key, message);
+public class ArgumentValidationException(string key, string message)
+    : ValidationException(key, message), IBusinessException;

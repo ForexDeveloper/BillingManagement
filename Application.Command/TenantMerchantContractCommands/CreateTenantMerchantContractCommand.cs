@@ -218,4 +218,3 @@ namespace Application.Command.TenantMerchantContractCommands
         }
     }
 }
-

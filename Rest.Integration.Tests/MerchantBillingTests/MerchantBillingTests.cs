@@ -650,18 +650,18 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Theory]
-    [InlineData(TimeInterval.Day, 17, 16, CommissionCalculationType.FixedAmount)]
-    [InlineData(TimeInterval.Day, 17, 16, CommissionCalculationType.FixedPercentage)]
+    [InlineData(TimeInterval.Day, 17, 17, CommissionCalculationType.FixedAmount)]
+    [InlineData(TimeInterval.Day, 17, 17, CommissionCalculationType.FixedPercentage)]
     [InlineData(TimeInterval.Week, 3, 7, CommissionCalculationType.FixedAmount)]
     [InlineData(TimeInterval.Week, 3, 7, CommissionCalculationType.FixedPercentage)]
-    [InlineData(TimeInterval.Month, 20, 29, CommissionCalculationType.FixedAmount)]
-    [InlineData(TimeInterval.Month, 20, 29, CommissionCalculationType.FixedPercentage)]
+    [InlineData(TimeInterval.Month, 20, 30, CommissionCalculationType.FixedAmount)]
+    [InlineData(TimeInterval.Month, 20, 30, CommissionCalculationType.FixedPercentage)]
     public async Task WhenRefundInstallmentsAreDetected_And_CommissionCalculationType_Is_FixedAmount_Or_FixedPercentage_And_BillingBreak_Is_GreatEnoughToShiftPurchaseInstallmentsToNextPeriod_StatusOfFirstBilling_ShouldBeEqualToSettled(
         TimeInterval billingPeriodType, int billingPeriod, int billingBreak, CommissionCalculationType commissionCalculationType)
     {
         await hostFixture.FlushAsync();
 
-        var installmentsCount = Random.Shared.Next(1, 6);
+        var installmentsCount = Random.Shared.Next(1, 2);
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 

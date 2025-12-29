@@ -21,22 +21,22 @@ public sealed class BillingPaymentService(
     {
         if (request.PayAmount > request.PayableAmount)
         {
-            throw new ArgumentValidationException("BillingId", "مبلغ پرداختی بیشتر از مبلغ قابل پرداخت صورت حساب می باشد.");
+            throw new ArgumentValidationException("BillingId", "مبلغ پرداختی بیشتر از مبلغ قابل پرداخت صورت حساب می باشد");
         }
 
         if (request.Status == BillingStatus.Settled)
         {
-            throw new ArgumentValidationException("BillingId", "صورت حساب قبلا پرداخت شده است.");
+            throw new ArgumentValidationException("BillingId", "صورت حساب قبلا پرداخت شده است");
         }
 
         if (request.Status == BillingStatus.Overdue)
         {
-            throw new ArgumentValidationException("BillingId", "صورت حساب معوق قابل پرداخت نمی باشد.");
+            throw new ArgumentValidationException("BillingId", "صورت حساب معوق قابل پرداخت نمی باشد");
         }
 
         if (request.DueDate.AddDays(request.GracePeriod).Date < DateTime.Today)
         {
-            throw new ArgumentValidationException("BillingId", "صورت حساب قابل پرداخت نمی باشد.");
+            throw new ArgumentValidationException("BillingId", "صورت حساب قابل پرداخت نمی باشد");
         }
 
         return true;
@@ -44,16 +44,17 @@ public sealed class BillingPaymentService(
 
     public async Task SetMerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent request)
     {
-        var billing = await merchantBillingRepository.GetAsync(request.BillingId) ?? throw new BillingNotFoundException("صورت حساب پیدا نشد.");
+        var billing = await merchantBillingRepository.GetAsync(request.BillingId) ??
+                      throw new BillingNotFoundException("صورت حساب پیدا نشد");
 
         var payableAmount = billing.GetPayableAmount();
 
-        var merchantBillingPayableDto = new MerchantBillingPayableDto(
-            billing.TenantId, billing.Status, billing.DueDate, billing.GracePeriod, payableAmount, request.Amount);
+        var merchantBillingPayableDto = new MerchantBillingPayableDto(billing.TenantId, billing.Status, billing.DueDate,
+            billing.GracePeriod, payableAmount, request.Amount);
 
         IsMerchantBillingPayable(merchantBillingPayableDto);
 
-        billing.AddBillingPayment(request.BillingId, request.PaymentId, request.Amount, request.PaymentDate);
+        billing.AddBillingPayment(request.PaymentId, request.Amount, request.PaymentDate);
 
         if (request.Amount == payableAmount)
         {
@@ -68,7 +69,7 @@ public sealed class BillingPaymentService(
         {
             BillingId = request.BillingId,
             PaymentId = request.PaymentId,
-            Amount = request.Amount,
+            Amount = request.Amount
         });
 
         merchantBillingRepository.Update(billing);
