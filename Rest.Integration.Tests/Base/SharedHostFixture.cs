@@ -13,7 +13,6 @@ using Domain.Core.Entities.TenantAggregate;
 using Domain.Core.Entities.MerchantAggregate;
 using Microsoft.Extensions.DependencyInjection;
 using Domain.Core.Entities.FinancialDocumentAggregate;
-using Domain.Core.Entities.Shared;
 using Domain.Core.Entities.TenantMerchantContractAggregate;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
@@ -303,7 +302,7 @@ public class SharedHostFixture : IDisposable
     {
         var contract = new TenantMerchantContract(Tenant.Id,
             Merchant.Id,
-            $"TN-MR{Random.Shared.Next(1, 10000000)}",
+            $"TN-MR{Random.Shared.Next(1, 1000)}",
             DateTime.Now,
             DateTime.Now.AddMonths(6),
             SettlementType.Installments,
@@ -340,6 +339,47 @@ public class SharedHostFixture : IDisposable
         await _mainContext.SaveChangesAsync();
 
         return contract;
+    }
+
+    public async Task<TenantMerchantContract> CloneTenantMerchantContract(TenantMerchantContract contract)
+    {
+        var cloneContract = new TenantMerchantContract(contract.Tenant.Id,
+            contract.Merchant.Id,
+            contract.ContractNumber,
+            contract.StartDate,
+            contract.EndDate,
+            contract.SettlementType,
+            contract.IsCommissionExchanged,
+            contract.InstallmentsCount,
+            contract.CommissionDeductionMethodType,
+            contract.InterestPercentage, 
+            contract.InterestReferenceTypes,
+            contract.BillingPeriodType,
+            contract.BillingPeriod,
+            contract.DailyBillingOriginDate,
+            contract.BillingBreak,
+            contract.PaymentMethodType,
+            contract.GuaranteeType,
+            contract.GuaranteeDescription,
+            contract.CommissionCalculationType,
+            contract.FixedAmountCommission,
+            contract.FixedPercentageCommission,
+            contract.CommissionReferenceTypes,
+            contract.TransactionMinCommissionAmount,
+            contract.TransactionMaxCommissionAmount,
+            contract.PeriodMinCommissionAmount,
+            contract.PeriodMaxCommissionAmount
+        );
+
+        contract.SetStatus(false);
+
+        cloneContract.SetParentId(contract.Id);
+
+        await _mainContext.TenantMerchantContracts.AddAsync(cloneContract);
+
+        await _mainContext.SaveChangesAsync();
+
+        return cloneContract;
     }
 
     private async Task<long> GetUniqueFinancialDocumentId()

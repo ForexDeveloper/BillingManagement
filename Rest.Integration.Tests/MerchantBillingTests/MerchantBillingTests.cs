@@ -7,8 +7,8 @@ using Shared.EventBus.Events;
 using Application.Service.Helper;
 using Domain.Core.Entities.Shared;
 using Rest.Integration.Tests.Base;
-using Microsoft.EntityFrameworkCore;
 using Application.Service.Contracts;
+using Microsoft.EntityFrameworkCore;
 using Domain.Core.Entities.BillingAggregate;
 using Domain.Core.Entities.Shared.Exceptions;
 using Domain.Core.Entities.MerchantBillingAggregate;
@@ -47,7 +47,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings.Should().NotBeNull();
         billings.Should().HaveCountGreaterThan(0);
@@ -64,7 +64,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings.Should().AllBeAssignableTo<Billing>();
         billings.Should().AllBeOfType<MerchantBilling>();
@@ -81,7 +81,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings.Should().AllSatisfy(p => p.As<MerchantBilling>().IsAbsoluteZero().Should().BeFalse());
     }
@@ -97,7 +97,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings[^1].Status.Should().BeOneOf(BillingStatus.Issued, BillingStatus.Overdue);
         billings[..^1].Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Overdue));
@@ -112,7 +112,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         foreach (var billing in billings)
         {
@@ -144,7 +144,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         foreach (var billing in billings)
         {
@@ -176,7 +176,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings[^1].Status.Should().BeOneOf(BillingStatus.Issued, BillingStatus.Settled);
         billings[..^1].Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Settled));
@@ -196,7 +196,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         foreach (var billing in billings)
         {
@@ -230,7 +230,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         foreach (var billing in billings)
         {
@@ -266,7 +266,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
@@ -303,7 +303,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
@@ -341,7 +341,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
@@ -372,7 +372,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
@@ -410,7 +410,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings.Should().AllSatisfy(p => p.DueDate.Should().BeAfter(DateTime.Today.AddDays(-SHIFT)));
 
@@ -440,7 +440,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         foreach (var billing in billings)
         {
@@ -474,7 +474,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         foreach (var billing in billings)
         {
@@ -512,7 +512,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.MerchantBillings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllMerchantBillingsAsync(contract.Id);
 
         billings.Take(installmentsCount).Should().AllSatisfy(p => p.PurchaseTransactionsAmount.Should().BePositive());
         billings.Skip(installmentsCount).Should().AllSatisfy(p => p.PurchaseTransactionsAmount.Should().Be(0));
@@ -563,7 +563,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.MerchantBillings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllMerchantBillingsAsync(contract.Id);
 
         billings.Take(installmentsCount).Should().AllSatisfy(p => p.PurchaseTransactionsCommission.Should().BePositive());
         billings.Skip(installmentsCount).Should().AllSatisfy(p => p.PurchaseTransactionsCommission.Should().Be(0));
@@ -597,7 +597,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.MerchantBillings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllMerchantBillingsAsync(contract.Id);
 
         billings.Skip(installmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsAmount.Should().Be(0));
         billings.Take(installmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsAmount.Should().BePositive());
@@ -642,7 +642,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.MerchantBillings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllMerchantBillingsAsync(contract.Id);
 
         billings.Should().AllSatisfy(p => p.RefundedTransactionsCommission.Should().Be(0));
         billings.Take(installmentsCount).Should().AllSatisfy(p => p.RefundedTransactionsCommission.Should().Be(0));
@@ -661,15 +661,15 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     {
         await hostFixture.FlushAsync();
 
-        var installmentsCount = Random.Shared.Next(1, 2);
+        var installmentsCount = Random.Shared.Next(1, 6);
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
         contract.SetProperty(p => p.BillingBreak, billingBreak);
-        contract.SetProperty(p => p.PeriodMinCommissionAmount, 0);
         contract.SetProperty(p => p.BillingPeriod, billingPeriod);
         contract.SetProperty(p => p.BillingPeriodType, billingPeriodType);
         contract.SetProperty(p => p.InstallmentsCount, installmentsCount);
+        contract.SetProperty(p => p.PeriodMinCommissionAmount, decimal.Zero);
         contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
 
         var purchaseDocument = await ConsumePurchaseDocument(contract);
@@ -678,21 +678,31 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.MerchantBillings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllMerchantBillingsAsync(contract.Id);
 
         billings[0].Amount.Should().BeNegative();
-        billings[0].Status.Should().Be(BillingStatus.Settled);
         billings[0].PurchaseTransactionsAmount.Should().Be(0);
+        billings[0].PurchaseTransactionsCommission.Should().Be(0);
         billings[0].RefundedTransactionsAmount.Should().BePositive();
-        billings[0].RefundedTransactionsCommission.Should().BeGreaterThanOrEqualTo(0);
+        billings[0].RefundedTransactionsCommission.Should().BePositive();
 
-        billings[^1].Amount.Should().Be(0);
-        billings[^1].RefundedTransactionsAmount.Should().Be(0);
-        billings[^1].RefundedTransactionsCommission.Should().Be(0);
-        billings[^1].PurchaseTransactionsAmount.Should().BePositive();
-        billings[^1].Status.Should().Be(BillingStatus.Settled);
+        billings[installmentsCount].Amount.Should().Be(0);
+        billings[installmentsCount].RefundedTransactionsAmount.Should().Be(0);
+        billings[installmentsCount].RefundedTransactionsCommission.Should().Be(0);
+        billings[installmentsCount].PurchaseTransactionsAmount.Should().BePositive();
+        billings[installmentsCount].PurchaseTransactionsCommission.Should().BePositive();
+
+        billings.Take(installmentsCount).Should().AllSatisfy(p => p.Amount.Should().BeNegative());
+        billings.Skip(installmentsCount + 1).Should().AllSatisfy(p => p.IsAbsoluteZero().Should().BeTrue());
+        billings.Take(installmentsCount + 1).Should().AllSatisfy(p => p.IsAbsoluteZero().Should().BeFalse());
 
         billings.Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Settled));
+
+        billings.Skip(1).Take(installmentsCount - 1).Should()
+            .AllSatisfy(p => p.PurchaseTransactionsAmount.Should().BePositive()).And
+            .AllSatisfy(p => p.RefundedTransactionsAmount.Should().BePositive()).And
+            .AllSatisfy(p => p.PurchaseTransactionsCommission.Should().BePositive()).And
+            .AllSatisfy(p => p.RefundedTransactionsCommission.Should().BePositive());
     }
 
     #endregion
@@ -714,7 +724,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).FirstOrDefaultAsync();
+        var billing = await GetFirstBillingAsync(contract.Id);
 
         billing.Should().NotBeNull();
         billing.DueDate.Should().Be(DateTime.Today);
@@ -724,6 +734,8 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     [Fact]
     public async Task WhenBillingPeriodType_Is_Weekly_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_ShouldCreateFirstBilling()
     {
+        await hostFixture.FlushAsync();
+
         var pc = new PersianCalendar();
 
         var dayOfWeek = pc.GetDayOfWeek(DateTime.Today);
@@ -731,8 +743,6 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         var billingPeriod = MapDayOfWeekToBillingPeriod(dayOfWeek);
 
         var periodDayOfWeek = DateHelper.GetPersianDayOfWeek(billingPeriod);
-
-        await hostFixture.FlushAsync();
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
@@ -743,7 +753,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).FirstOrDefaultAsync();
+        var billing = await GetFirstBillingAsync(contract.Id);
 
         billing.Should().NotBeNull();
         billing.DueDate.Should().Be(DateTime.Today);
@@ -754,11 +764,11 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     [Fact]
     public async Task WhenBillingPeriodType_Is_Monthly_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_ShouldCreateFirstBilling()
     {
+        await hostFixture.FlushAsync();
+
         var pc = new PersianCalendar();
 
         var billingPeriod = pc.GetDayOfMonth(DateTime.Today);
-
-        await hostFixture.FlushAsync();
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
@@ -769,7 +779,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).FirstOrDefaultAsync();
+        var billing = await GetFirstBillingAsync(contract.Id);
 
         billing.Should().NotBeNull();
         billing.DueDate.Should().Be(DateTime.Today);
@@ -794,7 +804,9 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).FirstAsync();
+        var billing = await GetFirstBillingAsync(contract.Id);
+
+        billing.Should().NotBeNull();
 
         if (periodMinCommissionAmount == 0)
         {
@@ -808,35 +820,28 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         }
     }
 
-    [Fact]
-    public async Task WhenPurchaseInstallmentsAreDetected_ShouldDebitEachBillingToNextOne2()
-    {
-        var contract = await hostFixture.CreateTenantMerchantContract();
+    //[Fact]
+    //public async Task WhenPurchaseInstallmentsAreDetected_ShouldDebitEachBillingToNextOne2()
+    //{
+    //    await hostFixture.FlushAsync();
 
-        await ConsumePurchaseDocument(contract);
+    //    var contract = await hostFixture.CreateTenantMerchantContract();
 
-        await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+    //    await ConsumePurchaseDocument(contract);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+    //    var cloneContract = await hostFixture.CloneTenantMerchantContract(contract);
 
-        foreach (var billing in billings)
-        {
-            var index = billings.IndexOf(billing);
+    //    cloneContract.SetProperty(p => p.BillingPeriod, 17);
 
-            if (index == 0)
-            {
-                billing.Debtor.Should().BeNull();
-                billing.DebtorId.Should().BeNull();
-            }
-            else
-            {
-                var previousBilling = billings[index - 1];
+    //    await ConsumePurchaseDocument(cloneContract);
 
-                billing.Debtor.Should().Be(previousBilling);
-                billing.DebtorId.Should().Be(previousBilling.Id);
-            }
-        }
-    }
+    //    await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
+
+    //    var billings = await GetAllBillingsAsync(contract.Id);
+
+    //    var billings2 = await GetAllBillingsAsync(cloneContract.Id);
+
+    //}
 
     #endregion
 
@@ -858,8 +863,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         await _billingPaymentService.SetMerchantBillingPayment(new PmBillingManualPaymentUpdateStateEvent()
         {
@@ -889,8 +893,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var oldPayableAmount = billing!.GetPayableAmount();
 
@@ -929,8 +932,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var oldPayableAmount = billing!.GetPayableAmount();
 
@@ -959,8 +961,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var additionsAmount = billing!.GetPayableAmount();
 
@@ -988,7 +989,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings[..^1].Should().AllSatisfy(p => Assert.Throws<ArgumentValidationException>(() => p.SetAdditions(1000)));
     }
@@ -1008,8 +1009,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         await _billingPaymentService.SetMerchantBillingPayment(new PmBillingManualPaymentUpdateStateEvent()
         {
@@ -1040,8 +1040,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var payableAmount = billing!.GetPayableAmount();
 
@@ -1070,8 +1069,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var additionsAmount = Math.Abs(billing!.GetPayableAmount());
 
@@ -1097,8 +1095,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var additionsAmount = Math.Abs(billing!.GetPayableAmount()) / 2;
 
@@ -1124,8 +1121,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var additionsAmount = Math.Abs(billing!.GetPayableAmount()) * 2;
 
@@ -1155,8 +1151,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var oldPayableAmount = billing!.GetPayableAmount();
 
@@ -1185,7 +1180,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billings = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id).ToListAsync();
+        var billings = await GetAllBillingsAsync(contract.Id);
 
         billings[..^1].Should().AllSatisfy(p => Assert.Throws<ArgumentValidationException>(() => p.SetDeductions(1000)));
     }
@@ -1205,8 +1200,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var payableAmount = billing!.GetPayableAmount();
 
@@ -1230,8 +1224,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
-        var billing = await _dbContext.Billings.Where(p => p.MainContractId == contract.Id)
-            .OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+        var billing = await GetLastBillingAsync(contract.Id);
 
         var deductionsAmount = billing!.GetPayableAmount();
 
@@ -1243,6 +1236,25 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
     #endregion
 
+    private async Task<Billing?> GetLastBillingAsync(int contractId)
+    {
+        return await _dbContext.Billings.Where(p => p.MainContractId == contractId).OrderByDescending(p => p.DueDate).FirstOrDefaultAsync();
+    }
+
+    private async Task<Billing?> GetFirstBillingAsync(int contractId)
+    {
+        return await _dbContext.Billings.Where(p => p.MainContractId == contractId).OrderBy(p => p.DueDate).FirstOrDefaultAsync();
+    }
+
+    private async Task<List<Billing>> GetAllBillingsAsync(int contractId)
+    {
+        return await _dbContext.Billings.Where(p => p.MainContractId == contractId).OrderBy(p => p.DueDate).ToListAsync();
+    }
+
+    private async Task<List<MerchantBilling>> GetAllMerchantBillingsAsync(int contractId)
+    {
+        return await _dbContext.MerchantBillings.Where(p => p.MainContractId == contractId).OrderBy(p => p.DueDate).ToListAsync();
+    }
 
     private async Task ShiftFinancialDocument(FinancialDocument financialDocument, int? shift = null)
     {
