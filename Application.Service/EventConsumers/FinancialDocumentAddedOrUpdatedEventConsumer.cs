@@ -26,7 +26,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     {
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        var succeed = true;
         const string SERVICE_NAME = $"{nameof(FinancialDocumentAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {

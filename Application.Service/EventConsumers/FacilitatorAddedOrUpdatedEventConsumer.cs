@@ -21,7 +21,7 @@ public sealed class FacilitatorAddedOrUpdatedEventConsumer(
     {
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        var succeed = true;
         const string SERVICE_NAME = $"{nameof(FacilitatorAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
