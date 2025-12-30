@@ -9,18 +9,28 @@ namespace Domain.Core.Entities.WalletContractAggregate;
 public class WalletContract : BaseEntity<int>
 {
     public int TenantId { get; private set; }
-    public Tenant Tenant { get; private set; }
-    public DateTime StartDate { get; private set; }
-    public DateTime? EndDate { get; private set; }
-    public WalletContractStatus Status { get; private set; }
-    public int? ParentId { get; set; }
-    public int? RootParentId { get; set; }
-    public int? TenantIpgSettingId { get; private set; }
-    public TenantIpgSetting TenantIpgSetting { get; private set; }
-    public List<WalletContractGuarantor> WalletContractGuarantors { get; private set; } = [];
-    public List<WalletContractFinancier> WalletContractFinanciers { get; private set; } = [];
-    public List<WalletContractFacilitator> WalletContractFacilitators { get; private set; } = [];
 
+    public Tenant Tenant { get; private set; }
+
+    public DateTime StartDate { get; private set; }
+
+    public DateTime? EndDate { get; private set; }
+
+    public WalletContractStatus Status { get; private set; }
+
+    public int? ParentId { get; set; }
+
+    public int? RootParentId { get; set; }
+
+    public int? TenantIpgSettingId { get; private set; }
+
+    public TenantIpgSetting TenantIpgSetting { get; private set; }
+
+    public List<WalletContractGuarantor> WalletContractGuarantors { get; private set; } = [];
+
+    public List<WalletContractFinancier> WalletContractFinanciers { get; private set; } = [];
+
+    public List<WalletContractFacilitator> WalletContractFacilitators { get; private set; } = [];
 
     public WalletContract(int id, int tenantId, DateTime startDate, DateTime? endDate, WalletContractStatus status,
         int? parentId, int? rootParentId,
@@ -28,13 +38,12 @@ public class WalletContract : BaseEntity<int>
     {
         Id = id;
         TenantId = tenantId;
-        TenantIpgSettingId = tenantIpgSettingId;
         StartDate = startDate;
         EndDate = endDate;
         Status = status;
         ParentId = parentId;
         RootParentId = rootParentId;
-        TenantIpgSettingId = TenantIpgSettingId;
+        TenantIpgSettingId = tenantIpgSettingId;
     }
 
     public void SetWalletContractGuarantors(List<WalletContractGuarantor> walletContractGuarantors)

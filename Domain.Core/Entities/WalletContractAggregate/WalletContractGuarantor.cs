@@ -1,28 +1,42 @@
 ﻿using Domain.Base;
-using Domain.Core.Entities.GuarantorAggregate;
-using Domain.Core.Entities.Shared;
+using System.Linq;
 using Domain.Core.Enums;
 using System.Collections.Generic;
-using System.Linq;
+using Domain.Core.Entities.Shared;
+using Domain.Core.Entities.GuarantorAggregate;
 
 namespace Domain.Core.Entities.WalletContractAggregate;
 
 public class WalletContractGuarantor : BaseEntity<int>
 {
     #region Property
+
     public int WalletContractId { get; private set; }
+
     public WalletContract WalletContract { get; private set; }
+
     public int GuarantorId { get; private set; }
+
     public Guarantor Guarantor { get; private set; }
+
     public List<WalletPortionType> PortionTypes { get; private set; }
+
     public CommissionCalculationType? CommissionCalculationType { get; private set; }
+
     public decimal? FixedAmountCommission { get; private set; }
+
     public decimal? FixedPercentageCommission { get; private set; }
+
     public decimal? TransactionMinCommissionAmount { get; private set; }
+
     public decimal? TransactionMaxCommissionAmount { get; private set; }
+
     public decimal? PeriodMinCommissionAmount { get; private set; }
+
     public decimal? PeriodMaxCommissionAmount { get; private set; }
+
     public List<TieredCommission>? TieredCommissions { get; private set; } = [];
+
     public PaymentMethodType? PaymentMethodType { get; private set; }
 
     private WalletContractGuarantor() { }
