@@ -19,9 +19,9 @@ public sealed class FacilitatorAddedOrUpdatedEventConsumer(
 {
     public async Task Consume(ConsumeContext<CmFacilitatorAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        var succeed = true;
         const string SERVICE_NAME = $"{nameof(FacilitatorAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {

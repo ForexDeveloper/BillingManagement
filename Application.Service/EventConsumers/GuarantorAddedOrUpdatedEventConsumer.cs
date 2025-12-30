@@ -19,9 +19,9 @@ public sealed class GuarantorAddedOrUpdatedEventConsumer(
 {
     public async Task Consume(ConsumeContext<CmGuarantorAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        var succeed = true;
         const string SERVICE_NAME = $"{nameof(GuarantorAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {

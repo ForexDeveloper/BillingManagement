@@ -19,9 +19,9 @@ public sealed class BillingManualPaymentUpdateStateEventConsumer(
 {
     public async Task Consume(ConsumeContext<PmBillingManualPaymentUpdateStateEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        var succeed = true;
         const string SERVICE_NAME = $"{nameof(BillingManualPaymentUpdateStateEventConsumer)}_{nameof(Consume)}";
 
         var lockName = $"billing:merchant:payment:{context.Message.BillingId}";

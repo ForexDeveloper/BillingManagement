@@ -12,14 +12,23 @@ namespace Domain.Core.Entities.CustomerAggregate;
 public class Customer : BusinessIdentity
 {
     #region Property
+
     public int TenantId { get; private set; }
+
     public Tenant Tenant { get; private set; }
+
     public string? FullName { get; private set; }
+
     public string? NationalId { get; private set; }
+
     public string? Mobile { get; private set; }
+
     public bool IsShahkarConfirmed { get; private set; }
+
     public string UniqueIdentifier { get; private set; }
+
     public IdentityTypeEnum CustomerType { get; private set; }
+
     public List<CustomerOrganization> CustomerOrganizations { get; private set; } = [];
 
     #endregion #region Property

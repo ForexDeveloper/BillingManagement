@@ -19,9 +19,9 @@ public sealed class FinancierAddedOrUpdatedEventConsumer(
 {
     public async Task Consume(ConsumeContext<CmFinancierAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        var succeed = true;
         const string SERVICE_NAME = $"{nameof(FinancierAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {

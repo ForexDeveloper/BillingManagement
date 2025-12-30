@@ -24,9 +24,9 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 {
     public async Task Consume(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        var succeed = true;
         const string SERVICE_NAME = $"{nameof(FinancialDocumentAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
