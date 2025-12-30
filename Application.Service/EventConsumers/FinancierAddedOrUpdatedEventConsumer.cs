@@ -86,18 +86,14 @@ public sealed class FinancierAddedOrUpdatedEventConsumer(
     private async Task CreateFinancier(ConsumeContext<CmFinancierAddedOrUpdatedEvent> context)
     {
         Financier financier = new(context.Message.Id, context.Message.Name, context.Message.TenantId, context.Message.Type, context.Message.IsTenant);
-
         await financierRepository.AddAsync(financier);
-
         await unitOfWork.SaveChangesAsync();
     }
 
     private async Task UpdateFinancier(ConsumeContext<CmFinancierAddedOrUpdatedEvent> context, Financier financier)
     {
         financier.Update(context.Message.Name, context.Message.TenantId, context.Message.Type);
-
         financierRepository.Update(financier);
-
         await unitOfWork.SaveChangesAsync();
     }
 }
