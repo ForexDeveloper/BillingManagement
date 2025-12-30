@@ -1,72 +1,84 @@
-﻿using Domain.Core.Entities.FacilitatorAggregate;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-
+using Shared.EventBus.Events;
+using Microsoft.Extensions.Logging;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.FacilitatorAggregate;
 
 namespace Application.Service.EventConsumers;
 
-public class FacilitatorAddedOrUpdatedEventConsumer : IConsumer<CmFacilitatorAddedOrUpdatedEvent>
+public sealed class FacilitatorAddedOrUpdatedEventConsumer(
+    IApplicationDbContextUnitOfWork unitOfWork,
+    IFacilitatorRepository facilitatorRepository,
+    ILogger<FacilitatorAddedOrUpdatedEventConsumer> logger) : IConsumer<CmFacilitatorAddedOrUpdatedEvent>
 {
-    private readonly IFacilitatorRepository _facilitatorRepository;
-    private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    public readonly ILogger<FacilitatorAddedOrUpdatedEventConsumer> _logger;
-
-    public FacilitatorAddedOrUpdatedEventConsumer(ILogger<FacilitatorAddedOrUpdatedEventConsumer> logger, IFacilitatorRepository facilitatorRepository,
-        IApplicationDbContextUnitOfWork unitOfWork)
-    {
-        _logger = logger;
-        _facilitatorRepository = facilitatorRepository;
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task Consume(ConsumeContext<CmFacilitatorAddedOrUpdatedEvent> context)
     {
         var stopWatch = new Stopwatch();
         stopWatch.Start();
         bool succeed = true;
+        const string SERVICE_NAME = $"{nameof(FacilitatorAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
-            var facilitator = await _facilitatorRepository.GetAsync(context.Message.Id);
+            var facilitator = await facilitatorRepository.GetAsync(context.Message.Id);
+
             if (facilitator == null)
             {
                 await CreateFacilitator(context);
-                return;
             }
-
-            await UpdateFacilitator(context, facilitator);
+            else
+            {
+                await UpdateFacilitator(context, facilitator);
+            }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
+
+            if (exception is IBusinessException)
             {
-                Message = ex.Message,
-                ServiceName = "FacilitatorAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
-            throw;
+                logger.LogWarning(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "FacilitatorAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
+                InputParams = context.Message,
                 Tags = LogMessageTag.EventBus,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }
@@ -74,15 +86,14 @@ public class FacilitatorAddedOrUpdatedEventConsumer : IConsumer<CmFacilitatorAdd
     private async Task CreateFacilitator(ConsumeContext<CmFacilitatorAddedOrUpdatedEvent> context)
     {
         Facilitator facilitator = new(context.Message.Id, context.Message.Name, context.Message.TenantId, context.Message.Type, context.Message.IsTenant);
-        await _facilitatorRepository.AddAsync(facilitator);
-        await _unitOfWork.SaveChangesAsync();
+        await facilitatorRepository.AddAsync(facilitator);
+        await unitOfWork.SaveChangesAsync();
     }
 
     private async Task UpdateFacilitator(ConsumeContext<CmFacilitatorAddedOrUpdatedEvent> context, Facilitator facilitator)
     {
         facilitator.Update(context.Message.Name, context.Message.TenantId, context.Message.Type);
-        _facilitatorRepository.Update(facilitator);
-        await _unitOfWork.SaveChangesAsync();
+        facilitatorRepository.Update(facilitator);
+        await unitOfWork.SaveChangesAsync();
     }
-
 }

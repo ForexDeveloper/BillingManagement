@@ -22,9 +22,10 @@ public sealed class BillingManualPaymentUpdateStateEventConsumer(
         var stopWatch = new Stopwatch();
         stopWatch.Start();
         var succeed = true;
-        const string SERVICE_NAME = "BillingManualPaymentUpdateStateEventConsumer_Consume";
+        const string SERVICE_NAME = $"{nameof(BillingManualPaymentUpdateStateEventConsumer)}_{nameof(Consume)}";
 
         var lockName = $"billing:merchant:payment:{context.Message.BillingId}";
+
         await using var redLock = await distributedLockFactory.CreateLockAsync(lockName,
             TimeSpan.FromSeconds(3),
             TimeSpan.FromSeconds(6),
@@ -45,8 +46,8 @@ public sealed class BillingManualPaymentUpdateStateEventConsumer(
             {
                 logger.LogWarning(new LogStruct
                 {
-                    Results = string.Empty,
                     Exception = exception,
+                    Results = string.Empty,
                     ServiceName = SERVICE_NAME,
                     Message = exception.Message,
                     InputParams = context.Message,
@@ -58,8 +59,8 @@ public sealed class BillingManualPaymentUpdateStateEventConsumer(
             {
                 logger.LogCritical(new LogStruct
                 {
-                    Results = string.Empty,
                     Exception = exception,
+                    Results = string.Empty,
                     ServiceName = SERVICE_NAME,
                     Message = exception.Message,
                     InputParams = context.Message,

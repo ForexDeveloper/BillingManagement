@@ -24,7 +24,7 @@ public sealed class CustomerAddedOrUpdatedEventConsumer(
         var stopWatch = new Stopwatch();
         stopWatch.Start();
         var succeed = true;
-        const string SERVICE_NAME = "CustomerAddedOrUpdatedEventConsumer_Consume";
+        const string SERVICE_NAME = $"{nameof(CustomerAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
             var existedCustomers = await customerRepository.GetCustomersByIds(context.Message.Customers.Select(x => x.Id).ToList(), context.Message.TenantId);
@@ -71,8 +71,8 @@ public sealed class CustomerAddedOrUpdatedEventConsumer(
             {
                 logger.LogWarning(new LogStruct
                 {
-                    Results = string.Empty,
                     Exception = exception,
+                    Results = string.Empty,
                     ServiceName = SERVICE_NAME,
                     Message = exception.Message,
                     InputParams = context.Message,
@@ -84,10 +84,10 @@ public sealed class CustomerAddedOrUpdatedEventConsumer(
             {
                 logger.LogCritical(new LogStruct
                 {
-                    Results = string.Empty,
                     Exception = exception,
-                    Message = exception.Message,
+                    Results = string.Empty,
                     ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
                     InputParams = context.Message,
                     Tags = LogMessageTag.EventBus,
                     ResponseTimeStopWatcher = stopWatch,
