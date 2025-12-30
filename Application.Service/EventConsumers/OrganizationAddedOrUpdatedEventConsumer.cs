@@ -20,9 +20,9 @@ public sealed class OrganizationAddedOrUpdatedEventConsumer(
 {
     public async Task Consume(ConsumeContext<CmOrganizationAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        var succeed = true;
         const string SERVICE_NAME = $"{nameof(OrganizationAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {

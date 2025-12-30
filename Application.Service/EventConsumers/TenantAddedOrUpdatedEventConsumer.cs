@@ -1,74 +1,84 @@
-﻿using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
-
+using Shared.EventBus.Events;
+using Microsoft.Extensions.Logging;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Domain.Core.Entities.TenantAggregate;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
 
 namespace Application.Service.EventConsumers;
 
-public class TenantAddedOrUpdatedEventConsumer : IConsumer<CmTenantAddedOrUpdatedEvent>
+public sealed class TenantAddedOrUpdatedEventConsumer(
+    ITenantRepository tenantRepository,
+    IApplicationDbContextUnitOfWork unitOfWork,
+    ILogger<TenantAddedOrUpdatedEventConsumer> logger) : IConsumer<CmTenantAddedOrUpdatedEvent>
 {
-    private readonly ITenantRepository _tenantRepository;
-    private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    public readonly ILogger<TenantAddedOrUpdatedEventConsumer> _logger;
-
-    public TenantAddedOrUpdatedEventConsumer(ILogger<TenantAddedOrUpdatedEventConsumer> logger, ITenantRepository tenantRepository,
-        IApplicationDbContextUnitOfWork unitOfWork)
-    {
-        _logger = logger;
-        _tenantRepository = tenantRepository;
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task Consume(ConsumeContext<CmTenantAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        const string SERVICE_NAME = $"{nameof(TenantAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
-            var tenant = await _tenantRepository.GetAsync(context.Message.Id);
+            var tenant = await tenantRepository.GetAsync(context.Message.Id);
+
             if (tenant == null)
             {
                 await CreateTenant(context);
-                return;
             }
-
-            await UpdateTenant(context, tenant);
+            else
+            {
+                await UpdateTenant(context, tenant);
+            }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
+
+            if (exception is IBusinessException)
             {
-                Message = ex.Message,
-                ServiceName = "TenantAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
-            throw;
+                logger.LogWarning(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "TenantAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
+                InputParams = context.Message,
                 Tags = LogMessageTag.EventBus,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }
@@ -77,14 +87,14 @@ public class TenantAddedOrUpdatedEventConsumer : IConsumer<CmTenantAddedOrUpdate
     {
         Tenant tenant = new(context.Message.Id, context.Message.Title, context.Message.CreditProjectName, context.Message.BrandName, context.Message.InternalProjectManagerName, context.Message.HasCoWallet, context.Message.HasAnonymous);
 
-        await _tenantRepository.AddAsync(tenant);
-        await _unitOfWork.SaveChangesAsync();
+        await tenantRepository.AddAsync(tenant);
+        await unitOfWork.SaveChangesAsync();
     }
 
     private async Task UpdateTenant(ConsumeContext<CmTenantAddedOrUpdatedEvent> context, Tenant tenant)
     {
         tenant.Update(context.Message.Title, context.Message.CreditProjectName, context.Message.BrandName, context.Message.InternalProjectManagerName,context.Message.HasCoWallet,context.Message.HasAnonymous);
-        _tenantRepository.Update(tenant);
-        await _unitOfWork.SaveChangesAsync();
+        tenantRepository.Update(tenant);
+        await unitOfWork.SaveChangesAsync();
     }
 }

@@ -19,9 +19,9 @@ public sealed class MerchantBranchAddedOrUpdatedEventConsumer(
 {
     public async Task Consume(ConsumeContext<CmMerchantBranchAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        var succeed = true;
         const string SERVICE_NAME = $"{nameof(MerchantBranchAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {

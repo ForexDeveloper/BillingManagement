@@ -28,9 +28,9 @@ public sealed class RichTenantAddedOrUpdatedEventConsumer(
 {
     public async Task Consume(ConsumeContext<CmRichTenantAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        var succeed = true;
         const string SERVICE_NAME = $"{nameof(RichTenantAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {

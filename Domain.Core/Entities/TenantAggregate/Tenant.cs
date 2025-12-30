@@ -8,6 +8,7 @@ namespace Domain.Core.Entities.TenantAggregate;
 public class Tenant : BusinessIdentity
 {
     #region Property
+
     public string Title { get; private set; }
 
     public string? CreditProjectName { get; set; }
@@ -34,7 +35,6 @@ public class Tenant : BusinessIdentity
         InternalProjectManagerName = internalProjectManagerName;
         HasCoWallet = hasCoWallet;
         HasAnonymous = hasAnonymous;
-
         SetTitle(title);
     }
 
