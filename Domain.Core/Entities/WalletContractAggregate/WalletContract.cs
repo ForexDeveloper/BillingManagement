@@ -1,8 +1,8 @@
-﻿using Domain.Base;
-using Domain.Core.Entities.TenantAggregate;
+﻿using System;
+using Domain.Base;
 using Domain.Core.Enums;
-using System;
 using System.Collections.Generic;
+using Domain.Core.Entities.TenantAggregate;
 
 namespace Domain.Core.Entities.WalletContractAggregate;
 
