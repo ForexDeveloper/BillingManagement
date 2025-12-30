@@ -1,14 +1,14 @@
-﻿using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Shared.EventBus.Events;
+using Microsoft.Extensions.Logging;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Domain.Core.Entities.TenantAggregate;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
 
 namespace Application.Service.EventConsumers;
 
@@ -94,7 +94,6 @@ public sealed class TenantIpgSettingsAddedOrUpdatedEventConsumer(
     private async Task UpdateTenantIpgSetting(ConsumeContext<PmTenantIpgSettingAddedOrUpdatedEvent> context, TenantIpgSetting tenantIpgSetting)
     {
         tenantIpgSetting.Update(context.Message.Title, context.Message.TenantId, context.Message.IpgType, context.Message.IsActive);
-
         tenantRepository.TenantIPgSettingUpdate(tenantIpgSetting);
         await unitOfWork.SaveChangesAsync();
     }
