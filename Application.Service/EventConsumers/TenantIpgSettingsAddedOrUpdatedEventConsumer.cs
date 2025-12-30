@@ -1,71 +1,84 @@
-﻿using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Shared.EventBus.Events;
+using Microsoft.Extensions.Logging;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Domain.Core.Entities.TenantAggregate;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
 
 namespace Application.Service.EventConsumers;
 
-public class TenantIpgSettingsAddedOrUpdatedEventConsumer : IConsumer<PmTenantIpgSettingAddedOrUpdatedEvent>
+public sealed class TenantIpgSettingsAddedOrUpdatedEventConsumer(
+    ITenantRepository tenantRepository,
+    IApplicationDbContextUnitOfWork unitOfWork,
+    ILogger<TenantIpgSettingsAddedOrUpdatedEventConsumer> logger) : IConsumer<PmTenantIpgSettingAddedOrUpdatedEvent>
 {
-    private readonly ITenantRepository _tenantRepository;
-    private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    public readonly ILogger<TenantIpgSettingsAddedOrUpdatedEventConsumer> _logger;
-
-    public TenantIpgSettingsAddedOrUpdatedEventConsumer(ILogger<TenantIpgSettingsAddedOrUpdatedEventConsumer> logger,
-        IApplicationDbContextUnitOfWork unitOfWork, ITenantRepository tenantRepository)
-    {
-        _logger = logger;
-        _unitOfWork = unitOfWork;
-        _tenantRepository = tenantRepository;
-    }
-
     public async Task Consume(ConsumeContext<PmTenantIpgSettingAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        const string SERVICE_NAME = $"{nameof(TenantIpgSettingsAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
-            var tenantIpgSetting = await _tenantRepository.TenantIPgSettingGetAsync(context.Message.Id);
+            var tenantIpgSetting = await tenantRepository.TenantIPgSettingGetAsync(context.Message.Id);
+
             if (tenantIpgSetting == null)
             {
                 await CreateTenantIpgSetting(context);
-                return;
             }
-
-            await UpdateTenantIpgSetting(context, tenantIpgSetting);
+            else
+            {
+                await UpdateTenantIpgSetting(context, tenantIpgSetting);
+            }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
+
+            if (exception is IBusinessException)
             {
-                Message = ex.Message,
-                ServiceName = "TenantIpgSettingAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
-            throw;
+                logger.LogWarning(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "TenantIpgSettingAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
+                InputParams = context.Message,
                 Tags = LogMessageTag.EventBus,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }
@@ -74,15 +87,14 @@ public class TenantIpgSettingsAddedOrUpdatedEventConsumer : IConsumer<PmTenantIp
     {
         TenantIpgSetting tenantIpgSetting = new(context.Message.Id, context.Message.Title, context.Message.TenantId,
         context.Message.IpgType, context.Message.IsActive);
-        await _tenantRepository.TenantIPgSettingAddAsync(tenantIpgSetting);
-        await _unitOfWork.SaveChangesAsync();
+        await tenantRepository.TenantIPgSettingAddAsync(tenantIpgSetting);
+        await unitOfWork.SaveChangesAsync();
     }
 
     private async Task UpdateTenantIpgSetting(ConsumeContext<PmTenantIpgSettingAddedOrUpdatedEvent> context, TenantIpgSetting tenantIpgSetting)
     {
         tenantIpgSetting.Update(context.Message.Title, context.Message.TenantId, context.Message.IpgType, context.Message.IsActive);
-
-        _tenantRepository.TenantIPgSettingUpdate(tenantIpgSetting);
-        await _unitOfWork.SaveChangesAsync();
+        tenantRepository.TenantIPgSettingUpdate(tenantIpgSetting);
+        await unitOfWork.SaveChangesAsync();
     }
 }

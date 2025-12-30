@@ -1,75 +1,86 @@
-﻿using Domain.Core.Entities.MerchantAggregate;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using Shared.EventBus.Events;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.MerchantAggregate;
 
 namespace Application.Service.EventConsumers;
 
-public class MerchantBranchAddedOrUpdatedEventConsumer : IConsumer<CmMerchantBranchAddedOrUpdatedEvent>
+public sealed class MerchantBranchAddedOrUpdatedEventConsumer(
+    IMerchantRepository merchantRepository,
+    IApplicationDbContextUnitOfWork unitOfWork,
+    ILogger<MerchantBranchAddedOrUpdatedEventConsumer> logger) : IConsumer<CmMerchantBranchAddedOrUpdatedEvent>
 {
-    private readonly IMerchantRepository _merchantRepository;
-    private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    public readonly ILogger<MerchantBranchAddedOrUpdatedEventConsumer> _logger;
-
-    public MerchantBranchAddedOrUpdatedEventConsumer(ILogger<MerchantBranchAddedOrUpdatedEventConsumer> logger, 
-        IApplicationDbContextUnitOfWork unitOfWork, IMerchantRepository merchantRepository)
-    {
-        _logger = logger;
-        _unitOfWork = unitOfWork;
-        _merchantRepository = merchantRepository;
-    }
-
     public async Task Consume(ConsumeContext<CmMerchantBranchAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        const string SERVICE_NAME = $"{nameof(MerchantBranchAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
             //var merchant = await _merchantRepository.GetByIdAsync(context.Message.MerchantId);
-            var merchantBranch = await _merchantRepository.GetBranchAsync(context.Message.BranchId);
+
+            var merchantBranch = await merchantRepository.GetBranchAsync(context.Message.BranchId);
+
             if (merchantBranch == null)
             {
                 await CreateMerchantBranch(context);
-                return;
             }
-
-            await UpdateMerchantBranch(context, merchantBranch);
+            else
+            {
+                await UpdateMerchantBranch(context, merchantBranch);
+            }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
+
+            if (exception is IBusinessException)
             {
-                Message = ex.Message,
-                ServiceName = "MerchantBranchAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
-            throw;
+                logger.LogWarning(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "MerchantBranchAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
+                InputParams = context.Message,
                 Tags = LogMessageTag.EventBus,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }
@@ -79,14 +90,14 @@ public class MerchantBranchAddedOrUpdatedEventConsumer : IConsumer<CmMerchantBra
         var merchantBranch = new MerchantBranch(context.Message.BranchId, context.Message.MerchantId,
             context.Message.Title, context.Message.TerminalId);
 
-        await _merchantRepository.AddBranchAsync(merchantBranch);
-        await _unitOfWork.SaveChangesAsync();
+        await merchantRepository.AddBranchAsync(merchantBranch);
+        await unitOfWork.SaveChangesAsync();
     }
 
     private async Task UpdateMerchantBranch(ConsumeContext<CmMerchantBranchAddedOrUpdatedEvent> context, MerchantBranch merchantBranch)
     {
         merchantBranch.Update(context.Message.Title);
-        _merchantRepository.UpdateBranch(merchantBranch);
-        await _unitOfWork.SaveChangesAsync();
+        merchantRepository.UpdateBranch(merchantBranch);
+        await unitOfWork.SaveChangesAsync();
     }
 }

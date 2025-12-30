@@ -1,76 +1,81 @@
-﻿using Application.Service.Contracts;
-using Domain.Core.Entities.WalletContractAggregate;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
+using Domain.Core.Enums;
 using System.Diagnostics;
+using Shared.EventBus.Events;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.WalletContractAggregate;
 
 namespace Application.Service.EventConsumers;
 
-public class WalletContractStatusChangedEventConsumer : IConsumer<FcmWalletContractStatusChangedEvent>
+public sealed class WalletContractStatusChangedEventConsumer(
+    IApplicationDbContextUnitOfWork unitOfWork,
+    IWalletContractRepository walletContractRepository,
+    ILogger<WalletContractStatusChangedEventConsumer> logger) : IConsumer<FcmWalletContractStatusChangedEvent>
 {
-    private readonly IWalletContractRepository _walletContractRepository;
-    private readonly IWalletContractService _walletContractService;
-    private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    public readonly ILogger<WalletContractStatusChangedEventConsumer> _logger;
-
-    public WalletContractStatusChangedEventConsumer(ILogger<WalletContractStatusChangedEventConsumer> logger,
-        IApplicationDbContextUnitOfWork unitOfWork,
-        IWalletContractRepository walletContractRepository,
-        IWalletContractService walletContractService)
-    {
-        _logger = logger;
-        _unitOfWork = unitOfWork;
-        _walletContractRepository = walletContractRepository;
-        _walletContractService = walletContractService;
-    }
-
     public async Task Consume(ConsumeContext<FcmWalletContractStatusChangedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        const string SERVICE_NAME = $"{nameof(WalletContractStatusChangedEventConsumer)}_{nameof(Consume)}";
         try
         {
-            var walletContract = await _walletContractRepository.GetAsync(context.Message.Id);
-            if (walletContract == null)
-            {
-                return;
-            }
+            var walletContract = await walletContractRepository.GetAsync(context.Message.Id);
 
-            await UpdateWalletContractStatus(context, walletContract);
+            if (walletContract != null)
+            {
+                await UpdateWalletContractStatus(context, walletContract);
+            }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
+
+            if (exception is IBusinessException)
             {
-                Message = ex.Message,
-                ServiceName = "WalletContractStatusChangedEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
-            throw;
+                logger.LogWarning(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "WalletContractStatusChangedEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
+                InputParams = context.Message,
                 Tags = LogMessageTag.EventBus,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }
@@ -79,20 +84,20 @@ public class WalletContractStatusChangedEventConsumer : IConsumer<FcmWalletContr
     {
         if (context.Message.Status == (byte)WalletContractStatus.Active)
         {
-            var contracts = await _walletContractRepository.GetByRootParentIdAsync(currentContract.RootParentId ?? currentContract.Id, WalletContractStatus.Active);
+            var contracts = await walletContractRepository.GetByRootParentIdAsync(currentContract.RootParentId ?? currentContract.Id, WalletContractStatus.Active);
 
             contracts.ForEach(contract => contract.SetStatus(
                 contract.Id == currentContract.Id ? WalletContractStatus.Active : WalletContractStatus.DeActive));
 
             currentContract.SetStatus(WalletContractStatus.Active);
-            _walletContractRepository.UpdateRange(contracts);
+            walletContractRepository.UpdateRange(contracts);
         }
         else
         {
             currentContract.SetStatus((WalletContractStatus)context.Message.Status);
-            _walletContractRepository.Update(currentContract);
+            walletContractRepository.Update(currentContract);
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
     }
 }

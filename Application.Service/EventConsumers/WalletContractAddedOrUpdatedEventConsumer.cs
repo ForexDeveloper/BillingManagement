@@ -1,79 +1,90 @@
-﻿using Application.Service.Contracts;
-using Domain.Core.Entities.WalletContractAggregate;
-using Domain.Core.Enums;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using Domain.Core.Enums;
+using System.Diagnostics;
+using Shared.EventBus.Events;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
+using Microsoft.Extensions.Logging;
+using Application.Service.Contracts;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.WalletContractAggregate;
 
 namespace Application.Service.EventConsumers;
 
-public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletContractAddedOrUpdatedEvent>
+public sealed class WalletContractAddedOrUpdatedEventConsumer(
+    IApplicationDbContextUnitOfWork unitOfWork,
+    IWalletContractService walletContractService,
+    IWalletContractRepository walletContractRepository,
+    ILogger<FcmWalletContractAddedOrUpdatedEvent> logger) : IConsumer<FcmWalletContractAddedOrUpdatedEvent>
 {
-    private readonly IWalletContractRepository _walletContractRepository;
-    private readonly IWalletContractService _walletContractService;
-    private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    public readonly ILogger<FcmWalletContractAddedOrUpdatedEvent> _logger;
-
-    public WalletContractAddedOrUpdatedEventConsumer(ILogger<FcmWalletContractAddedOrUpdatedEvent> logger,
-        IApplicationDbContextUnitOfWork unitOfWork,
-        IWalletContractRepository walletContractRepository,
-        IWalletContractService walletContractService)
-    {
-        _logger = logger;
-        _unitOfWork = unitOfWork;
-        _walletContractRepository = walletContractRepository;
-        _walletContractService = walletContractService;
-    }
-
     public async Task Consume(ConsumeContext<FcmWalletContractAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        const string SERVICE_NAME = $"{nameof(WalletContractAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
-            var walletContract = await _walletContractRepository.GetAsync(context.Message.Id);
+            var walletContract = await walletContractRepository.GetAsync(context.Message.Id);
+
             if (walletContract == null)
             {
                 await CreateWalletContract(context);
-                return;
             }
-
-            await UpdateWalletContract(context, walletContract);
+            else
+            {
+                await UpdateWalletContract(context, walletContract);
+            }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
+
+            if (exception is IBusinessException)
             {
-                Message = ex.Message,
-                ServiceName = "WalletContractAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
-            throw;
+                logger.LogWarning(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "WalletContractAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
+                InputParams = context.Message,
                 Tags = LogMessageTag.EventBus,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }
@@ -91,11 +102,11 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
                context.Message.TenantIpgSettingId
            );
 
-        _walletContractService.SetWalletContractGuarantor(contract, context.Message.WalletContractGuarantors);
-        _walletContractService.SetWalletContractFinancier(contract, context.Message.WalletContractFinanciers);
-        _walletContractService.SetWalletContractFacilitators(contract, context.Message.WalletContractFacilitators);
-        await _walletContractRepository.AddAsync(contract);
-        await _unitOfWork.SaveChangesAsync();
+        walletContractService.SetWalletContractGuarantor(contract, context.Message.WalletContractGuarantors);
+        walletContractService.SetWalletContractFinancier(contract, context.Message.WalletContractFinanciers);
+        walletContractService.SetWalletContractFacilitators(contract, context.Message.WalletContractFacilitators);
+        await walletContractRepository.AddAsync(contract);
+        await unitOfWork.SaveChangesAsync();
     }
 
     private async Task UpdateWalletContract(ConsumeContext<FcmWalletContractAddedOrUpdatedEvent> context, WalletContract contract)
@@ -106,16 +117,15 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
         UpdateWalletContractFinancier(contract, context.Message.WalletContractFinanciers);
         UpdateWalletContractFacilitators(contract, context.Message.WalletContractFacilitators);
 
-        _walletContractRepository.Update(contract);
-        await _unitOfWork.SaveChangesAsync();
+        walletContractRepository.Update(contract);
+        await unitOfWork.SaveChangesAsync();
     }
 
-    private void UpdateWalletContractGuarantor(WalletContract contract, List<FcmWalletContractGuarantor> guarantors)
+    private static void UpdateWalletContractGuarantor(WalletContract contract, List<FcmWalletContractGuarantor> guarantors)
     {
         List<WalletContractGuarantor> inputGuarantorList = [];
         List<WalletContractGuarantor> newGuarantorList = [];
         List<WalletContractGuarantor> oldGuarantorList = contract.WalletContractGuarantors;
-        List<WalletContractGuarantor> updatedGuarantorList = [];
         var guarantor = guarantors.First();
 
         var inputGuarantor = new WalletContractGuarantor(guarantor.Id, contract.Id, guarantor.GuarantorId, guarantor.PortionTypes, guarantor.CommissionCalculationType,
@@ -169,7 +179,7 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
 
         foreach (var oldGuarantor in oldGuarantorList)
         {
-            if (!inputGuarantorList.Any(i => i.GuarantorId == oldGuarantor.GuarantorId))
+            if (inputGuarantorList.All(i => i.GuarantorId != oldGuarantor.GuarantorId))
             {
                 oldGuarantor.SetDeleted();
                 oldGuarantor.SetEditDateTime(DateTime.Now);
@@ -177,7 +187,7 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
         }
     }
 
-    private void UpdateWalletContractFinancier(WalletContract contract, List<FcmWalletContractFinancier> financiers)
+    private static void UpdateWalletContractFinancier(WalletContract contract, List<FcmWalletContractFinancier> financiers)
     {
         if (financiers == null)
         {
@@ -193,7 +203,6 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
 
         if (contract.WalletContractFinanciers == null)
         {
-
             List<WalletContractFinancier> financierList = [];
 
             var newFinancier = new WalletContractFinancier(financier.Id, contract.Id, financier.FinancierId, financier.PortionTypes, financier.CommissionCalculationType, financier.FixedAmountCommission, financier.FixedPercentageCommission,
@@ -270,7 +279,7 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
 
         foreach (var oldFinancier in oldFinancierList)
         {
-            if (!inputFinancierList.Any(i => i.FinancierId == oldFinancier.FinancierId))
+            if (inputFinancierList.All(i => i.FinancierId != oldFinancier.FinancierId))
             {
                 oldFinancier.SetDeleted();
                 oldFinancier.SetEditDateTime(DateTime.Now);
@@ -278,7 +287,7 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
         }
     }
 
-    private void UpdateWalletContractFacilitators(WalletContract contract, List<FcmWalletContractFacilitator> facilitators)
+    private static void UpdateWalletContractFacilitators(WalletContract contract, List<FcmWalletContractFacilitator> facilitators)
     {
         if (contract == null) throw new ArgumentNullException(nameof(contract));
 
@@ -305,7 +314,7 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
                 if ((CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
                     (CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
                 {
-                    newFacilitator.SetTieredCommissions(facilitator.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                    newFacilitator.SetTieredCommissions(facilitator.TieredCommissions.Select(x => new TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
                 }
 
                 facilitatorList.Add(newFacilitator);
@@ -377,7 +386,7 @@ public class WalletContractAddedOrUpdatedEventConsumer : IConsumer<FcmWalletCont
 
         foreach (var oldFacilitator in oldFacilitatorList)
         {
-            if (!inputFacilitatorList.Any(i => i.FacilitatorId == oldFacilitator.FacilitatorId))
+            if (inputFacilitatorList.All(i => i.FacilitatorId != oldFacilitator.FacilitatorId))
             {
                 oldFacilitator.SetDeleted();
                 oldFacilitator.SetEditDateTime(DateTime.Now);
