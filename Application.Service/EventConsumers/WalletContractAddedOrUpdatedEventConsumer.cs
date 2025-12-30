@@ -6,6 +6,7 @@ using System.Diagnostics;
 using Shared.EventBus.Events;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Domain.Core.Entities.Shared;
 using Microsoft.Extensions.Logging;
 using Application.Service.Contracts;
 using Domain.Core.UnitOfWorkContracts;
@@ -202,7 +203,6 @@ public sealed class WalletContractAddedOrUpdatedEventConsumer(
 
         if (contract.WalletContractFinanciers == null)
         {
-
             List<WalletContractFinancier> financierList = [];
 
             var newFinancier = new WalletContractFinancier(financier.Id, contract.Id, financier.FinancierId, financier.PortionTypes, financier.CommissionCalculationType, financier.FixedAmountCommission, financier.FixedPercentageCommission,
@@ -314,7 +314,7 @@ public sealed class WalletContractAddedOrUpdatedEventConsumer(
                 if ((CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
                     (CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
                 {
-                    newFacilitator.SetTieredCommissions(facilitator.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                    newFacilitator.SetTieredCommissions(facilitator.TieredCommissions.Select(x => new TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
                 }
 
                 facilitatorList.Add(newFacilitator);
