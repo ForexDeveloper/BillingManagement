@@ -169,10 +169,13 @@ public sealed class MerchantBillingService(
                             }
                             else if (billingDto.Type == BillingType.MerchantToTenant)
                             {
-                                replicateBilling.Overdue();
-                                replicateBilling.Transfer();
-                                debtorBilling = replicateBilling;
-                                previousDebitAmount = payableAmount;
+                                if (payableAmount > 0)
+                                {
+                                    replicateBilling.Overdue();
+                                    replicateBilling.Transfer();
+                                    debtorBilling = replicateBilling;
+                                    previousDebitAmount = payableAmount;
+                                }
                             }
                         }
                         else
@@ -250,8 +253,6 @@ public sealed class MerchantBillingService(
                         debtorBilling,
                         creditorBilling);
 
-                    replicateBillings.Add(billing);
-
                     if (billing.IsAbsoluteZero())
                     {
                         if (!contract.Status) continue;
@@ -269,6 +270,8 @@ public sealed class MerchantBillingService(
                     }
 
                     billings.Add(billing);
+
+                    replicateBillings.Add(billing);
                 }
 
                 await billingRepository.AddRangeAsync(billings, cancellationToken);
@@ -452,21 +455,20 @@ public sealed class MerchantBillingService(
 
         billingDtos.Add(billingDto);
 
-        if (!contract.IsCommissionExchanged)
-        {
-            billingDto = new BillingDto
-            {
-                ContractGroup = contract,
-                EndOfPeriod = endOfPeriod,
-                StartOfPeriod = startOfPeriod,
-                CurrentPeriod = currentPeriod,
-                Type = BillingType.MerchantToTenant,
-                FromBusinessIdentityId = contract.MerchantId,
-                ToBusinessIdentityId = contract.TenantId
-            };
+        if (contract.IsCommissionExchanged) return;
 
-            billingDtos.Add(billingDto);
-        }
+        billingDto = new BillingDto
+        {
+            ContractGroup = contract,
+            EndOfPeriod = endOfPeriod,
+            StartOfPeriod = startOfPeriod,
+            CurrentPeriod = currentPeriod,
+            Type = BillingType.MerchantToTenant,
+            FromBusinessIdentityId = contract.MerchantId,
+            ToBusinessIdentityId = contract.TenantId
+        };
+
+        billingDtos.Add(billingDto);
     }
 
     private async Task<List<NotSettledBilling>> OverdueExpiredBillings(List<NotSettledBilling> notSettledBillings, CancellationToken cancellationToken)
