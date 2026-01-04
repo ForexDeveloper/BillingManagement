@@ -306,63 +306,14 @@ public sealed class MerchantBillingService(
     private async Task ScanPeriodsForActiveContract(ContractGroup contract, DateTime? lastBillingDueDate,
         InstallmentRange installmentRange, List<BillingDto> billingDtos, CancellationToken cancellationToken)
     {
-        while (true)
+        bool currentPeriod;
+        DateTime endOfPeriod;
+        DateTime startOfPeriod;
+
+        var today = DateTime.Today;
+
+        if (!lastBillingDueDate.HasValue)
         {
-            bool currentPeriod;
-            DateTime endOfPeriod;
-            DateTime startOfPeriod;
-
-            var today = DateTime.Today;
-
-            if (lastBillingDueDate.HasValue && installmentRange != null)
-            {
-                (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodByLastBillingDueDate(contract.BillingPeriod,
-                    contract.BillingPeriodType, contract.DailyBillingOriginDate, lastBillingDueDate.Value);
-
-                if (endOfPeriod > today) return;
-
-                currentPeriod = endOfPeriod == today;
-
-                if (endOfPeriod > installmentRange.MaxDueDate)
-                {
-                    var hasIntersection = await billingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId, contract.MerchantId, endOfPeriod, cancellationToken);
-
-                    if (hasIntersection == false)
-                    {
-                        CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-                    }
-                }
-                else
-                {
-                    CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-                }
-
-                lastBillingDueDate = endOfPeriod;
-
-                continue;
-            }
-
-            if (lastBillingDueDate.HasValue)
-            {
-                (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodByLastBillingDueDate(contract.BillingPeriod,
-                    contract.BillingPeriodType, contract.DailyBillingOriginDate, lastBillingDueDate.Value);
-
-                if (endOfPeriod > today) return;
-
-                currentPeriod = endOfPeriod == today;
-
-                var hasIntersection = await billingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId, contract.MerchantId, endOfPeriod, cancellationToken);
-
-                if (hasIntersection == false)
-                {
-                    CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-                }
-
-                lastBillingDueDate = endOfPeriod;
-
-                continue;
-            }
-
             if (installmentRange != null)
             {
                 (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
@@ -375,34 +326,74 @@ public sealed class MerchantBillingService(
                 CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
 
                 lastBillingDueDate = endOfPeriod;
-
-                continue;
             }
+            else
+            {
+                (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
+                    contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
 
-            (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodBySpecificDate(contract.BillingPeriod,
-                contract.BillingPeriodType, contract.DailyBillingOriginDate, today);
+                currentPeriod = endOfPeriod == today;
+
+                if (currentPeriod)
+                {
+                    CreateBillingDto(contract, billingDtos, true, startOfPeriod, endOfPeriod);
+                }
+
+                return;
+            }
+        }
+
+        while (true)
+        {
+            (startOfPeriod, endOfPeriod) = ContractPeriodHelper.GetPeriodByLastBillingDueDate(contract.BillingPeriod,
+                contract.BillingPeriodType, contract.DailyBillingOriginDate, lastBillingDueDate.Value);
+
+            if (endOfPeriod > today) break;
 
             currentPeriod = endOfPeriod == today;
 
-            if (currentPeriod)
+            if (installmentRange != null)
             {
-                CreateBillingDto(contract, billingDtos, true, startOfPeriod, endOfPeriod);
+                if (endOfPeriod > installmentRange.MaxDueDate)
+                {
+                    var hasIntersection = await billingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId,
+                            contract.MerchantId, endOfPeriod, cancellationToken);
+
+                    if (hasIntersection == false)
+                    {
+                        CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
+                    }
+                }
+                else
+                {
+                    CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
+                }
+            }
+            else
+            {
+                var hasIntersection = await billingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId,
+                    contract.MerchantId, endOfPeriod, cancellationToken);
+
+                if (hasIntersection == false)
+                {
+                    CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
+                }
             }
 
-            break;
+            lastBillingDueDate = endOfPeriod;
         }
     }
 
     private static void ScanPeriodsForDeactiveContract(ContractGroup contract, DateTime? lastBillingDueDate, InstallmentRange installmentRange, List<BillingDto> billingDtos)
     {
+        if (installmentRange == null) return;
+
         while (true)
         {
             DateTime endOfPeriod;
             DateTime startOfPeriod;
 
             var today = DateTime.Today;
-
-            if (installmentRange == null) return;
 
             if (lastBillingDueDate.HasValue)
             {
@@ -415,24 +406,20 @@ public sealed class MerchantBillingService(
                     contract.BillingPeriodType, contract.DailyBillingOriginDate, installmentRange.MinDueDate);
             }
 
-            if (endOfPeriod > today) return;
+            if (endOfPeriod > today) break;
 
             var currentPeriod = endOfPeriod == today;
 
             if (endOfPeriod > installmentRange.MaxDueDate)
             {
                 CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
-            }
-            else
-            {
-                CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
 
-                lastBillingDueDate = endOfPeriod;
-
-                continue;
+                break;
             }
 
-            break;
+            CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
+
+            lastBillingDueDate = endOfPeriod;
         }
     }
 
