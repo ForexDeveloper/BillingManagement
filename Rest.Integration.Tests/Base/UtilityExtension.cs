@@ -1,24 +1,38 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
+using System.ComponentModel;
+using System.Linq.Expressions;
 
-namespace Rest.Integration.Tests.Base
+namespace Rest.Integration.Tests.Base;
+
+public static class UtilityExtension
 {
-    public static class UtilityExtension
+    public static StringContent ToStringContent(this object model)
     {
-        public static StringContent ToStringContent(this object model)
+        var json = JsonSerializer.Serialize(model);
+        return new StringContent(json, Encoding.UTF8, "application/json");
+    }
+
+    public static string GenerateUniqueInvoiceNumber()
+    {
+        return $"int-test-{DateTime.UtcNow:HHmmssfff}";
+    }
+
+    public static void SetProperty<TEntity, TProperty>(this TEntity entity, Expression<Func<TEntity, TProperty>> propertyExpression, object? value) where TEntity : class
+    {
+        var entityType = entity.GetType();
+
+        var expression = (MemberExpression)propertyExpression.Body;
+
+        var property = expression.Member.Name;
+
+        var propertyType = entityType.GetProperty(property)!.PropertyType;
+
+        if (!propertyType.IsClass)
         {
-            var json = JsonSerializer.Serialize(model);
-            return new StringContent(json, Encoding.UTF8, "application/json");
+            value = TypeDescriptor.GetConverter(propertyType).ConvertFromInvariantString(value.ToString());
         }
 
-        public static string GenerateUniqueInvoiceNumber()
-        {
-            return $"int-test-{DateTime.UtcNow:HHmmssfff}";
-        }
-
+        entityType.GetProperty(property)?.SetValue(entity, value);
     }
 }

@@ -152,7 +152,7 @@ public abstract class Billing : BaseEntity<long>
         return PayableAmount;
     }
 
-    public void SetAdditions(decimal additionsAmount, string? additionDescription)
+    public void SetAdditions(decimal additionsAmount, string? additionDescription = null)
     {
         if (additionsAmount < 0)
         {
@@ -194,7 +194,7 @@ public abstract class Billing : BaseEntity<long>
         SetEditDateTime(DateTime.Now);
     }
 
-    public void SetDeductions(decimal deductionsAmount, string? deductionDescription)
+    public void SetDeductions(decimal deductionsAmount, string? deductionDescription = null)
     {
         if (deductionsAmount < 0)
         {

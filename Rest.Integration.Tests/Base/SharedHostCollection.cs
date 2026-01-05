@@ -3,7 +3,4 @@
 namespace Rest.Integration.Tests.Base;
 
 [CollectionDefinition(nameof(SharedHostCollection))]
-public class SharedHostCollection : ICollectionFixture<SharedHostFixture>
-{
-
-}
+public class SharedHostCollection : ICollectionFixture<SharedHostFixture>;

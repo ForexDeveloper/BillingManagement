@@ -58,8 +58,6 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
 
             case CommissionCalculationType.FixedPercentage:
 
-                if (!contract.FixedPercentageCommission.HasValue) break;
-
                 purchaseCommission = CalculateFixedPercentageCommission(contract, financialDocumentTargetAmount);
 
                 break;

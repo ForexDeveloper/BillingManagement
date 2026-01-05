@@ -1,13 +1,12 @@
 using Service.Rest;
-using Shared.Logging.Abstraction.Models;
-using Shared.Logging.Serilog;
-using Shared.Logging.Serilog.Configurations;
-using Shared.Logging.Serilog.Utilities;
-using Shared.Middlewares;
 using Shared.Swagger;
-using System.Collections.ObjectModel;
 using System.Reflection;
-
+using Shared.Middlewares;
+using Shared.Logging.Serilog;
+using System.Collections.ObjectModel;
+using Shared.Logging.Serilog.Utilities;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Serilog.Configurations;
 
 try
 {
@@ -60,4 +59,3 @@ finally
 {
     SerilogHelpers.FlushLog();
 }
-

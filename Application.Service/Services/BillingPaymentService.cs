@@ -12,10 +12,10 @@ using Domain.Core.Entities.BillingAggregate.Exceptions;
 
 namespace Application.Service.Services;
 
-public class BillingPaymentService(
+public sealed class BillingPaymentService(
     IOutboxService outboxService,
-    IMerchantBillingRepository merchantBillingRepository,
-    IApplicationDbContextUnitOfWork unitOfWork) : IBillingPaymentService
+    IApplicationDbContextUnitOfWork unitOfWork,
+    IMerchantBillingRepository merchantBillingRepository) : IBillingPaymentService
 {
     public bool IsMerchantBillingPayable(MerchantBillingPayableDto request)
     {
@@ -42,21 +42,21 @@ public class BillingPaymentService(
         return true;
     }
 
-    public async Task SetMerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent requset)
+    public async Task SetMerchantBillingPayment(PmBillingManualPaymentUpdateStateEvent request)
     {
-        var billing = await merchantBillingRepository.GetAsync(requset.BillingId) ??
+        var billing = await merchantBillingRepository.GetAsync(request.BillingId) ??
                       throw new BillingNotFoundException("صورت حساب پیدا نشد");
 
         var payableAmount = billing.GetPayableAmount();
 
         var merchantBillingPayableDto = new MerchantBillingPayableDto(billing.TenantId, billing.Status, billing.DueDate,
-            billing.GracePeriod, payableAmount, requset.Amount);
+            billing.GracePeriod, payableAmount, request.Amount);
 
         IsMerchantBillingPayable(merchantBillingPayableDto);
 
-        billing.AddBillingPayment(requset.PaymentId, requset.Amount, requset.PaymentDate);
+        billing.AddBillingPayment(request.PaymentId, request.Amount, request.PaymentDate);
 
-        if (requset.Amount == payableAmount)
+        if (request.Amount == payableAmount)
         {
             billing.Settle();
         }
@@ -67,9 +67,9 @@ public class BillingPaymentService(
 
         outboxService.AddNewEvent(new BmBillingManualPaymentSettledEvent
         {
-            BillingId = requset.BillingId,
-            PaymentId = requset.PaymentId,
-            Amount = requset.Amount
+            BillingId = request.BillingId,
+            PaymentId = request.PaymentId,
+            Amount = request.Amount
         });
 
         merchantBillingRepository.Update(billing);

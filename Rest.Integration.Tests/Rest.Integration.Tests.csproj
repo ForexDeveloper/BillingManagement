@@ -6,6 +6,12 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="MerchantTests\Merchants\**" />
+    <EmbeddedResource Remove="MerchantTests\Merchants\**" />
+    <None Remove="MerchantTests\Merchants\**" />
+  </ItemGroup>
+
 
 	<ItemGroup>
 		<Content Include="appsettings.Stage.json">
@@ -49,11 +55,6 @@
 	<ItemGroup>
 	  <ProjectReference Include="..\Infrastructure.Data.Repository.EfCore\Infrastructure.Data.Repository.EfCore.csproj" />
 	  <ProjectReference Include="..\Service.Rest\Service.Rest.csproj" />
-	</ItemGroup>
-
-
-	<ItemGroup>
-	  <Folder Include="BillingTests\Merchants\" />
 	</ItemGroup>
 	
 </Project>
