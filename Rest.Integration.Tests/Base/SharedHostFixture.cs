@@ -177,11 +177,11 @@ public class SharedHostFixture : IDisposable
 
     public async Task FlushAsync()
     {
-        var billings = await _mainContext.Billings.ToListAsync();
-        var installments = await _mainContext.Installments.ToListAsync();
-        var billingPayments = await _mainContext.BillingPayments.ToListAsync();
-        var contracts = await _mainContext.TenantMerchantContracts.ToListAsync();
-        var financialDocuments = await _mainContext.FinancialDocuments.ToListAsync();
+        var billings = _mainContext.Billings.AsQueryable();
+        var billingPayments = _mainContext.BillingPayments.AsQueryable();
+        var installments = _mainContext.Installments.AsQueryable();
+        var contracts = _mainContext.TenantMerchantContracts.AsQueryable();
+        var financialDocuments = _mainContext.FinancialDocuments.AsQueryable();
 
         _mainContext.BillingPayments.RemoveRange(billingPayments);
         _mainContext.Billings.RemoveRange(billings);
@@ -343,8 +343,8 @@ public class SharedHostFixture : IDisposable
 
     public async Task<TenantMerchantContract> CloneTenantMerchantContract(TenantMerchantContract contract)
     {
-        var cloneContract = new TenantMerchantContract(contract.Tenant.Id,
-            contract.Merchant.Id,
+        var cloneContract = new TenantMerchantContract(contract.TenantId,
+            contract.MerchantId,
             contract.ContractNumber,
             contract.StartDate,
             contract.EndDate,
@@ -352,7 +352,7 @@ public class SharedHostFixture : IDisposable
             contract.IsCommissionExchanged,
             contract.InstallmentsCount,
             contract.CommissionDeductionMethodType,
-            contract.InterestPercentage, 
+            contract.InterestPercentage,
             contract.InterestReferenceTypes,
             contract.BillingPeriodType,
             contract.BillingPeriod,

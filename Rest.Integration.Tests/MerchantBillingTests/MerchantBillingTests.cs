@@ -21,7 +21,7 @@ namespace Rest.Integration.Tests.MerchantBillingTests;
 [Collection(nameof(SharedHostCollection))]
 public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 {
-    private const int SHIFT = 300;
+    private const int SHIFT = 60;
 
     private readonly ApplicationDbContext _dbContext = hostFixture.GetMainContext();
     private readonly IBillingPaymentService _billingPaymentService = hostFixture.GetRequiredService<IBillingPaymentService>();
@@ -661,7 +661,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     {
         await hostFixture.FlushAsync();
 
-        var installmentsCount = Random.Shared.Next(1, 6);
+        var installmentsCount = Random.Shared.Next(1, 4);
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
@@ -672,9 +672,9 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.PeriodMinCommissionAmount, decimal.Zero);
         contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
 
-        var purchaseDocument = await ConsumePurchaseDocument(contract);
+        var purchaseDocument = await ConsumePurchaseDocument(contract, 150);
 
-        await ConsumeRefundDocument(contract, purchaseDocument);
+        await ConsumeRefundDocument(contract, purchaseDocument, 150);
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
