@@ -1,71 +1,84 @@
-﻿using Domain.Core.Entities.GuarantorAggregate;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
 using System.Diagnostics;
+using Shared.EventBus.Events;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.GuarantorAggregate;
 
 namespace Application.Service.EventConsumers;
 
-public class GuarantorAddedOrUpdatedEventConsumer : IConsumer<CmGuarantorAddedOrUpdatedEvent>
+public sealed class GuarantorAddedOrUpdatedEventConsumer(
+    IGuarantorRepository guarantorRepository,
+    IApplicationDbContextUnitOfWork unitOfWork,
+    ILogger<GuarantorAddedOrUpdatedEventConsumer> logger) : IConsumer<CmGuarantorAddedOrUpdatedEvent>
 {
-    private readonly IGuarantorRepository _guarantorRepository;
-    private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    public readonly ILogger<GuarantorAddedOrUpdatedEventConsumer> _logger;
-
-    public GuarantorAddedOrUpdatedEventConsumer(ILogger<GuarantorAddedOrUpdatedEventConsumer> logger, IGuarantorRepository guarantorRepository,
-        IApplicationDbContextUnitOfWork unitOfWork)
-    {
-        _logger = logger;
-        _guarantorRepository = guarantorRepository;
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task Consume(ConsumeContext<CmGuarantorAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        const string SERVICE_NAME = $"{nameof(GuarantorAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
-            var guarantor = await _guarantorRepository.GetAsync(context.Message.Id);
+            var guarantor = await guarantorRepository.GetAsync(context.Message.Id);
+
             if (guarantor == null)
             {
                 await CreateGuarantor(context);
-                return;
             }
-
-            await UpdateGuarantor(context, guarantor);
+            else
+            {
+                await UpdateGuarantor(context, guarantor);
+            }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
+
+            if (exception is IBusinessException)
             {
-                Message = ex.Message,
-                ServiceName = "GuarantorAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
-            throw;
+                logger.LogWarning(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "GuarantorAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
+                InputParams = context.Message,
                 Tags = LogMessageTag.EventBus,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }
@@ -73,15 +86,14 @@ public class GuarantorAddedOrUpdatedEventConsumer : IConsumer<CmGuarantorAddedOr
     private async Task CreateGuarantor(ConsumeContext<CmGuarantorAddedOrUpdatedEvent> context)
     {
         Guarantor guarantor = new(context.Message.Id, context.Message.Name, context.Message.TenantId, context.Message.Type, context.Message.IsTenant);
-        await _guarantorRepository.AddAsync(guarantor);
-        await _unitOfWork.SaveChangesAsync();
+        await guarantorRepository.AddAsync(guarantor);
+        await unitOfWork.SaveChangesAsync();
     }
 
     private async Task UpdateGuarantor(ConsumeContext<CmGuarantorAddedOrUpdatedEvent> context, Guarantor guarantor)
     {
         guarantor.Update(context.Message.Name, context.Message.TenantId, context.Message.Type);
-        _guarantorRepository.Update(guarantor);
-        await _unitOfWork.SaveChangesAsync();
+        guarantorRepository.Update(guarantor);
+        await unitOfWork.SaveChangesAsync();
     }
-
 }

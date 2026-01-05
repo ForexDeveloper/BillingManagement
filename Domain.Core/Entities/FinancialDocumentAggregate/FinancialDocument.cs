@@ -1,14 +1,14 @@
-﻿using Domain.Base;
-using Domain.Core.Entities.BusinessEntity;
-using Domain.Core.Entities.MerchantAggregate;
-using Domain.Core.Entities.Shared.Exceptions;
-using Domain.Core.Entities.TenantAggregate;
-using Domain.Core.Entities.TenantMerchantContractAggregate;
-using Domain.Core.Entities.TenantPlatformContractAggregate;
+﻿using System;
+using Domain.Base;
 using Domain.Core.Enums;
 using Domain.Core.Helper;
-using System;
 using System.Collections.Generic;
+using Domain.Core.Entities.BusinessEntity;
+using Domain.Core.Entities.TenantAggregate;
+using Domain.Core.Entities.MerchantAggregate;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.TenantMerchantContractAggregate;
+using Domain.Core.Entities.TenantPlatformContractAggregate;
 
 namespace Domain.Core.Entities.FinancialDocumentAggregate;
 

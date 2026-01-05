@@ -87,7 +87,7 @@ public abstract class Installment : BaseEntity<long>
     {
         if (commission < 0)
         {
-            throw new ArgumentValidationException(nameof(commission), "مبلغ کمیسیون قسط نمی تواند کوچک تر مساوی صفر باشد");
+            throw new ArgumentValidationException(nameof(commission), "مبلغ کمیسیون قسط نمی تواند کوچک تر از صفر باشد");
         }
 
         Commission = commission;

@@ -19,14 +19,15 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
     IApplicationDbContextUnitOfWork unitOfWork,
     IMerchantInstallmentService merchantInstallmentService,
     IFinancialDocumentRepository financialDocumentRepository,
-    ITenantMerchantContractRepository tenantMerchantContractRepository,
-    ILogger<FinancialDocumentAddedOrUpdatedEventConsumer> logger) : IConsumer<FcmFinancialDocumentAddedOrUpdatedEvent>
+    ILogger<FinancialDocumentAddedOrUpdatedEventConsumer> logger,
+    ITenantMerchantContractRepository tenantMerchantContractRepository) : IConsumer<FcmFinancialDocumentAddedOrUpdatedEvent>
 {
     public async Task Consume(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        const string SERVICE_NAME = $"{nameof(FinancialDocumentAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
             var financialDocument = await financialDocumentRepository.GetByIdAsync(context.Message.Id);
@@ -38,7 +39,7 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
 
                 if (financialDocument.TenantMerchantContractId.HasValue)
                 {
-                    decimal commission = 0;
+                    decimal commission;
 
                     var contractId = financialDocument.TenantMerchantContractId.Value;
 
@@ -59,37 +60,55 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
             else
             {
                 //only reverse
-                await UpdateFinancialDocument(context, financialDocument);
+
+                UpdateFinancialDocument(context, financialDocument);
             }
 
             await unitOfWork.SaveChangesAsync();
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            logger.LogCritical(new LogStruct
-            {
-                Message = ex.Message,
-                ServiceName = "FinancialDocumentAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
 
-            throw;
+            if (exception is IBusinessException)
+            {
+                logger.LogWarning(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
             logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "FinancialDocumentAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
+                InputParams = context.Message,
                 Tags = LogMessageTag.EventBus,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }
@@ -131,25 +150,24 @@ public sealed class FinancialDocumentAddedOrUpdatedEventConsumer(
         return financialDocument;
     }
 
-    private async Task UpdateFinancialDocument(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context, FinancialDocument financialDocument)
+    private void UpdateFinancialDocument(ConsumeContext<FcmFinancialDocumentAddedOrUpdatedEvent> context, FinancialDocument financialDocument)
     {
-        FinancialDocumentType type = FinancialDocumentType.Reverse;
-
         //1 => purchase
         if (context.Message.Type != 1)
         {
-            ArgumentValidationException ex = new ArgumentValidationException(nameof(context.Message.Type), "نوع سند مالی برای بازگشت کامل وجه خرید معتبر نیست.");
+            var exception = new ArgumentValidationException(nameof(context.Message.Type), "نوع سند مالی برای بازگشت کامل وجه خرید معتبر نیست.");
+
             logger.LogError(new LogStruct
             {
-                Message = ex.Message,
-                ServiceName = "FinancialDocumentAddedOrUpdatedEventConsumer_Consume",
+                Exception = exception,
+                Results = string.Empty,
+                Message = exception.Message,
+                Tags = LogMessageTag.EventBus,
                 InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                Tags = LogMessageTag.EventBus
+                ServiceName = $"{nameof(FinancialDocumentAddedOrUpdatedEventConsumer)}_{nameof(Consume)}"
             });
 
-            throw ex;
+            throw exception;
         }
 
         financialDocument.SetState(FinancialDocumentState.Reverse);

@@ -9,6 +9,7 @@ using Domain.Core.Enums;
 using Shared.EventBus.Events;
 using System.Collections.Generic;
 using System.Linq;
+using Domain.Core.Entities.Shared;
 
 namespace Application.Service.Services
 {
@@ -46,7 +47,7 @@ namespace Application.Service.Services
                 if ((CommissionCalculationType)guarantor.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
                (CommissionCalculationType)guarantor.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
                 {
-                    newGuarantor.SetTieredCommissions(guarantor.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                    newGuarantor.SetTieredCommissions(guarantor.TieredCommissions.Select(x => new TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
                 }
             }
 
@@ -71,7 +72,7 @@ namespace Application.Service.Services
                 if ((CommissionCalculationType)financier.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
                 (CommissionCalculationType)financier.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
                 {
-                    newFinancier.SetTieredCommissions(financier.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                    newFinancier.SetTieredCommissions(financier.TieredCommissions.Select(x => new TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
                 }
             }
 
@@ -98,7 +99,7 @@ namespace Application.Service.Services
                     if ((CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.UniformTiered ||
                     (CommissionCalculationType)facilitator.CommissionCalculationType == CommissionCalculationType.CumulativeTiered)
                     {
-                        newFacilitator.SetTieredCommissions(facilitator.TieredCommissions.Select(x => new Domain.Core.Entities.Shared.TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
+                        newFacilitator.SetTieredCommissions(facilitator.TieredCommissions.Select(x => new TieredCommission(x.FromAmount, x.ToAmount, x.Percentage, x.MinAmount, x.MaxAmount)).ToList());
                     }
                 }
 

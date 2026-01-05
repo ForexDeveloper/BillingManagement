@@ -169,10 +169,13 @@ public sealed class MerchantBillingService(
                             }
                             else if (billingDto.Type == BillingType.MerchantToTenant)
                             {
-                                replicateBilling.Overdue();
-                                replicateBilling.Transfer();
-                                debtorBilling = replicateBilling;
-                                previousDebitAmount = payableAmount;
+                                if (payableAmount > 0)
+                                {
+                                    replicateBilling.Overdue();
+                                    replicateBilling.Transfer();
+                                    debtorBilling = replicateBilling;
+                                    previousDebitAmount = payableAmount;
+                                }
                             }
                         }
                         else
@@ -250,8 +253,6 @@ public sealed class MerchantBillingService(
                         debtorBilling,
                         creditorBilling);
 
-                    replicateBillings.Add(billing);
-
                     if (billing.IsAbsoluteZero())
                     {
                         if (!contract.Status) continue;
@@ -269,6 +270,8 @@ public sealed class MerchantBillingService(
                     }
 
                     billings.Add(billing);
+
+                    replicateBillings.Add(billing);
                 }
 
                 await billingRepository.AddRangeAsync(billings, cancellationToken);
@@ -384,7 +387,8 @@ public sealed class MerchantBillingService(
         }
     }
 
-    private static void ScanPeriodsForDeactiveContract(ContractGroup contract, DateTime? lastBillingDueDate, InstallmentRange installmentRange, List<BillingDto> billingDtos)
+    private static void ScanPeriodsForDeactiveContract(ContractGroup contract, DateTime? lastBillingDueDate,
+        InstallmentRange installmentRange, List<BillingDto> billingDtos)
     {
         if (installmentRange == null) return;
 

@@ -1,96 +1,108 @@
-﻿using Domain.Core.Entities.OrganizationAggregate;
-using Domain.Core.UnitOfWorkContracts;
+﻿using System;
 using MassTransit;
-using Microsoft.Extensions.Logging;
-using Shared.EventBus.Events;
-using Shared.Logging.Abstraction.Extensions;
-using Shared.Logging.Abstraction.Models;
-using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
 using Domain.Core.Enums;
-
+using System.Diagnostics;
+using Shared.EventBus.Events;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Domain.Core.UnitOfWorkContracts;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Abstraction.Extensions;
+using Domain.Core.Entities.Shared.Exceptions;
+using Domain.Core.Entities.OrganizationAggregate;
 
 namespace Application.Service.EventConsumers;
 
-public class OrganizationAddedOrUpdatedEventConsumer : IConsumer<CmOrganizationAddedOrUpdatedEvent>
+public sealed class OrganizationAddedOrUpdatedEventConsumer(
+    IApplicationDbContextUnitOfWork unitOfWork,
+    IOrganizationRepository organizationRepository,
+    ILogger<OrganizationAddedOrUpdatedEventConsumer> logger) : IConsumer<CmOrganizationAddedOrUpdatedEvent>
 {
-    private readonly IOrganizationRepository _organizationRepository;
-    private readonly IApplicationDbContextUnitOfWork _unitOfWork;
-    public readonly ILogger<OrganizationAddedOrUpdatedEventConsumer> _logger;
-
-    public OrganizationAddedOrUpdatedEventConsumer(ILogger<OrganizationAddedOrUpdatedEventConsumer> logger, IOrganizationRepository organizationRepository,
-        IApplicationDbContextUnitOfWork unitOfWork)
-    {
-        _logger = logger;
-        _organizationRepository = organizationRepository;
-        _unitOfWork = unitOfWork;
-    }
-
     public async Task Consume(ConsumeContext<CmOrganizationAddedOrUpdatedEvent> context)
     {
+        var succeed = true;
         var stopWatch = new Stopwatch();
         stopWatch.Start();
-        bool succeed = true;
+        const string SERVICE_NAME = $"{nameof(OrganizationAddedOrUpdatedEventConsumer)}_{nameof(Consume)}";
         try
         {
-            var organization = await _organizationRepository.GetAsync(context.Message.Id);
+            var organization = await organizationRepository.GetAsync(context.Message.Id);
+
             if (organization == null)
             {
                 await CreateOrganization(context);
-                return;
             }
-
-            await UpdateOrganization(context, organization);
+            else
+            {
+                await UpdateOrganization(context, organization);
+            }
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
             succeed = false;
-            _logger.LogCritical(new LogStruct
+
+            if (exception is IBusinessException)
             {
-                Message = ex.Message,
-                ServiceName = "OrganizationAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
-                Results = "",
-                Exception = ex,
-                ResponseTimeStopWatcher = stopWatch,
-                Tags = LogMessageTag.EventBus
-            });
-            throw;
+                logger.LogWarning(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+            }
+            else
+            {
+                logger.LogCritical(new LogStruct
+                {
+                    Exception = exception,
+                    Results = string.Empty,
+                    ServiceName = SERVICE_NAME,
+                    Message = exception.Message,
+                    InputParams = context.Message,
+                    Tags = LogMessageTag.EventBus,
+                    ResponseTimeStopWatcher = stopWatch
+                });
+
+                throw;
+            }
         }
         finally
         {
-            _logger.LogTrace(new LogStruct
+            logger.LogTrace(new LogStruct
             {
-                Message = "",
-                ServiceName = "OrganizationAddedOrUpdatedEventConsumer_Consume",
-                InputParams = context.Message,
                 Results = succeed,
-                ResponseTimeStopWatcher = stopWatch,
+                Message = string.Empty,
+                ServiceName = SERVICE_NAME,
+                InputParams = context.Message,
                 Tags = LogMessageTag.EventBus,
+                ResponseTimeStopWatcher = stopWatch
             });
         }
     }
 
     private async Task CreateOrganization(ConsumeContext<CmOrganizationAddedOrUpdatedEvent> context)
     {
-        Organization organization = new(context.Message.Id, context.Message.Title, context.Message.TenantId, 
-            (OrganizationTypeEnum)context.Message.OrganizationType, 
-            (OrganizationIdentityTypeEnum)context.Message.OrganizationIdentityType, 
-            (CoWalletNameEnum?)context.Message.CoWalletName, context.Message.ParentId);
-
-        await _organizationRepository.AddAsync(organization);
-        await _unitOfWork.SaveChangesAsync();
-    }
-
-    private async Task UpdateOrganization(ConsumeContext<CmOrganizationAddedOrUpdatedEvent> context, Organization organization)
-    {
-        organization.Update(context.Message.TenantId, context.Message.Title, 
+        Organization organization = new(context.Message.Id, context.Message.Title, context.Message.TenantId,
             (OrganizationTypeEnum)context.Message.OrganizationType,
             (OrganizationIdentityTypeEnum)context.Message.OrganizationIdentityType,
             (CoWalletNameEnum?)context.Message.CoWalletName, context.Message.ParentId);
 
-        _organizationRepository.Update(organization);
-        await _unitOfWork.SaveChangesAsync();
+        await organizationRepository.AddAsync(organization);
+        await unitOfWork.SaveChangesAsync();
+    }
+
+    private async Task UpdateOrganization(ConsumeContext<CmOrganizationAddedOrUpdatedEvent> context, Organization organization)
+    {
+        organization.Update(context.Message.TenantId, context.Message.Title,
+            (OrganizationTypeEnum)context.Message.OrganizationType,
+            (OrganizationIdentityTypeEnum)context.Message.OrganizationIdentityType,
+            (CoWalletNameEnum?)context.Message.CoWalletName, context.Message.ParentId);
+
+        organizationRepository.Update(organization);
+        await unitOfWork.SaveChangesAsync();
     }
 }
