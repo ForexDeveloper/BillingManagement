@@ -820,29 +820,6 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         }
     }
 
-    //[Fact]
-    //public async Task WhenPurchaseInstallmentsAreDetected_ShouldDebitEachBillingToNextOne2()
-    //{
-    //    await hostFixture.FlushAsync();
-
-    //    var contract = await hostFixture.CreateTenantMerchantContract();
-
-    //    await ConsumePurchaseDocument(contract);
-
-    //    var cloneContract = await hostFixture.CloneTenantMerchantContract(contract);
-
-    //    cloneContract.SetProperty(p => p.BillingPeriod, 17);
-
-    //    await ConsumePurchaseDocument(cloneContract);
-
-    //    await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
-
-    //    var billings = await GetAllBillingsAsync(contract.Id);
-
-    //    var billings2 = await GetAllBillingsAsync(cloneContract.Id);
-
-    //}
-
     #endregion
 
 

@@ -9,28 +9,29 @@ public interface IAccessTokenManager
     Task<string> GetAccessToken();
 }
 
-public class AccessTokenManager(IConfiguration configuration) : IAccessTokenManager
+public sealed class AccessTokenManager(IConfiguration configuration) : IAccessTokenManager
 {
     public async Task<string> GetAccessToken()
     {
-        using (var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(30) })
-        {
-            var baseUrl = configuration["AccessTokenInfo:BaseUrl"];
+        using var httpClient = new HttpClient();
 
-            httpClient.BaseAddress = new Uri(baseUrl!);
+        httpClient.Timeout = TimeSpan.FromMinutes(30);
 
-            var content = CreateTokenRequestContent();
+        var baseUrl = configuration["AccessTokenInfo:BaseUrl"];
 
-            var response = await httpClient.PostAsync("connect/token", content);
+        httpClient.BaseAddress = new Uri(baseUrl!);
 
-            response.EnsureSuccessStatusCode();
+        var content = CreateTokenRequestContent();
 
-            string result = await response.Content.ReadAsStringAsync();
+        var response = await httpClient.PostAsync("connect/token", content);
 
-            var tokenResponse = JsonSerializer.Deserialize<LoginDto>(result);
+        response.EnsureSuccessStatusCode();
 
-            return tokenResponse!.AccessToken;
-        }
+        var result = await response.Content.ReadAsStringAsync();
+
+        var tokenResponse = JsonSerializer.Deserialize<LoginDto>(result);
+
+        return tokenResponse!.AccessToken;
     }
 
     private FormUrlEncodedContent CreateTokenRequestContent()

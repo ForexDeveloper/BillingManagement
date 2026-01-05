@@ -1,23 +1,12 @@
-using Application.Command.Base;
-using Application.Service.HealthChecks;
-using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
-using MassTransit;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Service.Rest;
-using Shared.Logging.Abstraction.Models;
-using Shared.Logging.Serilog;
-using Shared.Logging.Serilog.Configurations;
-using Shared.Logging.Serilog.Utilities;
-using Shared.Middlewares;
 using Shared.Swagger;
-using System.Collections.ObjectModel;
 using System.Reflection;
-using Shared.ApiVersioning;
-using Shared.FluentValidation;
-using Shared.Swagger.Extensions;
-
+using Shared.Middlewares;
+using Shared.Logging.Serilog;
+using System.Collections.ObjectModel;
+using Shared.Logging.Serilog.Utilities;
+using Shared.Logging.Abstraction.Models;
+using Shared.Logging.Serilog.Configurations;
 
 try
 {
@@ -35,34 +24,6 @@ try
         options.ApplicationName = configuration["PublicAppConfiguration:ApplicationName"];
         options.BaseFilePath = configuration["Serilog:BaseFilePath"];
     });
-
-    builder.Services.AddCustomSwagger(cfg =>
-    {
-        cfg.Title = "Billing Management Api";
-        cfg.IdpServer = new Uri($"{configuration["IDP:Server"]}/connect/token");
-    });
-    builder.Services.AddHttpContextAccessor();
-    builder.Services.AddOptions();
-    builder.Services.AddControllers(cfg =>
-    {
-        cfg.Conventions.AddSwaggerResponseModelConvention();
-    })
-        .AddCustomFluentValidation(new[] { typeof(BaseCommandValidator<>).Assembly });
-
-    builder.Services.RegisterAuthentication(configuration);
-    builder.Services.RegisterMediatorService();
-    builder.Services.RegisterRepositories();
-    builder.Services.RegisterServices();
-    builder.Services.RegisterPublicAppConfiguration(configuration);
-    builder.Services.RegisterUnitOfWorks();
-    builder.Services.RegisterRedisServices(configuration);
-    builder.Services.RegisterOutBoxServices(configuration);
-    builder.Services.RegisterMinIoServices(configuration);
-    builder.Services.RegisterEncryptionServices(configuration);
-    builder.Services.UploadFileConfigurationServices(configuration);
-
-    builder.Services.AddCustomApiVersioning();
-    builder.Services.AddHealthChecks().AddCheck<DatabaseConnectionHealthCheck>("database_health_check");
 
     var startup = new Startup(builder.Configuration, builder.Environment);
     startup.ConfigureServices(builder.Services);
@@ -98,4 +59,3 @@ finally
 {
     SerilogHelpers.FlushLog();
 }
-

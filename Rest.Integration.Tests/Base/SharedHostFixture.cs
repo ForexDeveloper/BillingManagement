@@ -110,7 +110,7 @@ public class SharedHostFixture : IDisposable
 
             _mainContext ??= _host.Services.GetRequiredService<ApplicationDbContext>();
 
-            await _mainContext.Database.EnsureCreatedAsync();
+             _mainContext.Database.EnsureCreated();
 
             _isExistDb = true;
         }

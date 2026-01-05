@@ -6,16 +6,9 @@ using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 
 namespace Rest.Integration.Tests.Base;
 
-public class BaseTestDataBuilder
+public sealed class BaseTestDataBuilder(SharedHostFixture hostFixture)
 {
-    private readonly ApplicationDbContext _context;
-    private readonly SharedHostFixture _hostFixture;
-
-    public BaseTestDataBuilder(SharedHostFixture hostFixture)
-    {
-        _hostFixture = hostFixture;
-        _context = _hostFixture.GetMainContext();
-    }
+    private readonly ApplicationDbContext _context = hostFixture.GetMainContext();
 
     public async Task<Tenant> CreateTenant()
     {
