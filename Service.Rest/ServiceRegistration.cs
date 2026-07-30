@@ -121,11 +121,10 @@ namespace Service.Rest
         {
             services.AddMediatorService(options =>
             {
-                options.SetAssemblies(new Assembly[]
-                {
-                    Assembly.GetAssembly(typeof(BaseCommandHandler)),
-                    Assembly.GetAssembly(typeof(BaseQueryHandler))
-                }); ;
+                options.SetAssemblies([
+                    Assembly.GetAssembly(typeof(BaseQueryHandler)),
+                    Assembly.GetAssembly(typeof(BaseCommandHandler))
+                ]);
                 options.EnableAutoLogging = true;
                 options.EnableAutoValidation = true;
             });
@@ -134,7 +133,7 @@ namespace Service.Rest
         {
             services.AddCustomAuthentication(options =>
             {
-                options.IdpServer = new Uri(configuration["IDP:Server"]);
+                options.IdpServer = new Uri(configuration["IDP:Server"]!);
                 options.ValidateAudience = false;
                 options.ValidateIssuer = false;
                 options.ValidateIssuerSigningKey = false;
@@ -169,7 +168,7 @@ namespace Service.Rest
             });
         }
 
-        internal static void RegisteOpenTelemetryServices(this IServiceCollection services, string generalServiceName)
+        internal static void RegisterOpenTelemetryServices(this IServiceCollection services, string generalServiceName)
         {
 
             services.AddOpenTelemetry()

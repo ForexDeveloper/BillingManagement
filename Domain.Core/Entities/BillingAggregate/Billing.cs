@@ -211,8 +211,6 @@ public abstract class Billing : BaseEntity<long>
             throw new ArgumentValidationException(nameof(deductionsAmount), "امکان ثبت کسورات برای صورتحسابی که مهلت بازپرداخت آن گذشته است وجود ندارد");
         }
 
-        var lastPayableAmount = PayableAmount;
-
         ValidateCheckSum();
         DeductionsAmount = deductionsAmount;
         DeductionsDescription = deductionDescription;

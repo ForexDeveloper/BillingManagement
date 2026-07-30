@@ -85,7 +85,7 @@ public sealed class AdminMerchantBillingController(IMediator mediator) : Control
 
 
     [HttpGet("previous-credit")]
-    [SwaggerOperation("Get merchant billing previous debit")]
+    [SwaggerOperation("Get merchant billing previous credit")]
     [SwaggerResponse((int)HttpStatusCode.OK, "merchant billing previous credit returned", typeof(GetPreviousCreditVm))]
     public async Task<ActionResult> GetPreviousCredit([FromRoute] int tenantId, [FromRoute] long billingId)
     {

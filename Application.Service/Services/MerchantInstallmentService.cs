@@ -1,8 +1,8 @@
 ﻿using System;
 using Domain.Core.Enums;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Application.Service.Helper;
+using System.Collections.Generic;
 using Application.Service.Contracts;
 using Domain.Core.Entities.FinancialDocumentAggregate;
 using Domain.Core.Entities.MerchantInstallmentAggregate;
@@ -70,78 +70,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
                 throw new ArgumentOutOfRangeException();
         }
 
-        var installmentCount = contract.InstallmentsCount;
-
-        var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
-        var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
-
-        var installmentCashAmount = RoundHelper.RoundAmount(financialDocument.CashAmount / installmentCount);
-        var lastInstallmentCashAmount = financialDocument.CashAmount - (installmentCashAmount * (installmentCount - 1));
-
-        var installmentCreditAmount = RoundHelper.RoundAmount(financialDocument.CreditAmount / installmentCount);
-        var lastInstallmentCreditAmount = financialDocument.CreditAmount - (installmentCreditAmount * (installmentCount - 1));
-
-        var installmentPrepaymentAmount = RoundHelper.RoundAmount(financialDocument.PrepaymentAmount / installmentCount);
-        var lastInstallmentPrepaymentAmount = financialDocument.PrepaymentAmount - (installmentPrepaymentAmount * (installmentCount - 1));
-
-        var installmentCommission = RoundHelper.RoundAmount(purchaseCommission / installmentCount);
-        var lastInstallmentCommission = purchaseCommission - (installmentCommission * (installmentCount - 1));
-
-        var installmentDates = DateHelper.CalculateInstallmentDates(financialDocument.CreatedDateTime, installmentCount,
-            TimeInterval.Day, contract.BillingBreak, contract.BillingPeriod, contract.BillingPeriodType);
-
-        List<MerchantInstallment> installments = [];
-
-        for (var i = 0; i < installmentDates.Count; i++)
-        {
-            decimal amount;
-            decimal cashAmount;
-            decimal creditAmount;
-            decimal prePaymentAmount;
-            decimal commission;
-
-            if (i == installmentDates.Count - 1)
-            {
-                amount = lastInstallmentAmount;
-                cashAmount = lastInstallmentCashAmount;
-                creditAmount = lastInstallmentCreditAmount;
-                prePaymentAmount = lastInstallmentPrepaymentAmount;
-                commission = lastInstallmentCommission;
-            }
-            else
-            {
-                amount = installmentAmount;
-                cashAmount = installmentCashAmount;
-                creditAmount = installmentCreditAmount;
-                prePaymentAmount = installmentPrepaymentAmount;
-                commission = installmentCommission;
-            }
-
-            var installmentDate = installmentDates[i];
-
-            var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
-                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contract.Id, amount, cashAmount,
-                creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Purchase);
-
-            installments.Add(installment);
-
-            switch (contract.CommissionDeductionMethodType)
-            {
-                case null:
-                case CommissionDeductionMethodType.DeductEquallyFromInstallments:
-                    installment.SetCommission(commission);
-                    break;
-
-                case CommissionDeductionMethodType.DeductFromFirstInstallment:
-                    installments[0].SetCommission(purchaseCommission);
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        await merchantInstallmentRepository.AddRangeAsync(installments);
+        await CreateInstallments(contract, financialDocument, purchaseCommission, InstallmentType.Purchase);
 
         return purchaseCommission;
     }
@@ -155,78 +84,7 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
             refundCommission = await financialDocumentService.CalculateRefundCommission(financialDocument);
         }
 
-        var installmentCount = contract.InstallmentsCount;
-
-        var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
-        var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
-
-        var installmentCashAmount = RoundHelper.RoundAmount(financialDocument.CashAmount / installmentCount);
-        var lastInstallmentCashAmount = financialDocument.CashAmount - (installmentCashAmount * (installmentCount - 1));
-
-        var installmentCreditAmount = RoundHelper.RoundAmount(financialDocument.CreditAmount / installmentCount);
-        var lastInstallmentCreditAmount = financialDocument.CreditAmount - (installmentCreditAmount * (installmentCount - 1));
-
-        var installmentPrepaymentAmount = RoundHelper.RoundAmount(financialDocument.PrepaymentAmount / installmentCount);
-        var lastInstallmentPrepaymentAmount = financialDocument.PrepaymentAmount - (installmentPrepaymentAmount * (installmentCount - 1));
-
-        var installmentCommission = RoundHelper.RoundAmount(refundCommission / installmentCount);
-        var lastInstallmentCommission = refundCommission - (installmentCommission * (installmentCount - 1));
-
-        var installmentDates = DateHelper.CalculateInstallmentDates(financialDocument.CreatedDateTime, installmentCount,
-            TimeInterval.Day, 0, contract.BillingPeriod, contract.BillingPeriodType);
-
-        List<MerchantInstallment> installments = [];
-
-        for (var i = 0; i < installmentDates.Count; i++)
-        {
-            decimal amount;
-            decimal cashAmount;
-            decimal creditAmount;
-            decimal prePaymentAmount;
-            decimal commission;
-
-            if (i == installmentDates.Count - 1)
-            {
-                amount = lastInstallmentAmount;
-                cashAmount = lastInstallmentCashAmount;
-                creditAmount = lastInstallmentCreditAmount;
-                prePaymentAmount = lastInstallmentPrepaymentAmount;
-                commission = lastInstallmentCommission;
-            }
-            else
-            {
-                amount = installmentAmount;
-                cashAmount = installmentCashAmount;
-                creditAmount = installmentCreditAmount;
-                prePaymentAmount = installmentPrepaymentAmount;
-                commission = installmentCommission;
-            }
-
-            var installmentDate = installmentDates[i];
-
-            var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
-                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contract.Id, amount, cashAmount,
-                creditAmount, prePaymentAmount, i + 1, installmentDate, InstallmentType.Refund);
-
-            installments.Add(installment);
-
-            switch (contract.CommissionDeductionMethodType)
-            {
-                case null:
-                case CommissionDeductionMethodType.DeductEquallyFromInstallments:
-                    installment.SetCommission(commission);
-                    break;
-
-                case CommissionDeductionMethodType.DeductFromFirstInstallment:
-                    installments[0].SetCommission(refundCommission);
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-        }
-
-        await merchantInstallmentRepository.AddRangeAsync(installments);
+        await CreateInstallments(contract, financialDocument, refundCommission, InstallmentType.Refund);
 
         return refundCommission;
     }
@@ -250,5 +108,83 @@ public sealed class MerchantInstallmentService(IMerchantInstallmentRepository me
         }
 
         return financialDocumentCommission;
+    }
+
+    private async Task CreateInstallments(TenantMerchantContract contract, FinancialDocument financialDocument, decimal financialDocumentCommission, InstallmentType installmentType)
+    {
+        var installmentCount = contract.InstallmentsCount;
+
+        var billingBreak = installmentType == InstallmentType.Purchase ? contract.BillingBreak : 0;
+
+        var installmentAmount = RoundHelper.RoundAmount(financialDocument.Amount / installmentCount);
+        var lastInstallmentAmount = financialDocument.Amount - (installmentAmount * (installmentCount - 1));
+
+        var installmentCashAmount = RoundHelper.RoundAmount(financialDocument.CashAmount / installmentCount);
+        var lastInstallmentCashAmount = financialDocument.CashAmount - (installmentCashAmount * (installmentCount - 1));
+
+        var installmentCreditAmount = RoundHelper.RoundAmount(financialDocument.CreditAmount / installmentCount);
+        var lastInstallmentCreditAmount = financialDocument.CreditAmount - (installmentCreditAmount * (installmentCount - 1));
+
+        var installmentPrepaymentAmount = RoundHelper.RoundAmount(financialDocument.PrepaymentAmount / installmentCount);
+        var lastInstallmentPrepaymentAmount = financialDocument.PrepaymentAmount - (installmentPrepaymentAmount * (installmentCount - 1));
+
+        var installmentCommission = RoundHelper.RoundAmount(financialDocumentCommission / installmentCount);
+        var lastInstallmentCommission = financialDocumentCommission - (installmentCommission * (installmentCount - 1));
+
+        var installmentDates = DateHelper.CalculateInstallmentDates(financialDocument.CreatedDateTime, installmentCount,
+            TimeInterval.Day, billingBreak, contract.BillingPeriod, contract.BillingPeriodType);
+
+        List<MerchantInstallment> installments = [];
+
+        for (var i = 0; i < installmentDates.Count; i++)
+        {
+            decimal amount;
+            decimal cashAmount;
+            decimal creditAmount;
+            decimal prePaymentAmount;
+            decimal commission;
+
+            if (i == installmentDates.Count - 1)
+            {
+                amount = lastInstallmentAmount;
+                cashAmount = lastInstallmentCashAmount;
+                creditAmount = lastInstallmentCreditAmount;
+                prePaymentAmount = lastInstallmentPrepaymentAmount;
+                commission = lastInstallmentCommission;
+            }
+            else
+            {
+                amount = installmentAmount;
+                cashAmount = installmentCashAmount;
+                creditAmount = installmentCreditAmount;
+                prePaymentAmount = installmentPrepaymentAmount;
+                commission = installmentCommission;
+            }
+
+            var installmentDate = installmentDates[i];
+
+            var installment = new MerchantInstallment(financialDocument, financialDocument.TenantId,
+                financialDocument.TenantId, financialDocument.ToBusinessIdentityId, contract.Id, amount, cashAmount,
+                creditAmount, prePaymentAmount, i + 1, installmentDate, installmentType);
+
+            installments.Add(installment);
+
+            switch (contract.CommissionDeductionMethodType)
+            {
+                case null:
+                case CommissionDeductionMethodType.DeductEquallyFromInstallments:
+                    installment.SetCommission(commission);
+                    break;
+
+                case CommissionDeductionMethodType.DeductFromFirstInstallment:
+                    installments[0].SetCommission(financialDocumentCommission);
+                    break;
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        await merchantInstallmentRepository.AddRangeAsync(installments);
     }
 }

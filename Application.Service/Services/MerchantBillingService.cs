@@ -362,7 +362,7 @@ public sealed class MerchantBillingService(
                     var hasIntersection = await billingRepository.HasIntersectionWithAnotherBillingPeriod(contract.TenantId,
                             contract.MerchantId, endOfPeriod, cancellationToken);
 
-                    if (hasIntersection == false)
+                    if (!hasIntersection)
                     {
                         CreateBillingDto(contract, billingDtos, currentPeriod, startOfPeriod, endOfPeriod);
                     }
@@ -467,18 +467,17 @@ public sealed class MerchantBillingService(
             {
                 var billing = notSettledBillings[i].Billing;
 
-                if (billing.Status is BillingStatus.Issued or BillingStatus.PartiallyPaid)
-                {
-                    var payableAmount = billing.GetPayableAmount();
+                if (billing.Status is not (BillingStatus.Issued or BillingStatus.PartiallyPaid)) continue;
 
-                    if (payableAmount > 0)
-                    {
-                        billing.Overdue();
-                    }
-                    else
-                    {
-                        notSettledBillings.RemoveAt(i);
-                    }
+                var payableAmount = billing.GetPayableAmount();
+
+                if (payableAmount > 0)
+                {
+                    billing.Overdue();
+                }
+                else
+                {
+                    notSettledBillings.RemoveAt(i);
                 }
             }
 

@@ -1,4 +1,5 @@
-﻿using Application.Command.Base;
+﻿using System.Reflection;
+using Application.Command.Base;
 using Application.Service.HealthChecks;
 using Infrastructure.Data.Repository.EfCore.DatabaseContexts;
 using Microsoft.EntityFrameworkCore;
@@ -40,7 +41,7 @@ namespace Service.Rest
             {
                 cfg.Conventions.AddSwaggerResponseModelConvention();
             })
-                .AddCustomFluentValidation(new[] { typeof(BaseCommandValidator<>).Assembly });
+                .AddCustomFluentValidation([typeof(BaseCommandValidator<>).Assembly]);
 
             services.RegisterAuthentication(configuration);
             services.RegisterMediatorService();
@@ -56,7 +57,7 @@ namespace Service.Rest
 
             services.AddCustomApiVersioning();
             services.AddHealthChecks().AddCheck<DatabaseConnectionHealthCheck>("database_health_check");
-            services.RegisteOpenTelemetryServices("BillingManagementGeneralMetrics");
+            services.RegisterOpenTelemetryServices("BillingManagementGeneralMetrics");
 
 
 

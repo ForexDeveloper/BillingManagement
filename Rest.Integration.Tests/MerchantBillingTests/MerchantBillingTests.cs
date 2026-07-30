@@ -538,7 +538,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
 
         List<TieredCommission> tieredCommissions =
         [
-            new (0, 5000, 5.7M, null, null),
+            new(0, 5000, 5.7M, null, null),
             new(5001, 10000, 4.7M, null, null),
             new(10001, 20000, 3.7M, null, null),
             new(20001, 40000, 2.7M, null, null),
@@ -661,7 +661,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     {
         await hostFixture.FlushAsync();
 
-        var installmentsCount = Random.Shared.Next(1, 4);
+        var installmentsCount = Random.Shared.Next(1, 5);
 
         var contract = await hostFixture.CreateTenantMerchantContract();
 
@@ -672,9 +672,9 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         contract.SetProperty(p => p.PeriodMinCommissionAmount, decimal.Zero);
         contract.SetProperty(p => p.CommissionCalculationType, commissionCalculationType);
 
-        var purchaseDocument = await ConsumePurchaseDocument(contract, 150);
+        var purchaseDocument = await ConsumePurchaseDocument(contract, 250);
 
-        await ConsumeRefundDocument(contract, purchaseDocument, 150);
+        await ConsumeRefundDocument(contract, purchaseDocument, 250);
 
         await _merchantBillingService.IssueOrOverdueBillings(CancellationToken.None);
 
@@ -692,13 +692,17 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
         billings[installmentsCount].PurchaseTransactionsAmount.Should().BePositive();
         billings[installmentsCount].PurchaseTransactionsCommission.Should().BePositive();
 
+        billings[installmentsCount + 1].PreviousCreditAmount.Should().Be(0);
+
         billings.Take(installmentsCount).Should().AllSatisfy(p => p.Amount.Should().BeNegative());
         billings.Skip(installmentsCount + 1).Should().AllSatisfy(p => p.IsAbsoluteZero().Should().BeTrue());
         billings.Take(installmentsCount + 1).Should().AllSatisfy(p => p.IsAbsoluteZero().Should().BeFalse());
+        billings.Skip(1).Take(installmentsCount).Should().AllSatisfy(p => p.PreviousCreditAmount.Should().BePositive());
 
         billings.Should().AllSatisfy(p => p.Status.Should().Be(BillingStatus.Settled));
 
         billings.Skip(1).Take(installmentsCount - 1).Should()
+            .AllSatisfy(p => p.PreviousCreditAmount.Should().BePositive()).And
             .AllSatisfy(p => p.PurchaseTransactionsAmount.Should().BePositive()).And
             .AllSatisfy(p => p.RefundedTransactionsAmount.Should().BePositive()).And
             .AllSatisfy(p => p.PurchaseTransactionsCommission.Should().BePositive()).And
@@ -711,7 +715,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     #region Advance
 
     [Fact]
-    public async Task WhenBillingPeriodType_Is_Daily_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_ShouldCreateFirstBilling()
+    public async Task WhenBillingPeriodType_Is_Daily_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentsDetected_ShouldCreateFirstBilling()
     {
         await hostFixture.FlushAsync();
 
@@ -732,7 +736,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Fact]
-    public async Task WhenBillingPeriodType_Is_Weekly_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_ShouldCreateFirstBilling()
+    public async Task WhenBillingPeriodType_Is_Weekly_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentsDetected_ShouldCreateFirstBilling()
     {
         await hostFixture.FlushAsync();
 
@@ -762,7 +766,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     }
 
     [Fact]
-    public async Task WhenBillingPeriodType_Is_Monthly_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_ShouldCreateFirstBilling()
+    public async Task WhenBillingPeriodType_Is_Monthly_And_BillingPeriod_Is_Equal2Today_And_NoInstallmentsDetected_ShouldCreateFirstBilling()
     {
         await hostFixture.FlushAsync();
 
@@ -790,7 +794,7 @@ public sealed class MerchantBillingTests(SharedHostFixture hostFixture)
     [Theory]
     [InlineData(0)]
     [InlineData(1000)]
-    public async Task WhenBillingPeriod_Is_Equal2Today_And_NoInstallmentDetected_AmountOfDefaultBilling_ShouldBeEqualToPeriodMinCommissionAmount(decimal periodMinCommissionAmount)
+    public async Task WhenBillingPeriod_Is_Equal2Today_And_NoInstallmentsDetected_AmountOfDefaultBilling_ShouldBeEqualToPeriodMinCommissionAmount(decimal periodMinCommissionAmount)
     {
         await hostFixture.FlushAsync();
 
