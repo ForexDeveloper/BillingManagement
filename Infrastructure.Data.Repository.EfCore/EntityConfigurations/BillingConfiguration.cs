@@ -21,6 +21,7 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.Property(p => p.TenantId).IsRequired();
         builder.Property(p => p.PeriodType).IsRequired();
         builder.Property(p => p.GracePeriod).IsRequired();
+        builder.Property(p => p.PairId).IsRequired(false);
         builder.Property(p => p.DebtorId).IsRequired(false);
         builder.Property(p => p.CreditorId).IsRequired(false);
         builder.Property(p => p.PaymentDeadlineDate).IsRequired();
@@ -63,6 +64,11 @@ public sealed class BillingConfiguration : IEntityTypeConfiguration<Billing>
         builder.HasOne(p => p.Creditor)
             .WithMany(p => p.CreditorChildren)
             .HasForeignKey(p => p.CreditorId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(p => p.Pair)
+            .WithOne()
+            .HasForeignKey<Billing>(p => p.PairId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(p => p.Payments)

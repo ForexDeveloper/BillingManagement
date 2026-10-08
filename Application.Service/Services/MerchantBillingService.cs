@@ -71,24 +71,11 @@ public sealed class MerchantBillingService(
 
                 if (billingDtos.Count == 0) continue;
 
-                var tenantToMerchantBillings = billingDtos.Where(p => p.Type == BillingType.TenantToMerchant).ToList();
+                var billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId);
 
-                var billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.TenantToMerchant);
-
-                if (!billingsDtoSets.TryAdd(billingIdentifier, tenantToMerchantBillings))
+                if (!billingsDtoSets.TryAdd(billingIdentifier, billingDtos))
                 {
-                    billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(tenantToMerchantBillings);
-                }
-
-                var merchantToTenantBillings = billingDtos.Where(p => p.Type == BillingType.MerchantToTenant).ToList();
-
-                if (merchantToTenantBillings.Count == 0) continue;
-
-                billingIdentifier = new BillingIdentifier(contract.TenantId, contract.MerchantId, BillingType.MerchantToTenant);
-
-                if (!billingsDtoSets.TryAdd(billingIdentifier, merchantToTenantBillings))
-                {
-                    billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(merchantToTenantBillings);
+                    billingsDtoSets.GetValueOrDefault(billingIdentifier).AddRange(billingDtos);
                 }
             }
             catch (Exception exception)
@@ -115,22 +102,26 @@ public sealed class MerchantBillingService(
         {
             try
             {
-                var oneDeactiveContractHasBilling = false;
+                ContractGroup contract = null;
 
-                var billings = new List<MerchantBilling>();
+                var stopAbsoluteZeroBilling = false;
 
-                var replicateBillings = new List<MerchantBilling>();
+                var dobble = false;
+
+                List<MerchantBilling> billings = [];
+                List<MerchantBilling> replicateBillings = [];
 
                 foreach (var billingDto in billingDtos)
                 {
-                    var contract = billingDto.ContractGroup;
-
                     decimal previousDebitAmount = 0;
                     decimal previousCreditAmount = 0;
                     decimal previousPenaltyAmount = 0;
 
+                    MerchantBilling pairBilling = null;
                     MerchantBilling debtorBilling = null;
                     MerchantBilling creditorBilling = null;
+
+                    contract = billingDto.ContractGroup;
 
                     var replicateBilling = replicateBillings.LastOrDefault();
 
@@ -146,10 +137,10 @@ public sealed class MerchantBillingService(
 
                         if (contractIdentifier == previousContractIdentifier)
                         {
-                            var payableAmount = replicateBilling.GetPayableAmount();
-
-                            if (billingDto.Type == BillingType.TenantToMerchant)
+                            if (billingDto.Type == replicateBilling.Type)
                             {
+                                var payableAmount = replicateBilling.GetPayableAmount();
+
                                 switch (payableAmount)
                                 {
                                     case > 0:
@@ -167,14 +158,42 @@ public sealed class MerchantBillingService(
                                         break;
                                 }
                             }
-                            else if (billingDto.Type == BillingType.MerchantToTenant)
+                            else
                             {
-                                if (payableAmount > 0)
+                                if (billingDto.Type == BillingType.MerchantToTenant) pairBilling = replicateBilling;
+
+                                var index = replicateBillings.IndexOf(replicateBilling) - 1;
+
+                                if (index != -1)
                                 {
-                                    replicateBilling.Overdue();
-                                    replicateBilling.Transfer();
-                                    debtorBilling = replicateBilling;
-                                    previousDebitAmount = payableAmount;
+                                    replicateBilling = replicateBillings[index];
+
+                                    var payableAmount = replicateBilling.GetPayableAmount();
+
+                                    switch (payableAmount)
+                                    {
+                                        case > 0:
+                                            replicateBilling.Overdue();
+                                            replicateBilling.Transfer();
+                                            debtorBilling = replicateBilling;
+                                            previousDebitAmount = payableAmount;
+                                            break;
+
+                                        case < 0:
+                                            replicateBilling.Settle();
+                                            replicateBilling.Transfer();
+                                            creditorBilling = replicateBilling;
+                                            previousCreditAmount = Math.Abs(payableAmount);
+                                            break;
+                                    }
+                                }
+                                else
+                                {
+                                    debtorBilling = TransferDebtorBillings(overdueBillings, billingDto,
+                                        contract.ContractIds, out previousDebitAmount);
+
+                                    creditorBilling = TransferCreditorBillings(negativeBillings, billingDto,
+                                        contract.ContractIds, out previousCreditAmount);
                                 }
                             }
                         }
@@ -186,19 +205,29 @@ public sealed class MerchantBillingService(
 
                     if (replicateBillings.Count == 0)
                     {
-                        debtorBilling = TransferDebtorBillings(overdueBillings,
-                            billingDto,
-                            contract.ContractIds,
-                            out previousDebitAmount);
+                        debtorBilling = TransferDebtorBillings(overdueBillings, billingDto,
+                            contract.ContractIds, out previousDebitAmount);
 
-                        creditorBilling = TransferCreditorBillings(negativeBillings,
-                            billingDto,
-                            contract.ContractIds,
-                            out previousCreditAmount);
+                        creditorBilling = TransferCreditorBillings(negativeBillings, billingDto,
+                            contract.ContractIds, out previousCreditAmount);
                     }
 
                     Commission purchaseCommission = new();
                     Transactions refundedTransactions = new();
+
+                    if (!dobble)
+                    {
+                        //calculate transactions
+                    }
+
+                    if (contract.IsCommissionExchanged)
+                    {
+                        //calculate commission
+                    }
+                    else
+                    {
+                        
+                    }
 
                     if (contract.IsCommissionExchanged)
                     {
@@ -213,7 +242,7 @@ public sealed class MerchantBillingService(
                             refundedTransactions = await CalculateRefundedTransactions(billingDto, cancellationToken);
 
                         }
-                        else if (billingDto.Type == BillingType.MerchantToTenant)
+                        else
                         {
                             purchaseCommission = await CalculateTransactionsCommission(billingDto, cancellationToken);
                         }
@@ -250,6 +279,7 @@ public sealed class MerchantBillingService(
                         purchaseTransactionsCalculatedCommission,
                         tieredTransactionsAmount,
                         tieredCalculatedLevels,
+                        pairBilling,
                         debtorBilling,
                         creditorBilling);
 
@@ -259,13 +289,13 @@ public sealed class MerchantBillingService(
 
                         //if (contract.Status && !billingDto.CurrentPeriod) continue;
 
-                        if (contract.Status && billingDto.CurrentPeriod && oneDeactiveContractHasBilling) continue;
+                        if (contract.Status && billingDto.CurrentPeriod && stopAbsoluteZeroBilling) continue;
                     }
                     else
                     {
                         if (!contract.Status && billingDto.CurrentPeriod)
                         {
-                            oneDeactiveContractHasBilling = true;
+                            stopAbsoluteZeroBilling = true;
                         }
                     }
 
@@ -276,9 +306,24 @@ public sealed class MerchantBillingService(
 
                 await billingRepository.AddRangeAsync(billings, cancellationToken);
 
-                await unitOfWork.SaveChangesAsync(cancellationToken);
-            }
+                await unitOfWork.BeginTransactionAsync(cancellationToken);
 
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                if (!contract.IsCommissionExchanged)
+                {
+                    for (var i = 0; i < billings.Count; i++)
+                    {
+                        if (i % 2 != 0) continue;
+
+                        billings[i].SetPair(billings[i + 1]);
+                    }
+
+                    await unitOfWork.SaveChangesAsync(cancellationToken);
+                }
+
+                await unitOfWork.CommitTransactionAsync(cancellationToken);
+            }
             catch (Exception exception)
             {
                 logger.LogCritical(new LogStruct()
@@ -289,6 +334,8 @@ public sealed class MerchantBillingService(
                     Message = "MerchantBillingService billings issue failed",
                     ServiceName = $"{nameof(MerchantBillingService)}_{nameof(CreateBillings)}"
                 });
+
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
             }
             finally
             {

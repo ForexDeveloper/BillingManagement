@@ -51,11 +51,9 @@ public sealed record ContractIdentifier
 /// به هیچ وجه از رکورد به کلاس تبدیل نشود. جاب صورتسحاب به مشکل می شود
 /// </summary>
 
-public sealed record BillingIdentifier(int TenantId, int MerchantId, BillingType BillingType)
+public sealed record BillingIdentifier(int TenantId, int MerchantId)
 {
     public int TenantId { get; set; } = TenantId;
 
     public int MerchantId { get; set; } = MerchantId;
-
-    public BillingType BillingType { get; set; } = BillingType;
 }

@@ -61,6 +61,8 @@ public abstract class Billing : BaseEntity<long>
 
     public DateTime PaymentDeadlineDate { get; set; }
 
+    public long? PairId { get; protected set; }
+
     public long? DebtorId { get; protected set; }
 
     public long? CreditorId { get; protected set; }
@@ -70,6 +72,8 @@ public abstract class Billing : BaseEntity<long>
     public string CheckSum { get; protected set; }
 
     public Tenant Tenant { get; protected set; }
+
+    public Billing? Pair { get; protected set; }
 
     public Billing? Debtor { get; protected set; }
 
@@ -100,9 +104,10 @@ public abstract class Billing : BaseEntity<long>
         TimeInterval periodType, decimal previousDebitAmount, decimal previousCreditAmount,
         decimal previousPenaltyAmount, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
         List<int> contractIds, decimal tieredTransactionsAmount, List<TieredCalculatedLevel> tieredCalculatedLevels = null,
-        Billing? debtor = null, Billing? creditor = null)
+        Billing? pair = null, Billing? debtor = null, Billing? creditor = null)
     {
         Type = type;
+        Pair = pair;
         Debtor = debtor;
         Creditor = creditor;
         Transferred = false;
@@ -150,6 +155,11 @@ public abstract class Billing : BaseEntity<long>
     public decimal GetPayableAmount()
     {
         return PayableAmount;
+    }
+
+    public void SetPair(Billing pair)
+    {
+        Pair = pair;
     }
 
     public void SetAdditions(decimal additionsAmount, string? additionDescription = null)

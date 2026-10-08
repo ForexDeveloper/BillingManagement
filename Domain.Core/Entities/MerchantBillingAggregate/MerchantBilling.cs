@@ -30,11 +30,11 @@ public sealed class MerchantBilling : Billing
         TimeInterval periodType, DateTime startDate, DateTime endDate, int gracePeriod, int mainContractId,
         List<int> contractIds, decimal previousDebitAmount, decimal previousCreditAmount, decimal previousPenaltyAmount,
         decimal purchaseTransactionsAmount, decimal refundedTransactionsAmount, decimal purchaseTransactionsCommission,
-        decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission, decimal tieredTransactionsAmount,
-        List<TieredCalculatedLevel> tieredCalculatedLevels, Billing? debtor = null, Billing? creditor = null) : base(
-        tenantId, fromBusinessIdentityId, toBusinessIdentityId, type, periodType, previousDebitAmount,
-        previousCreditAmount, previousPenaltyAmount, startDate, endDate, gracePeriod, mainContractId, contractIds,
-        tieredTransactionsAmount, tieredCalculatedLevels, debtor, creditor)
+        decimal refundedTransactionsCommission, decimal purchaseTransactionsCalculatedCommission,
+        decimal tieredTransactionsAmount, List<TieredCalculatedLevel> tieredCalculatedLevels, Billing? pair = null,
+        Billing? debtor = null, Billing? creditor = null) : base(tenantId, fromBusinessIdentityId, toBusinessIdentityId,
+        type, periodType, previousDebitAmount, previousCreditAmount, previousPenaltyAmount, startDate, endDate,
+        gracePeriod, mainContractId, contractIds, tieredTransactionsAmount, tieredCalculatedLevels, pair, debtor, creditor)
     {
         PurchaseTransactionsAmount = purchaseTransactionsAmount;
         RefundedTransactionsAmount = refundedTransactionsAmount;
@@ -46,13 +46,20 @@ public sealed class MerchantBilling : Billing
 
     public bool IsAbsoluteZero()
     {
+        if (Type == BillingType.TenantToMerchant)
+        {
+            return Amount == 0 &&
+                   PreviousDebitAmount == 0 &&
+                   PreviousCreditAmount == 0 &&
+                   PurchaseTransactionsAmount == 0 &&
+                   RefundedTransactionsAmount == 0 &&
+                   PurchaseTransactionsCommission == 0 &&
+                   RefundedTransactionsCommission == 0;
+        }
+
         return Amount == 0 &&
                PreviousDebitAmount == 0 &&
-               PreviousCreditAmount == 0 &&
-               PurchaseTransactionsAmount == 0 &&
-               RefundedTransactionsAmount == 0 && 
-               PurchaseTransactionsCommission == 0 && 
-               RefundedTransactionsCommission == 0;
+               PurchaseTransactionsCommission == 0;
     }
 
     protected override void CalculateAmount()

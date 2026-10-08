@@ -108,9 +108,9 @@ public class SharedHostFixture : IDisposable
 
             GenerateTestSqlConnectionString();
 
-            _mainContext ??= _host.Services.GetRequiredService<ApplicationDbContext>();
+            _mainContext= _host.Services.GetRequiredService<ApplicationDbContext>();
 
-             _mainContext.Database.EnsureCreated();
+             await _mainContext.Database.EnsureCreatedAsync();
 
             _isExistDb = true;
         }
@@ -123,10 +123,12 @@ public class SharedHostFixture : IDisposable
     private void GenerateTestSqlConnectionString()
     {
         var connection = Configuration.GetConnectionString("ApplicationDbConnection");
+
         if (string.IsNullOrEmpty(connection))
             throw new InvalidOperationException("ApplicationDbConnection connection string is not configured");
 
         var dbName = GenerateUniqueDbName();
+
         var newConnection = connection.Replace("$_DbName_DoNotChangeIt_Its_A_Token_$", dbName);
 
         Configuration["ConnectionStrings:ApplicationDbConnection"] = newConnection;
@@ -136,7 +138,8 @@ public class SharedHostFixture : IDisposable
     private static string GenerateUniqueDbName()
     {
         var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        return $"BillingManagement_{timestamp}__IntegrationTest";
+
+        return $"BillingManagement_IntegrationTest";
     }
 
     public async Task<HttpClient> GetAuthenticatedHttpClientAsync(int? tenantId = null, string? userId = null)
@@ -177,19 +180,19 @@ public class SharedHostFixture : IDisposable
 
     public async Task FlushAsync()
     {
-        var billings = _mainContext.Billings.AsQueryable();
-        var billingPayments = _mainContext.BillingPayments.AsQueryable();
         var installments = _mainContext.Installments.AsQueryable();
+        var billingPayments = _mainContext.BillingPayments.AsQueryable();
         var contracts = _mainContext.TenantMerchantContracts.AsQueryable();
         var financialDocuments = _mainContext.FinancialDocuments.AsQueryable();
 
-        _mainContext.BillingPayments.RemoveRange(billingPayments);
-        _mainContext.Billings.RemoveRange(billings);
         _mainContext.Installments.RemoveRange(installments);
+        _mainContext.BillingPayments.RemoveRange(billingPayments);
         _mainContext.TenantMerchantContracts.RemoveRange(contracts);
         _mainContext.FinancialDocuments.RemoveRange(financialDocuments);
 
         await _mainContext.SaveChangesAsync();
+
+        await _mainContext.Database.ExecuteSqlAsync($"DELETE Bill.Billing");
     }
 
     protected virtual void Dispose(bool disposing)
